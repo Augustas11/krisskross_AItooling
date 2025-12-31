@@ -33,7 +33,7 @@ CRITICAL: If context is provided (like a profile link, bio, or product details),
 Keep it under 100 words. Be conversational but professional. Use line breaks for readability.`;
 
         const response = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-latest",
+            model: "claude-sonnet-4-5-20250929",
             max_tokens: 300,
             system: systemPrompt,
             messages: [
