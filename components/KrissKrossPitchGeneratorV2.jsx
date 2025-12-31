@@ -43,6 +43,11 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isCrmInitialized, setIsCrmInitialized] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
+    const [selectedCrmLeadIds, setSelectedCrmLeadIds] = useState(new Set());
+    // Pagination & Bulk Processing State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    const [crmProcessing, setCrmProcessing] = useState(false);
     // duplicate viewingLead removed
 
     // Load Leads from Server on mount
@@ -266,7 +271,16 @@ ${template.cta}`;
     };
 
     const enrichViewingLead = async () => {
-        if (!viewingLead || (!viewingLead.storeUrl && !sourceUrl)) return;
+        // Validation: For saved leads (CRM), we should strictly require a URL on the lead itself.
+        // Falling back to 'sourceUrl' (the search bar) is risky for CRM leads as they might be unrelated.
+        const targetUrl = viewingLead.storeUrl || viewingLead.website;
+
+        if (!targetUrl) {
+            // If we are in discovery mode (not saved yet), maybe sourceUrl is valid, but here we are likely viewing a saved lead or detailed view.
+            // Let's be strict: if it's imported or missing URL, we can't enrich.
+            alert("This lead doesn't have a Store URL or Website to analyze.\nPlease add a URL to the lead details before enriching.");
+            return;
+        }
 
         setIsEnrichingViewingLead(true);
         setEnrichmentStatus("Connecting to Agent...");
@@ -276,7 +290,7 @@ ${template.cta}`;
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    url: viewingLead.storeUrl || sourceUrl,
+                    url: targetUrl,
                     name: viewingLead.name,
                     provider
                 }),
@@ -349,14 +363,20 @@ ${template.cta}`;
                 }
             }
 
+            // Only close immediately on success
+            setTimeout(() => {
+                setIsEnrichingViewingLead(false);
+                setEnrichmentStatus('');
+            }, 1000);
+
         } catch (error) {
             console.error('Enrichment error:', error);
-            // alert('Failed to enrich lead: ' + error.message);
             setEnrichmentStatus('Error: ' + error.message);
-        } finally {
-            setIsEnrichingViewingLead(false);
-            // Clear status after a short delay so user can see final success/error
-            setTimeout(() => setEnrichmentStatus(''), 2000);
+            // On error, keep the overlay open longer so user can read it
+            setTimeout(() => {
+                setIsEnrichingViewingLead(false);
+                setEnrichmentStatus('');
+            }, 3000);
         }
     };
 
@@ -388,7 +408,139 @@ ${template.cta}`;
     const deleteFromCrm = (leadId) => {
         if (window.confirm('Remove this lead from CRM?')) {
             setSavedLeads(prev => prev.filter(l => l.id !== leadId));
+            setSelectedCrmLeadIds(prev => {
+                const next = new Set(prev);
+                next.delete(leadId);
+                return next;
+            });
         }
+    };
+
+    const toggleCrmLeadSelection = (leadId) => {
+        setSelectedCrmLeadIds(prev => {
+            const next = new Set(prev);
+            if (next.has(leadId)) {
+                next.delete(leadId);
+            } else {
+                next.add(leadId);
+            }
+            return next;
+        });
+    };
+
+    const toggleAllCrmLeadSelection = () => {
+        if (selectedCrmLeadIds.size === filteredLeads.length) {
+            setSelectedCrmLeadIds(new Set());
+        } else {
+            setSelectedCrmLeadIds(new Set(filteredLeads.map(l => l.id)));
+        }
+    };
+
+    const deleteSelectedCrmLeads = () => {
+        if (selectedCrmLeadIds.size === 0) return;
+
+        if (window.confirm(`Are you sure you want to delete ${selectedCrmLeadIds.size} selected leads? This cannot be undone.`)) {
+            setSavedLeads(prev => prev.filter(l => !selectedCrmLeadIds.has(l.id)));
+            setSelectedCrmLeadIds(new Set());
+        }
+    };
+
+    const enrichCrmLead = async (lead) => {
+        const targetUrl = lead.storeUrl || lead.website;
+        if (!targetUrl) return false;
+
+        try {
+            const response = await fetch('/api/leads/enrich', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: targetUrl,
+                    name: lead.name,
+                    provider
+                }),
+            });
+            const data = await response.json();
+
+            // Handle if streaming response, but for headless generic enrich we might want to just wait for the end result or handle NDJSON.
+            // Our previous enrich implementation uses streaming. For bulk, we probably don't want to open a stream for each one in parallel if we can avoid it, 
+            // OR we can just ignore the stream updates and wait for the final result.
+            // Actually, the current /api/leads/enrich endpoint ONLY returns a stream now.
+            // So we MUST consume the stream to get the final result.
+
+            if (!response.ok) throw new Error('Failed to start enrichment');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let processBuffer = '';
+            let finalResult = null;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                processBuffer += chunk;
+                const lines = processBuffer.split('\n');
+                processBuffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    try {
+                        const message = JSON.parse(line);
+                        if (message.type === 'result') {
+                            finalResult = message.data;
+                        } else if (message.type === 'error') {
+                            throw new Error(message.data);
+                        }
+                    } catch (e) { /* ignore parse errors */ }
+                }
+            }
+
+            if (finalResult && finalResult.enrichedData) {
+                const enrichedInfo = finalResult.enrichedData;
+                const hasData = enrichedInfo.contact_information?.business_address ||
+                    enrichedInfo.contact_information?.customer_service?.email ||
+                    enrichedInfo.contact_information?.customer_service?.phone_number ||
+                    enrichedInfo.contact_information?.customer_service?.instagram;
+
+                const newFields = {
+                    enriched: !!hasData,
+                    businessAddress: enrichedInfo.contact_information?.business_address,
+                    email: enrichedInfo.contact_information?.customer_service?.email,
+                    phone: enrichedInfo.contact_information?.customer_service?.phone_number,
+                    instagram: enrichedInfo.contact_information?.customer_service?.instagram,
+                    website: enrichedInfo.contact_information?.customer_service?.website,
+                    tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
+                };
+
+                setSavedLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ...newFields } : l));
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error(`Failed to enrich lead ${lead.name}`, error);
+            return false;
+        }
+    };
+
+    const handleEnrichSelectedCrmLeads = async () => {
+        if (selectedCrmLeadIds.size === 0) return;
+        setCrmProcessing(true);
+
+        // Filter for leads that are selected AND not yet enriched (as per user request "un-enriched yet leads")
+        // But let's allow re-enriching if user explicitly selected them, just prioritize logic if needed.
+        // Actually, let's just enrich all selected to give user control.
+        const leadsToEnrich = savedLeads.filter(l => selectedCrmLeadIds.has(l.id));
+
+        let successCount = 0;
+        for (const lead of leadsToEnrich) {
+            // Sequential to avoid rate limits
+            const success = await enrichCrmLead(lead);
+            if (success) successCount++;
+        }
+
+        alert(`Bulk enrichment complete. Successfully enriched ${successCount} leads.`);
+        setCrmProcessing(false);
+        setSelectedCrmLeadIds(new Set()); // Clear selection after action
     };
 
     const exportToCsv = () => {
@@ -960,6 +1112,26 @@ ${template.cta}`;
                                     <p className="text-gray-600">Manage your prospecting pipeline</p>
                                 </div>
                                 <div className="flex gap-2">
+                                    {selectedCrmLeadIds.size > 0 && (
+                                        <>
+                                            <button
+                                                onClick={handleEnrichSelectedCrmLeads}
+                                                disabled={crmProcessing}
+                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-semibold rounded-lg transition-colors mr-2 border border-indigo-200 disabled:opacity-50"
+                                            >
+                                                {crmProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                                                Enrich Selected ({selectedCrmLeadIds.size})
+                                            </button>
+                                            <button
+                                                onClick={deleteSelectedCrmLeads}
+                                                disabled={crmProcessing}
+                                                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 font-semibold rounded-lg transition-colors mr-2 border border-red-200 disabled:opacity-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Delete Selected ({selectedCrmLeadIds.size})
+                                            </button>
+                                        </>
+                                    )}
                                     <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition-colors cursor-pointer">
                                         <Upload className="w-4 h-4" />
                                         Import CSV
@@ -1036,6 +1208,14 @@ ${template.cta}`;
                                         <table className="w-full">
                                             <thead className="bg-gray-50 border-b border-gray-200">
                                                 <tr>
+                                                    <th className="px-6 py-3 text-left w-10">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={filteredLeads.length > 0 && selectedCrmLeadIds.size === filteredLeads.length}
+                                                            onChange={toggleAllCrmLeadSelection}
+                                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                        />
+                                                    </th>
                                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lead</th>
                                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
                                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
@@ -1044,8 +1224,16 @@ ${template.cta}`;
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-200">
-                                                {filteredLeads.map((lead) => (
-                                                    <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                                                {filteredLeads.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((lead) => (
+                                                    <tr key={lead.id} className={`hover:bg-gray-50 transition-colors ${selectedCrmLeadIds.has(lead.id) ? 'bg-blue-50/50' : ''}`}>
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedCrmLeadIds.has(lead.id)}
+                                                                onChange={() => toggleCrmLeadSelection(lead.id)}
+                                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                            />
+                                                        </td>
                                                         <td className="px-6 py-4">
                                                             <div
                                                                 className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
@@ -1122,444 +1310,490 @@ ${template.cta}`;
                                             </tbody>
                                         </table>
                                     </div>
+                                    {/* Pagination Controls */}
+                                {filteredLeads.length > itemsPerPage && (
+                                    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                            <div>
+                                                <p className="text-sm text-gray-700">
+                                                    Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredLeads.length)}</span> of <span className="font-medium">{filteredLeads.length}</span> results
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                                    <button
+                                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                        disabled={currentPage === 1}
+                                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                    >
+                                                        <span className="sr-only">Previous</span>
+                                                        <ChevronRight className="h-5 w-5 rotate-180" aria-hidden="true" />
+                                                    </button>
+                                                    {/* Simple Page Numbers */}
+                                                    {[...Array(Math.ceil(filteredLeads.length / itemsPerPage)).keys()].map(number => (
+                                                        <button
+                                                            key={number + 1}
+                                                            onClick={() => setCurrentPage(number + 1)}
+                                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === number + 1
+                                                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            {number + 1}
+                                                        </button>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredLeads.length / itemsPerPage)))}
+                                                        disabled={currentPage === Math.ceil(filteredLeads.length / itemsPerPage)}
+                                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                    >
+                                                        <span className="sr-only">Next</span>
+                                                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                                                    </button>
+                                                </nav>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
+                                )}
+                        </div>
                         </motion.div>
                     )}
 
-                    {/* Pitch Generator Tab */}
-                    {activeTab === 'pitch' && (
-                        <motion.div
-                            key="pitch"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Pitch Generator</h2>
-                                <p className="text-gray-600">Create personalized outreach messages powered by Claude AI</p>
-                            </div>
+                {/* Pitch Generator Tab */}
+                {activeTab === 'pitch' && (
+                    <motion.div
+                        key="pitch"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Pitch Generator</h2>
+                            <p className="text-gray-600">Create personalized outreach messages powered by Claude AI</p>
+                        </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                                <div className="space-y-6">
-                                    {/* Target Type */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-3">
-                                            Target Audience
-                                        </label>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {targetTypes.map(type => (
-                                                <button
-                                                    key={type.id}
-                                                    onClick={() => {
-                                                        setTargetType(type.id);
-                                                        setLastTemplateIndex(-1);
-                                                        setGeneratedPitch('');
-                                                    }}
-                                                    className={`p-4 rounded-lg border-2 transition-all ${targetType === type.id
-                                                        ? 'border-blue-600 bg-blue-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                >
-                                                    <div className="text-3xl mb-2">{type.icon}</div>
-                                                    <div className="font-semibold text-gray-900 text-sm">{type.label}</div>
-                                                </button>
-                                            ))}
-                                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                            <div className="space-y-6">
+                                {/* Target Type */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                                        Target Audience
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {targetTypes.map(type => (
+                                            <button
+                                                key={type.id}
+                                                onClick={() => {
+                                                    setTargetType(type.id);
+                                                    setLastTemplateIndex(-1);
+                                                    setGeneratedPitch('');
+                                                }}
+                                                className={`p-4 rounded-lg border-2 transition-all ${targetType === type.id
+                                                    ? 'border-blue-600 bg-blue-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                <div className="text-3xl mb-2">{type.icon}</div>
+                                                <div className="font-semibold text-gray-900 text-sm">{type.label}</div>
+                                            </button>
+                                        ))}
                                     </div>
-
-                                    {/* Name Input */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                            Prospect Name (optional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={customName}
-                                            onChange={(e) => setCustomName(e.target.value)}
-                                            placeholder="e.g., Sarah, Mike, Jessica..."
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* Context Input */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                            Context or Profile Link
-                                            <span className="ml-2 text-xs font-normal text-gray-500">(Highly Recommended)</span>
-                                        </label>
-                                        <textarea
-                                            value={context}
-                                            onChange={(e) => setContext(e.target.value)}
-                                            placeholder="Paste social profile link, bio, or product details... Claude will use this to tailor the pitch."
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[120px] resize-none text-gray-900 placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* Generate Button */}
-                                    <button
-                                        onClick={generatePitch}
-                                        disabled={isLoading}
-                                        className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'
-                                            }`}
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <RefreshCw className="w-5 h-5 animate-spin" />
-                                                Generating with Claude AI...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Sparkles className="w-5 h-5" />
-                                                Generate AI Pitch
-                                                <ChevronRight className="w-5 h-5" />
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {/* Generated Pitch */}
-                                    {generatedPitch && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
-                                        >
-                                            <div className="flex justify-between items-start mb-4">
-                                                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                                    <Sparkles className="w-5 h-5 text-blue-600" />
-                                                    Your Pitch
-                                                    {wasAiGenerated ? (
-                                                        <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">
-                                                            AI OPTIMIZED
-                                                        </span>
-                                                    ) : (
-                                                        <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded">
-                                                            TEMPLATE
-                                                        </span>
-                                                    )}
-                                                </h3>
-                                                <button
-                                                    onClick={copyToClipboard}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                                                >
-                                                    {copied ? (
-                                                        <>
-                                                            <CheckCircle className="w-4 h-4" />
-                                                            Copied!
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Copy className="w-4 h-4" />
-                                                            Copy
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                            <div className="bg-white rounded-lg p-4 text-gray-800 whitespace-pre-wrap font-mono text-sm border border-blue-200">
-                                                {generatedPitch}
-                                            </div>
-                                        </motion.div>
-                                    )}
                                 </div>
-                            </div>
-                        </motion.div>
-                    )}
 
-                    {/* Analytics Tab */}
-                    {activeTab === 'analytics' && (
-                        <motion.div
-                            key="analytics"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
-                                <p className="text-gray-600">Track your outreach performance</p>
-                            </div>
+                                {/* Name Input */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                        Prospect Name (optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customName}
+                                        onChange={(e) => setCustomName(e.target.value)}
+                                        placeholder="e.g., Sarah, Mike, Jessica..."
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
+                                    />
+                                </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                                <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Coming Soon</h3>
-                                <p className="text-gray-600">Track response rates, conversion metrics, and more</p>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                {/* Lead Details Modal */}
-                <AnimatePresence>
-                    {viewingLead && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
-                            onClick={() => setViewingLead(null)}
-                        >
-                            <motion.div
-                                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
-                            >
-                                {/* Modal Header */}
-                                <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm">
-                                            {viewingLead.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                                {viewingLead.name}
-                                                {viewingLead.status && (
-                                                    <span className={`text-xs px-2 py-0.5 rounded-full border ${viewingLead.status === 'Replied' ? 'bg-green-50 border-green-200 text-green-700' :
-                                                        viewingLead.status === 'Pitched' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                                            'bg-gray-50 border-gray-200 text-gray-600'
-                                                        }`}>
-                                                        {viewingLead.status}
+                                {/* Context Input */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                        Context or Profile Link
+                                        <span className="ml-2 text-xs font-normal text-gray-500">(Highly Recommended)</span>
+                                    </label>
+                                    <textarea
+                                        value={context}
+                                        onChange={(e) => setContext(e.target.value)}
+                                        placeholder="Paste social profile link, bio, or product details... Claude will use this to tailor the pitch."
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[120px] resize-none text-gray-900 placeholder-gray-400"
+                                    />
+                                </div>
+
+                                {/* Generate Button */}
+                                <button
+                                    onClick={generatePitch}
+                                    disabled={isLoading}
+                                    className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'
+                                        }`}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <RefreshCw className="w-5 h-5 animate-spin" />
+                                            Generating with Claude AI...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-5 h-5" />
+                                            Generate AI Pitch
+                                            <ChevronRight className="w-5 h-5" />
+                                        </>
+                                    )}
+                                </button>
+
+                                {/* Generated Pitch */}
+                                {generatedPitch && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
+                                    >
+                                        <div className="flex justify-between items-start mb-4">
+                                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                                <Sparkles className="w-5 h-5 text-blue-600" />
+                                                Your Pitch
+                                                {wasAiGenerated ? (
+                                                    <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">
+                                                        AI OPTIMIZED
+                                                    </span>
+                                                ) : (
+                                                    <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded">
+                                                        TEMPLATE
                                                     </span>
                                                 )}
-                                            </h2>
-                                            <p className="text-sm text-gray-500 font-medium">{viewingLead.productCategory}</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => setViewingLead(null)}
-                                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                                    >
-                                        <X className="w-6 h-6 text-gray-500" />
-                                    </button>
-                                </div>
-
-                                {/* Modal Body - Scrollable */}
-                                <div className="p-6 overflow-y-auto custom-scrollbar">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* Contact Section */}
-                                        <div className="space-y-6 relative">
-                                            {isEnrichingViewingLead && (
-                                                <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center text-center p-4 rounded-xl backdrop-blur-sm transition-all border border-indigo-100">
-                                                    <div className="relative mb-4">
-                                                        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <Sparkles className="w-6 h-6 text-indigo-600 animate-pulse" />
-                                                        </div>
-                                                    </div>
-                                                    <h3 className="text-base font-bold text-indigo-900 animate-pulse transition-all duration-300">{enrichmentStatus}</h3>
-                                                    <p className="text-xs text-indigo-400 mt-2 font-medium">Analyzing page content...</p>
-                                                </div>
-                                            )}
-                                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
-                                                <Users className="w-4 h-4" /> Contact Information
                                             </h3>
+                                            <button
+                                                onClick={copyToClipboard}
+                                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                                            >
+                                                {copied ? (
+                                                    <>
+                                                        <CheckCircle className="w-4 h-4" />
+                                                        Copied!
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-4 h-4" />
+                                                        Copy
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-4 text-gray-800 whitespace-pre-wrap font-mono text-sm border border-blue-200">
+                                            {generatedPitch}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
 
-                                            <div className="space-y-4">
-                                                {/* Email */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                                                        <Mail className="w-4 h-4 text-blue-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Email Address</div>
-                                                        <div className="text-sm text-gray-900 break-all select-all">
-                                                            {viewingLead.email ? (
-                                                                <a href={`mailto:${viewingLead.email}`} className="hover:text-blue-600 hover:underline">
-                                                                    {viewingLead.email}
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
+                {/* Analytics Tab */}
+                {activeTab === 'analytics' && (
+                    <motion.div
+                        key="analytics"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
+                            <p className="text-gray-600">Track your outreach performance</p>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                            <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Coming Soon</h3>
+                            <p className="text-gray-600">Track response rates, conversion metrics, and more</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            {/* Lead Details Modal */}
+            <AnimatePresence>
+                {viewingLead && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={() => setViewingLead(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm">
+                                        {viewingLead.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                            {viewingLead.name}
+                                            {viewingLead.status && (
+                                                <span className={`text-xs px-2 py-0.5 rounded-full border ${viewingLead.status === 'Replied' ? 'bg-green-50 border-green-200 text-green-700' :
+                                                    viewingLead.status === 'Pitched' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                                        'bg-gray-50 border-gray-200 text-gray-600'
+                                                    }`}>
+                                                    {viewingLead.status}
+                                                </span>
+                                            )}
+                                        </h2>
+                                        <p className="text-sm text-gray-500 font-medium">{viewingLead.productCategory}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setViewingLead(null)}
+                                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                >
+                                    <X className="w-6 h-6 text-gray-500" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body - Scrollable */}
+                            <div className="p-6 overflow-y-auto custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Contact Section */}
+                                    <div className="space-y-6 relative">
+                                        {isEnrichingViewingLead && (
+                                            <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center text-center p-4 rounded-xl backdrop-blur-sm transition-all border border-indigo-100">
+                                                <div className="relative mb-4">
+                                                    <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Sparkles className="w-6 h-6 text-indigo-600 animate-pulse" />
                                                     </div>
                                                 </div>
+                                                <h3 className="text-base font-bold text-indigo-900 animate-pulse transition-all duration-300">{enrichmentStatus}</h3>
+                                                <p className="text-xs text-indigo-400 mt-2 font-medium">Analyzing page content...</p>
+                                            </div>
+                                        )}
+                                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
+                                            <Users className="w-4 h-4" /> Contact Information
+                                        </h3>
 
-                                                {/* Phone */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
-                                                        <Phone className="w-4 h-4 text-green-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</div>
-                                                        <div className="text-sm text-gray-900 select-all">
-                                                            {viewingLead.phone || <span className="text-gray-400 italic">Not available</span>}
-                                                        </div>
-                                                    </div>
+                                        <div className="space-y-4">
+                                            {/* Email */}
+                                            <div className="group flex items-start gap-4">
+                                                <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                                                    <Mail className="w-4 h-4 text-blue-600" />
                                                 </div>
-
-                                                {/* Instagram */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-100 transition-colors">
-                                                        <Instagram className="w-4 h-4 text-pink-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
-                                                        <div className="text-sm text-gray-900">
-                                                            {viewingLead.instagram ? (
-                                                                <a
-                                                                    href={`https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                    className="hover:text-pink-600 hover:underline flex items-center gap-1"
-                                                                >
-                                                                    {viewingLead.instagram} <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* TikTok Shop */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
-                                                        <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok Shop</div>
-                                                        <div className="text-sm text-gray-900">
-                                                            {viewingLead.tiktok ? (
-                                                                <a href={viewingLead.tiktok} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
-                                                                    {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Official Website */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
-                                                        <Globe className="w-4 h-4 text-indigo-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
-                                                        <div className="text-sm text-gray-900">
-                                                            {viewingLead.website ? (
-                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
-                                                                    {viewingLead.website} <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
+                                                <div className="flex-1">
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Email Address</div>
+                                                    <div className="text-sm text-gray-900 break-all select-all">
+                                                        {viewingLead.email ? (
+                                                            <a href={`mailto:${viewingLead.email}`} className="hover:text-blue-600 hover:underline">
+                                                                {viewingLead.email}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-gray-400 italic">Not available</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Business Section */}
-                                        <div className="space-y-6">
-                                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
-                                                <Target className="w-4 h-4" /> Business Profile
-                                            </h3>
-
-                                            <div className="space-y-4">
-                                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                                    <div className="text-xs text-gray-500 font-medium mb-2 uppercase tracking-wide">About Business</div>
-                                                    <p className="text-sm text-gray-700 leading-relaxed">
-                                                        {viewingLead.briefDescription || 'No description available for this lead.'}
-                                                    </p>
+                                            {/* Phone */}
+                                            <div className="group flex items-start gap-4">
+                                                <div className="mt-1 w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+                                                    <Phone className="w-4 h-4 text-green-600" />
                                                 </div>
-
-                                                <div className="flex items-start gap-3">
-                                                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                                    <div>
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
-                                                        <p className="text-sm text-gray-900">
-                                                            {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
-                                                        </p>
+                                                <div className="flex-1">
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</div>
+                                                    <div className="text-sm text-gray-900 select-all">
+                                                        {viewingLead.phone || <span className="text-gray-400 italic">Not available</span>}
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <div className="flex items-start gap-3">
-                                                    <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                                    <div>
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
-                                                        {viewingLead.storeUrl ? (
-                                                            <a href={viewingLead.storeUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
-                                                                {viewingLead.storeUrl}
+                                            {/* Instagram */}
+                                            <div className="group flex items-start gap-4">
+                                                <div className="mt-1 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-100 transition-colors">
+                                                    <Instagram className="w-4 h-4 text-pink-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
+                                                    <div className="text-sm text-gray-900">
+                                                        {viewingLead.instagram ? (
+                                                            <a
+                                                                href={`https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="hover:text-pink-600 hover:underline flex items-center gap-1"
+                                                            >
+                                                                {viewingLead.instagram} <ExternalLink className="w-3 h-3" />
                                                             </a>
                                                         ) : (
-                                                            <span className="text-sm text-gray-400 italic">Not available</span>
+                                                            <span className="text-gray-400 italic">Not available</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* TikTok Shop */}
+                                            <div className="group flex items-start gap-4">
+                                                <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
+                                                    <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok Shop</div>
+                                                    <div className="text-sm text-gray-900">
+                                                        {viewingLead.tiktok ? (
+                                                            <a href={viewingLead.tiktok} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
+                                                                {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-gray-400 italic">Not available</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Official Website */}
+                                            <div className="group flex items-start gap-4">
+                                                <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
+                                                    <Globe className="w-4 h-4 text-indigo-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
+                                                    <div className="text-sm text-gray-900">
+                                                        {viewingLead.website ? (
+                                                            <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
+                                                                {viewingLead.website} <ExternalLink className="w-3 h-3" />
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-gray-400 italic">Not available</span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Modal Footer */}
-                                <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center mt-auto">
-                                    <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        Added {viewingLead.addedAt}
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={enrichViewingLead}
-                                            disabled={isEnrichingViewingLead || (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website)}
-                                            className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website
-                                                ? 'border-green-200 bg-green-50 text-green-700'
-                                                : isEnrichingViewingLead ? 'border-gray-200 bg-gray-50 text-gray-400'
-                                                    : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                                                } ${isEnrichingViewingLead ? 'cursor-wait' : ''}`}
-                                        >
-                                            {isEnrichingViewingLead ? (
-                                                <>
-                                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                                    Enriching...
-                                                </>
-                                            ) : (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website) ? (
-                                                <>
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Fully Enriched
-                                                </>
-                                            ) : viewingLead.enriched ? (
-                                                <>
-                                                    <RefreshCw className="w-4 h-4" />
-                                                    Enrich Again
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Zap className="w-4 h-4" />
-                                                    Enrich Data
-                                                </>
-                                            )}
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                const body = `Hey ${viewingLead.name},\n\nI was checking out your store and loved your products!`;
-                                                window.open(`mailto:${viewingLead.email}?subject=Collaboration&body=${encodeURIComponent(body)}`);
-                                            }}
-                                            disabled={!viewingLead.email}
-                                            className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <Mail className="w-4 h-4" />
-                                            Email
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                selectLead(viewingLead);
-                                                setViewingLead(null);
-                                            }}
-                                            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
-                                        >
-                                            <Sparkles className="w-4 h-4" />
-                                            Generate Pitch
-                                        </button>
+                                    {/* Business Section */}
+                                    <div className="space-y-6">
+                                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
+                                            <Target className="w-4 h-4" /> Business Profile
+                                        </h3>
+
+                                        <div className="space-y-4">
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                <div className="text-xs text-gray-500 font-medium mb-2 uppercase tracking-wide">About Business</div>
+                                                <p className="text-sm text-gray-700 leading-relaxed">
+                                                    {viewingLead.briefDescription || 'No description available for this lead.'}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-start gap-3">
+                                                <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                                <div>
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
+                                                    <p className="text-sm text-gray-900">
+                                                        {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-3">
+                                                <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                                <div>
+                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
+                                                    {viewingLead.storeUrl ? (
+                                                        <a href={viewingLead.storeUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
+                                                            {viewingLead.storeUrl}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-sm text-gray-400 italic">Not available</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center mt-auto">
+                                <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    Added {viewingLead.addedAt}
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={enrichViewingLead}
+                                        disabled={isEnrichingViewingLead || (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website)}
+                                        className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website
+                                            ? 'border-green-200 bg-green-50 text-green-700'
+                                            : isEnrichingViewingLead ? 'border-gray-200 bg-gray-50 text-gray-400'
+                                                : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                                            } ${isEnrichingViewingLead ? 'cursor-wait' : ''}`}
+                                    >
+                                        {isEnrichingViewingLead ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                Enriching...
+                                            </>
+                                        ) : (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website) ? (
+                                            <>
+                                                <CheckCircle className="w-4 h-4" />
+                                                Fully Enriched
+                                            </>
+                                        ) : viewingLead.enriched ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4" />
+                                                Enrich Again
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Zap className="w-4 h-4" />
+                                                Enrich Data
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const body = `Hey ${viewingLead.name},\n\nI was checking out your store and loved your products!`;
+                                            window.open(`mailto:${viewingLead.email}?subject=Collaboration&body=${encodeURIComponent(body)}`);
+                                        }}
+                                        disabled={!viewingLead.email}
+                                        className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Mail className="w-4 h-4" />
+                                        Email
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            selectLead(viewingLead);
+                                            setViewingLead(null);
+                                        }}
+                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                    >
+                                        <Sparkles className="w-4 h-4" />
+                                        Generate Pitch
+                                    </button>
+                                </div>
+                            </div>
                         </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
+        </div >
     );
 }
