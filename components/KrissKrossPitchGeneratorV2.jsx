@@ -81,14 +81,14 @@ export default function KrissKrossPitchGeneratorV3() {
         loadLeads();
     }, []);
 
-    // Track if this is initial load to prevent sync
-    const isInitialLoad = React.useRef(true);
+    // Track if this is initial load to prevent sync (use useState instead of useRef to avoid hydration issues)
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     // Sync Leads to Supabase (ONLY when data is modified by user)
     React.useEffect(() => {
         // Skip sync on initial load
-        if (isInitialLoad.current) {
-            isInitialLoad.current = false;
+        if (isInitialLoad) {
+            setIsInitialLoad(false);
             return;
         }
 
