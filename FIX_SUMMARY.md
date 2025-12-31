@@ -12,10 +12,11 @@ The `executePerplexityEnrich()` and `executeGrokEnrich()` functions sent only th
 
 ### Changes Made to `app/api/leads/enrich/route.js`:
 
-1. **Added HTML Fetching Function** (lines 27-68)
-   - `fetchHtmlContent()`: Fetches HTML using Firecrawl (with axios fallback)
-   - Handles JavaScript-rendered content
-   - Returns both HTML and markdown formats
+1. **Added HTML Fetching Function** (lines 27-84)
+   - `fetchHtmlContent()`: Uses Perplexity to fetch rendered content first
+   - Falls back to axios for direct HTTP fetch
+   - Handles JavaScript-rendered content without external dependencies
+   - Returns text/markdown format
 
 2. **Added HTML Extraction Function** (lines 70-99)
    - `extractRelevantSections()`: Extracts footer and contact sections
@@ -51,7 +52,7 @@ The `executePerplexityEnrich()` and `executeGrokEnrich()` functions sent only th
 ### After (Fixed):
 ```
 1. User provides URL
-2. Fetch HTML using Firecrawl/axios
+2. Use Perplexity to fetch rendered page content (or axios as fallback)
 3. Extract footer and contact sections from HTML
 4. Send HTML content to Perplexity: "Extract contacts from this HTML: [actual HTML]"
 5. Perplexity analyzes the actual HTML content
@@ -60,9 +61,10 @@ The `executePerplexityEnrich()` and `executeGrokEnrich()` functions sent only th
 
 ## Key Improvements
 
-✅ **HTML Content Extraction**: Uses Firecrawl to fetch and render JavaScript-heavy sites
+✅ **Smart HTML Fetching**: Uses Perplexity to fetch rendered content (handles JS sites)
+✅ **Dual Fallback**: Falls back to direct axios fetch if Perplexity unavailable
 ✅ **Footer-Specific Analysis**: Extracts `<footer>` tags specifically
-✅ **Fallback Mechanism**: Uses axios if Firecrawl unavailable/fails
+✅ **No External Dependencies**: Removed Firecrawl dependency
 ✅ **Token Optimization**: Limits HTML to 10K chars (footer + contact sections)
 ✅ **Updated Prompts**: Instructs AI to analyze provided content, not search web
 ✅ **Grok Recovery**: Still uses Grok as fallback with same HTML content
@@ -116,7 +118,8 @@ To verify the fix works:
 
 ## Notes
 
-- **Firecrawl API Key**: Required for best results (handles JS rendering)
-- **Fallback**: Works without Firecrawl using direct axios fetch
+- **Perplexity-Powered Fetching**: Uses Perplexity itself to fetch rendered content (handles JS)
+- **Axios Fallback**: Falls back to direct axios fetch for server-rendered sites
+- **No Firecrawl**: Removed Firecrawl dependency - now uses only Perplexity + axios
 - **Token Limits**: HTML limited to 10K chars to avoid exceeding AI token limits
 - **Performance**: Adds ~2-5 seconds for HTML fetching (worth it for accuracy)

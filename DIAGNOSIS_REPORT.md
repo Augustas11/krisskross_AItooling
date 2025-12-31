@@ -79,21 +79,21 @@ Use Firecrawl (already in dependencies) to fetch and render the HTML, then send 
 
 ## Implementation Options
 
-### Option A: Use Firecrawl (Recommended)
-- Already in dependencies (`@mendable/firecrawl-js`)
+### Option A: Use Perplexity for Fetching (Implemented)
+- Uses Perplexity API to fetch and render page content
 - Handles JavaScript rendering
-- Returns clean HTML
-- Used successfully in `source/route.js`
+- No additional dependencies needed
+- Falls back to axios for direct fetch
 
-### Option B: Use axios + HTML parser
+### Option B: Use axios only
 - Simpler but doesn't handle JavaScript
 - May miss client-side rendered content
-- Cheaper (no API costs)
+- Works for server-rendered sites
 
-### Option C: Hybrid Approach
-- Try Firecrawl first
-- Fallback to direct axios fetch if Firecrawl fails
-- Best reliability
+### Option C: Hybrid Approach (Final Implementation)
+- Try Perplexity fetch first (handles JS rendering)
+- Fallback to direct axios fetch if Perplexity unavailable
+- Best reliability without external dependencies
 
 ## Expected Results After Fix
 

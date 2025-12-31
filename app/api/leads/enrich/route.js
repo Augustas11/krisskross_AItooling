@@ -24,47 +24,63 @@ function sanitizeAiData(data) {
     return data;
 }
 
-// Helper to fetch HTML content using Firecrawl
-async function fetchHtmlContent(url, firecrawlApiKey) {
-    if (!firecrawlApiKey) {
-        // Fallback: try direct fetch with axios
-        const axios = (await import('axios')).default;
+// Helper to fetch HTML content using axios and Perplexity for rendering
+async function fetchHtmlContent(url, perplexityApiKey) {
+    // Strategy: Use Perplexity to fetch the rendered page content
+    // This handles JavaScript-rendered sites without needing Firecrawl
+
+    if (perplexityApiKey) {
         try {
-            const response = await axios.get(url, {
+            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+                method: 'POST',
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    'Authorization': `Bearer ${perplexityApiKey}`,
+                    'Content-Type': 'application/json'
                 },
-                timeout: 10000
+                body: JSON.stringify({
+                    model: 'sonar-pro',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a web content extraction assistant. Extract the full visible text and HTML structure from web pages.'
+                        },
+                        {
+                            role: 'user',
+                            content: `Visit ${url} and extract ALL visible content including footer, header, and contact sections. Return the content in a structured format showing all text, links, and social media URLs found on the page.`
+                        }
+                    ]
+                })
             });
-            return response.data;
+
+            if (response.ok) {
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+                console.log('[Perplexity Fetch] Successfully retrieved content for', url);
+                return { text: content, markdown: content };
+            }
         } catch (e) {
-            console.warn('[HTML Fetch] Direct fetch failed:', e.message);
-            return null;
+            console.warn('[Perplexity Fetch] Failed:', e.message);
         }
     }
 
-    // Use Firecrawl for better HTML extraction (handles JavaScript rendering)
+    // Fallback: Direct axios fetch (works for server-rendered sites)
+    const axios = (await import('axios')).default;
     try {
-        const { FirecrawlAppV1 } = await import('@mendable/firecrawl-js');
-        const app = new FirecrawlAppV1({ apiKey: firecrawlApiKey });
-
-        const result = await app.scrapeUrl(url, {
-            formats: ['markdown', 'html']
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+            timeout: 15000,
+            maxRedirects: 5
         });
-
-        if (result.success) {
-            // Return both markdown (cleaner) and HTML (more complete)
-            return {
-                html: result.html || '',
-                markdown: result.markdown || '',
-                text: result.markdown || result.html || ''
-            };
-        }
+        console.log('[Axios Fetch] Successfully retrieved HTML for', url);
+        return response.data;
     } catch (e) {
-        console.warn('[Firecrawl] Scrape failed:', e.message);
+        console.warn('[HTML Fetch] Direct fetch failed:', e.message);
+        return null;
     }
-
-    return null;
 }
 
 // Helper to extract footer and contact sections from HTML
@@ -291,10 +307,9 @@ export async function POST(req) {
                     const perplexityKey = process.env.PERPLEXITY_API_KEY;
                     if (!perplexityKey) throw new Error('Missing PERPLEXITY_API_KEY');
 
-                    // FIXED: Fetch HTML content first
+                    // FIXED: Fetch HTML content first using Perplexity + axios fallback
                     send('status', 'Fetching website content...');
-                    const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-                    const htmlContent = await fetchHtmlContent(url, firecrawlKey);
+                    const htmlContent = await fetchHtmlContent(url, perplexityKey);
 
                     if (htmlContent) {
                         send('status', 'Website content retrieved successfully');
@@ -338,10 +353,10 @@ export async function POST(req) {
                     const grokKey = process.env.GROK_API_KEY;
                     if (!grokKey) throw new Error('Missing GROK_API_KEY');
 
-                    // FIXED: Fetch HTML content first
+                    // FIXED: Fetch HTML content first using Perplexity + axios fallback
                     send('status', 'Fetching website content...');
-                    const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-                    const htmlContent = await fetchHtmlContent(url, firecrawlKey);
+                    const perplexityKey = process.env.PERPLEXITY_API_KEY;
+                    const htmlContent = await fetchHtmlContent(url, perplexityKey);
 
                     if (htmlContent) {
                         send('status', 'Website content retrieved successfully');
