@@ -20,6 +20,9 @@ export default function KrissKrossPitchGenerator() {
     const [isSourcing, setIsSourcing] = useState(false);
     const [sourceError, setSourceError] = useState(null);
 
+    // Enrichment State
+    const [enrichingLeads, setEnrichingLeads] = useState({}); // { [index]: boolean }
+
     // Keep templates as fallback
     const pitchTemplates = {
         'fashion-seller': [
@@ -202,6 +205,50 @@ ${template.cta}`;
         }
     };
 
+    const handleEnrichLead = async (lead, index) => {
+        if (!lead.storeUrl && !sourceUrl) return;
+
+        setEnrichingLeads(prev => ({ ...prev, [index]: true }));
+        try {
+            console.log(`[DEBUG] Enriching lead: ${lead.name}`);
+            const response = await fetch('/api/leads/enrich', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: lead.storeUrl || sourceUrl,
+                    name: lead.name
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to enrich lead');
+
+            console.log('[DEBUG] Enrichment data received:', data);
+
+            // Update the lead in the foundLeads array
+            const enrichedInfo = data.enrichedData;
+            setFoundLeads(prev => prev.map((l, i) => {
+                if (i === index) {
+                    return {
+                        ...l,
+                        enriched: true,
+                        businessAddress: enrichedInfo.contact_information?.business_address,
+                        email: enrichedInfo.contact_information?.customer_service?.email,
+                        phone: enrichedInfo.contact_information?.customer_service?.phone_number,
+                        instagram: enrichedInfo.contact_information?.customer_service?.instagram,
+                        website: enrichedInfo.contact_information?.customer_service?.website
+                    };
+                }
+                return l;
+            }));
+        } catch (error) {
+            console.error('[DEBUG] Enrichment error:', error);
+            // Optionally show error in UI
+        } finally {
+            setEnrichingLeads(prev => ({ ...prev, [index]: false }));
+        }
+    };
+
     const selectLead = (lead) => {
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
@@ -271,20 +318,79 @@ ${template.cta}`;
                         )}
 
                         {foundLeads.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {foundLeads.map((lead, idx) => (
-                                    <div key={idx} className="border-2 border-gray-100 rounded-xl p-4 hover:border-blue-300 transition-colors flex justify-between items-start bg-gray-50/50">
+                                    <div key={idx} className={`border-3 rounded-2xl p-5 transition-all flex flex-col justify-between bg-white shadow-sm hover:shadow-md ${lead.enriched ? 'border-green-400' : 'border-gray-100 hover:border-blue-300'
+                                        }`}>
                                         <div>
-                                            <h4 className="font-bold text-gray-800">{lead.name}</h4>
-                                            <p className="text-xs text-gray-500 mb-1">{lead.productCategory}</p>
-                                            <p className="text-sm text-gray-600 line-clamp-2">{lead.briefDescription}</p>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-extrabold text-xl text-gray-800">{lead.name}</h4>
+                                                {lead.enriched && (
+                                                    <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">
+                                                        AI Enriched
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs font-bold text-blue-600 mb-2 uppercase tracking-widest">{lead.productCategory}</p>
+                                            <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed">{lead.briefDescription}</p>
+
+                                            {lead.enriched && (
+                                                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                                                    {lead.instagram && (
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-rose-600">
+                                                            <span className="w-5 h-5 flex items-center justify-center bg-rose-50 rounded text-[10px]">IG</span>
+                                                            {lead.instagram}
+                                                        </div>
+                                                    )}
+                                                    {lead.email && (
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
+                                                            <span className="w-5 h-5 flex items-center justify-center bg-blue-50 rounded text-[10px]">EM</span>
+                                                            {lead.email}
+                                                        </div>
+                                                    )}
+                                                    {lead.businessAddress && (
+                                                        <div className="flex items-center gap-2 text-[10px] text-gray-500 italic">
+                                                            <span className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded text-[10px]">AD</span>
+                                                            {lead.businessAddress}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                        <button
-                                            onClick={() => selectLead(lead)}
-                                            className="px-3 py-1 bg-white border-2 border-blue-500 text-blue-500 text-xs font-bold rounded-lg hover:bg-blue-500 hover:text-white transition-all transform hover:scale-110 shadow-sm"
-                                        >
-                                            USE LEAD
-                                        </button>
+
+                                        <div className="flex gap-2 mt-6">
+                                            <button
+                                                onClick={() => selectLead(lead)}
+                                                className="flex-1 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-md"
+                                            >
+                                                USE FOR PITCH
+                                            </button>
+                                            <button
+                                                onClick={() => handleEnrichLead(lead, idx)}
+                                                disabled={enrichingLeads[idx] || lead.enriched}
+                                                className={`flex-1 py-3 border-2 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${lead.enriched
+                                                        ? 'border-green-500 text-green-600 bg-green-50'
+                                                        : 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                                                    } ${enrichingLeads[idx] ? 'opacity-50 cursor-wait' : ''}`}
+                                            >
+                                                {enrichingLeads[idx] ? (
+                                                    <>
+                                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                                        AI AGENT BUSY...
+                                                    </>
+                                                ) : lead.enriched ? (
+                                                    <>
+                                                        <CheckCircle className="w-3 h-3" />
+                                                        ENRICHED
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Sparkles className="w-3 h-3" />
+                                                        FIND CONTACTS
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
