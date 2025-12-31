@@ -1,15 +1,21 @@
 {
   "leads": [
     {
+      "id": "lead_1767153718387",
       "name": "Zappos",
       "productCategory": "Footwear and Clothing",
       "storeUrl": "https://www.zappos.com/",
       "rating": "N/A",
       "briefDescription": "A wide variety of shoes and clothing for men, women, and kids.",
-      "id": "lead_1767153718387",
-      "status": "New",
+      "status": "Enriched",
       "addedAt": "12/31/2025",
-      "lastInteraction": null
+      "lastInteraction": "12/31/2025",
+      "businessAddress": null,
+      "email": null,
+      "phone": null,
+      "instagram": null,
+      "website": null,
+      "enriched": false
     }
   ]
 }

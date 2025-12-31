@@ -29,6 +29,7 @@ export default function KrissKrossPitchGeneratorV3() {
 
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({});
+    const [isEnrichingViewingLead, setIsEnrichingViewingLead] = useState(false);
 
     // CRM State
     const [savedLeads, setSavedLeads] = useState([]);
@@ -252,6 +253,47 @@ ${template.cta}`;
             console.error('Enrichment error:', error);
         } finally {
             setEnrichingLeads(prev => ({ ...prev, [index]: false }));
+        }
+    };
+
+    const enrichViewingLead = async () => {
+        if (!viewingLead || (!viewingLead.storeUrl && !sourceUrl)) return;
+
+        setIsEnrichingViewingLead(true);
+        try {
+            const response = await fetch('/api/leads/enrich', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: viewingLead.storeUrl || sourceUrl,
+                    name: viewingLead.name
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to enrich lead');
+
+            const enrichedInfo = data.enrichedData;
+
+            const newFields = {
+                enriched: true,
+                businessAddress: enrichedInfo.contact_information?.business_address,
+                email: enrichedInfo.contact_information?.customer_service?.email,
+                phone: enrichedInfo.contact_information?.customer_service?.phone_number,
+                instagram: enrichedInfo.contact_information?.customer_service?.instagram,
+                website: enrichedInfo.contact_information?.customer_service?.website
+            };
+
+            setViewingLead(prev => ({ ...prev, ...newFields }));
+            setSavedLeads(prev => prev.map(l =>
+                l.id === viewingLead.id ? { ...l, ...newFields } : l
+            ));
+
+        } catch (error) {
+            console.error('Enrichment error:', error);
+            alert('Failed to enrich lead: ' + error.message);
+        } finally {
+            setIsEnrichingViewingLead(false);
         }
     };
 
@@ -1070,6 +1112,31 @@ ${template.cta}`;
                                         Added {viewingLead.addedAt}
                                     </div>
                                     <div className="flex gap-3">
+                                        <button
+                                            onClick={enrichViewingLead}
+                                            disabled={isEnrichingViewingLead || viewingLead.enriched}
+                                            className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched
+                                                    ? 'border-green-200 bg-green-50 text-green-700'
+                                                    : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                                                } ${isEnrichingViewingLead ? 'opacity-70 cursor-wait' : ''}`}
+                                        >
+                                            {isEnrichingViewingLead ? (
+                                                <>
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                    Enriching...
+                                                </>
+                                            ) : viewingLead.enriched ? (
+                                                <>
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Enriched
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Zap className="w-4 h-4" />
+                                                    Enrich Data
+                                                </>
+                                            )}
+                                        </button>
                                         <button
                                             onClick={() => {
                                                 const body = `Hey ${viewingLead.name},\n\nI was checking out your store and loved your products!`;
