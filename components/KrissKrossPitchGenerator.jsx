@@ -24,27 +24,58 @@ export default function KrissKrossPitchGenerator() {
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({}); // { [index]: boolean }
 
-    // CRM State (Persistent)
+    // CRM State (Persistent via Server)
     const [savedLeads, setSavedLeads] = useState([]);
     const [isCrmInitialized, setIsCrmInitialized] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
 
-    // Load Leads from LocalStorage on mount
+    // Load Leads from Server on mount
     React.useEffect(() => {
-        const saved = localStorage.getItem('kk_leads_crm');
-        if (saved) {
+        const loadLeads = async () => {
             try {
-                setSavedLeads(JSON.parse(saved));
+                const response = await fetch('/api/crm/leads');
+                const data = await response.json();
+                if (data.leads) {
+                    setSavedLeads(data.leads);
+                    console.log('[DEBUG] CRM Loaded from server:', data.leads.length, 'leads');
+                }
             } catch (e) {
-                console.error('Failed to parse saved leads', e);
+                console.error('Failed to load leads from server, falling back to localStorage', e);
+                // Fallback to localStorage just in case api fails
+                const saved = localStorage.getItem('kk_leads_crm');
+                if (saved) setSavedLeads(JSON.parse(saved));
+            } finally {
+                setIsCrmInitialized(true);
             }
-        }
-        setIsCrmInitialized(true);
+        };
+        loadLeads();
     }, []);
 
-    // Save Leads to LocalStorage whenever they change
+    // Sync Leads to Server whenever they change
     React.useEffect(() => {
         if (isCrmInitialized) {
-            localStorage.setItem('kk_leads_crm', JSON.stringify(savedLeads));
+            const syncLeads = async () => {
+                setIsSyncing(true);
+                try {
+                    // Always update localstorage as quick backup
+                    localStorage.setItem('kk_leads_crm', JSON.stringify(savedLeads));
+
+                    // Sync to server for true persistence
+                    await fetch('/api/crm/leads', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ leads: savedLeads }),
+                    });
+                } catch (e) {
+                    console.error('Sync to server failed', e);
+                } finally {
+                    setIsSyncing(false);
+                }
+            };
+
+            // Debounce the sync to avoid too many requests
+            const timeoutId = setTimeout(syncLeads, 1000);
+            return () => clearTimeout(timeoutId);
         }
     }, [savedLeads, isCrmInitialized]);
 
@@ -306,6 +337,35 @@ ${template.cta}`;
         }
     };
 
+    const exportToCsv = () => {
+        if (savedLeads.length === 0) return;
+
+        const headers = ['Name', 'Category', 'Description', 'Status', 'Instagram', 'Email', 'Address', 'AddedAt'];
+        const csvRows = [
+            headers.join(','),
+            ...savedLeads.map(l => [
+                `"${l.name || ''}"`,
+                `"${l.productCategory || ''}"`,
+                `"${(l.briefDescription || '').replace(/"/g, '""')}"`,
+                `"${l.status || ''}"`,
+                `"${l.instagram || ''}"`,
+                `"${l.email || ''}"`,
+                `"${(l.businessAddress || '').replace(/"/g, '""')}"`,
+                `"${l.addedAt || ''}"`
+            ].join(','))
+        ];
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `krisskross_leads_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
     const selectLead = (lead) => {
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
@@ -502,8 +562,9 @@ ${template.cta}`;
                             <h2 className="text-2xl font-black flex items-center gap-3">
                                 <Clock className="w-8 h-8" />
                                 KrissKross Leads CRM
+                                {isSyncing && <span className="text-[10px] bg-indigo-500 px-2 py-1 rounded animate-pulse">SAVING TO CLOUD...</span>}
                             </h2>
-                            <p className="opacity-90 mt-1 font-medium">Your permanent prospecting pipeline</p>
+                            <p className="opacity-90 mt-1 font-medium">Your permanent prospecting pipeline (Synced to Server)</p>
                         </div>
                         <div className="flex gap-4">
                             <div className="text-center">
@@ -514,6 +575,14 @@ ${template.cta}`;
                                 <div className="text-2xl font-black text-green-300">{savedLeads.filter(l => l.status === 'Replied').length}</div>
                                 <div className="text-[10px] uppercase font-bold opacity-70">Replies</div>
                             </div>
+                            <button
+                                onClick={exportToCsv}
+                                className="ml-4 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center gap-2 border border-white/20"
+                                title="Download as CSV"
+                            >
+                                <Copy className="w-5 h-5" />
+                                <span className="text-xs font-bold">EXPORT</span>
+                            </button>
                         </div>
                     </div>
 
