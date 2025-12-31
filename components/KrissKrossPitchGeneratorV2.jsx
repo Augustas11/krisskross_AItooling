@@ -577,7 +577,11 @@ ${template.cta}`;
                 const hasData = enrichedInfo.contact_information?.business_address ||
                     enrichedInfo.contact_information?.customer_service?.email ||
                     enrichedInfo.contact_information?.customer_service?.phone_number ||
-                    enrichedInfo.contact_information?.customer_service?.instagram;
+                    enrichedInfo.contact_information?.customer_service?.instagram ||
+                    enrichedInfo.contact_information?.customer_service?.tiktok ||
+                    enrichedInfo.contact_information?.customer_service?.youtube ||
+                    enrichedInfo.contact_information?.customer_service?.facebook ||
+                    enrichedInfo.contact_information?.customer_service?.website;
 
                 const updates = {};
                 const info = enrichedInfo.contact_information || {};
@@ -589,6 +593,8 @@ ${template.cta}`;
                 if (cs.instagram) updates.instagram = cs.instagram;
                 if (cs.website) updates.website = cs.website;
                 if (cs.tiktok) updates.tiktok = cs.tiktok;
+                if (cs.youtube) updates.youtube = cs.youtube;
+                if (cs.facebook) updates.facebook = cs.facebook;
 
                 const foundNewData = Object.keys(updates).length > 0;
                 updates.enriched = foundNewData || lead.enriched;
@@ -1312,12 +1318,12 @@ ${template.cta}`;
                                         <div className="text-sm text-gray-600">New</div>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-indigo-600">{savedLeads.filter(l => l.status === 'Pitched').length}</div>
-                                        <div className="text-sm text-gray-600">Pitched</div>
+                                        <div className="text-2xl font-bold text-teal-600">{savedLeads.filter(l => l.status === 'Enriched').length}</div>
+                                        <div className="text-sm text-gray-600">Enriched</div>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-green-600">{savedLeads.filter(l => l.status === 'Replied').length}</div>
-                                        <div className="text-sm text-gray-600">Replied</div>
+                                        <div className="text-2xl font-bold text-indigo-600">{savedLeads.filter(l => l.status === 'Pitched').length}</div>
+                                        <div className="text-sm text-gray-600">Pitched</div>
                                     </div>
                                 </div>
 
@@ -1356,7 +1362,10 @@ ${template.cta}`;
                                     {['all', 'New', 'Enriched', 'Pitched', 'Replied', 'Dead'].map(filter => (
                                         <button
                                             key={filter}
-                                            onClick={() => setCrmFilter(filter)}
+                                            onClick={() => {
+                                                setCrmFilter(filter);
+                                                setCurrentPage(1);
+                                            }}
                                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${crmFilter === filter
                                                 ? 'bg-blue-600 text-white'
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1864,7 +1873,7 @@ ${template.cta}`;
                                                         <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok Shop</div>
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok</div>
                                                         <div className="text-sm text-gray-900">
                                                             {viewingLead.tiktok ? (
                                                                 <a href={ensureAbsoluteUrl(viewingLead.tiktok)} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">

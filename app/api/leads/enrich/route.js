@@ -6,12 +6,14 @@ import { z } from 'zod';
 async function executePerplexityEnrich(url, name, apiKey) {
     const prompt = `Visit and analyze the website ${url} for the business "${name}".
 
-IMPORTANT: Thoroughly check the HEADER and FOOTER for social media icons. Look for:
+IMPORTANT: I specifically need the TikTok link. Check the footer and header very carefully for ANY link containing "tiktok.com". Even if it's just an icon with no text, you MUST find the URL.
+
+Look for:
 1. Phone Number (Full format)
-2. Email address (Full domain required, e.g., service@wiholl.com)
+2. Email address (Full domain, no truncation)
 3. Physical address
-4. Social handles: Instagram (Full URL), TikTok (Full URL), YouTube, and Facebook.
-5. Search for any text like "Follow us" or social icon links.
+4. Social profiles: tiktok (MANDATORY if exists), instagram, youtube, facebook (Full URLs)
+5. Look for any text like "@zeagoo" or "tiktok.com/@" on the page.
 
 Return STRICT JSON:
 {
@@ -22,15 +24,15 @@ Return STRICT JSON:
             "phone_number": "string or null",
             "email": "string or null",
             "website": "${url}",
-            "tiktok": "string or null",
-            "instagram": "string or null",
+            "tiktok": "string or null (Full URL)",
+            "instagram": "string or null (Full URL)",
             "youtube": "string or null",
             "facebook": "string or null"
         }
     }
 }
 
-CRITICAL: capture FULL domain for emails. Output ONLY JSON.`;
+CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -69,12 +71,15 @@ CRITICAL: capture FULL domain for emails. Output ONLY JSON.`;
 async function executeGrokEnrich(url, name, apiKey) {
     const prompt = `Visit and analyze the website ${url} for the business "${name}".
 
-IMPORTANT: Look for:
+IMPORTANT: Look for ALL social media links in the HEADER and FOOTER. 
+Specifically hunt for TikTok (MANDATORY), Instagram, YouTube, and Facebook.
+Find any links containing "tiktok.com" or handles like "@${name}".
+
+Look for:
 1. Phone Number (Full format)
-2. Email address (MUST include full domain, e.g., info@domain.com. DO NOT TRUNCATE.)
+2. Email address (Full domain, no truncation)
 3. Physical address
-4. Social media: Instagram (URL), TikTok (URL), YouTube, Facebook.
-5. Official website domain
+4. Social profiles: tiktok, instagram, youtube, facebook (Full URLs)
 
 Return STRICT JSON:
 {
@@ -93,7 +98,7 @@ Return STRICT JSON:
     }
 }
 
-CRITICAL: capture FULL domain for emails. Output ONLY JSON.`;
+CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL if it exists in the footer Icons. Output ONLY JSON.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
