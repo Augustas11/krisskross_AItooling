@@ -129,11 +129,25 @@ export async function POST(req) {
         // Use Supabase
         console.log('🔄 [SUPABASE] Syncing leads to database...');
 
+        // --- SAFETY CHECK ---
+        // Get current count to prevent accidental wipeouts
+        const { count: currentCount } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true });
+
+        if (currentCount > 10 && leads.length === 0) {
+            console.error(`🚨 [SAFETY] Aborting sync. Attempting to wipe ${currentCount} leads with an empty list.`);
+            return NextResponse.json({
+                error: 'Safety Block: Attempting to sync 0 leads while DB has data. If you really want to clear the CRM, please delete leads individually.',
+                currentCount
+            }, { status: 403 });
+        }
+
         // Delete all existing leads and insert new ones (full sync approach)
         const { error: deleteError } = await supabase
             .from('leads')
             .delete()
-            .neq('id', ''); // Delete all rows
+            .neq('id', 'placeholder_non_existent'); // Delete all rows
 
         if (deleteError) {
             console.error('❌ [SUPABASE] Error deleting old leads:', deleteError);
@@ -153,18 +167,19 @@ export async function POST(req) {
             }
         }
 
-        console.log(`✅ [SUPABASE] Successfully synced ${leads.length} leads`);
+        console.log(`✅ [SUPABASE] Successfully synced ${leads.length} leads (Previous count: ${currentCount})`);
 
-        // Also save to file as backup (ignore errors on Vercel/Read-only FS)
+        // Also save to file as local mirror/backup
         try {
-            writeDb({ leads });
+            writeDb({ leads, last_sync: new Date().toISOString() });
         } catch (fsError) {
-            console.warn('⚠️ [API] Could not backup to file (expected on Vercel):', fsError.message);
+            console.warn('⚠️ [API] Local backup failed:', fsError.message);
         }
 
         return NextResponse.json({
-            message: 'Leads synced to Supabase',
-            count: leads.length
+            message: 'Leads synced to Supabase + Local Mirror',
+            count: leads.length,
+            previousCount: currentCount
         });
     } catch (error) {
         console.error('❌ [API] Error syncing leads:', error);

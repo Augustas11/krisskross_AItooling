@@ -50,21 +50,33 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`
     });
 
     if (!response.ok) {
-        throw new Error(`Perplexity API failed: ${response.status}`);
+        if (response.status === 429) {
+            throw new Error('Perplexity Rate Limit Reached. Please wait a moment and try again.');
+        }
+        throw new Error(`Perplexity API failed: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
+    console.log(`[PERPLEXITY] Response for ${name}:`, content);
 
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    // More robust JSON extraction
+    const jsonMatch = content.match(/(\{[\s\S]*\})/);
     if (jsonMatch) {
         try {
-            return JSON.parse(jsonMatch[0]);
+            return JSON.parse(jsonMatch[1]);
         } catch (e) {
-            console.error("JSON Parse Error", e);
+            console.error("JSON Parse Error for matched content:", e);
         }
     }
-    return JSON.parse(content);
+
+    // Fallback: try parsing the whole content
+    try {
+        return JSON.parse(content);
+    } catch (e) {
+        console.error("Final JSON Parse Error:", e);
+        throw new Error("AI returned malformed data. Please try again.");
+    }
 }
 
 // Helper for Grok Enrichment

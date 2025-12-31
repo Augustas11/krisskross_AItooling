@@ -424,7 +424,17 @@ ${template.cta}`;
                             ));
 
                             if (!hasData) {
-                                console.log('Enrichment finished but no specific contact fields found.');
+                                setEnrichmentStatus('Search complete - No new data discovered');
+                                setTimeout(() => {
+                                    setIsEnrichingViewingLead(false);
+                                    setEnrichmentStatus('');
+                                }, 3000);
+                            } else {
+                                setEnrichmentStatus('Contact information updated!');
+                                setTimeout(() => {
+                                    setIsEnrichingViewingLead(false);
+                                    setEnrichmentStatus('');
+                                }, 2000);
                             }
                         }
 
@@ -434,20 +444,13 @@ ${template.cta}`;
                 }
             }
 
-            // Only close immediately on success
-            setTimeout(() => {
-                setIsEnrichingViewingLead(false);
-                setEnrichmentStatus('');
-            }, 1000);
-
         } catch (error) {
             console.error('Enrichment error:', error);
             setEnrichmentStatus('Error: ' + error.message);
-            // On error, keep the overlay open longer so user can read it
             setTimeout(() => {
                 setIsEnrichingViewingLead(false);
                 setEnrichmentStatus('');
-            }, 3000);
+            }, 5000); // Keep error visible for 5 seconds
         }
     };
 
