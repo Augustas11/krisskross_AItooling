@@ -361,25 +361,31 @@ ${template.cta}`;
                                 enrichedInfo.contact_information?.customer_service?.tiktok ||
                                 enrichedInfo.contact_information?.customer_service?.website;
 
-                            const newFields = {
-                                enriched: !!hasData, // Only mark enriched if we successfully found data
-                                businessAddress: enrichedInfo.contact_information?.business_address,
-                                email: enrichedInfo.contact_information?.customer_service?.email,
-                                phone: enrichedInfo.contact_information?.customer_service?.phone_number,
-                                instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                                website: enrichedInfo.contact_information?.customer_service?.website,
-                                tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
-                            };
+                            // Construct valid updates ONLY to avoid wiping existing data
+                            const updates = {};
+                            const info = enrichedInfo.contact_information || {};
+                            const cs = info.customer_service || {};
 
-                            // Determine status update
+                            if (info.business_address) updates.businessAddress = info.business_address;
+                            if (cs.email) updates.email = cs.email;
+                            if (cs.phone_number) updates.phone = cs.phone_number;
+                            if (cs.instagram) updates.instagram = cs.instagram;
+                            if (cs.website) updates.website = cs.website;
+                            if (cs.tiktok) updates.tiktok = cs.tiktok;
+
+                            // Determine enriched status based on new OR existing data
+                            // If updates has any keys, we potentially found something new.
+                            // But 'enriched' flag implies we successfully ran enrichment at least once.
+                            const foundNewData = Object.keys(updates).length > 0;
+                            updates.enriched = foundNewData || viewingLead.enriched;
                             let newStatus = viewingLead.status;
-                            if (newFields.enriched || checkShouldBeEnriched({ ...viewingLead, ...newFields })) {
+                            if (updates.enriched || checkShouldBeEnriched({ ...viewingLead, ...updates })) {
                                 newStatus = 'Enriched';
                             }
 
-                            setViewingLead(prev => ({ ...prev, ...newFields, status: newStatus }));
+                            setViewingLead(prev => ({ ...prev, ...updates, status: newStatus }));
                             setSavedLeads(prev => prev.map(l =>
-                                l.id === viewingLead.id ? { ...l, ...newFields, status: newStatus } : l
+                                l.id === viewingLead.id ? { ...l, ...updates, status: newStatus } : l
                             ));
 
                             if (!hasData) {
@@ -538,19 +544,24 @@ ${template.cta}`;
                     enrichedInfo.contact_information?.customer_service?.phone_number ||
                     enrichedInfo.contact_information?.customer_service?.instagram;
 
-                const newFields = {
-                    enriched: !!hasData,
-                    businessAddress: enrichedInfo.contact_information?.business_address,
-                    email: enrichedInfo.contact_information?.customer_service?.email,
-                    phone: enrichedInfo.contact_information?.customer_service?.phone_number,
-                    instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                    website: enrichedInfo.contact_information?.customer_service?.website,
-                    tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
-                };
+                const updates = {};
+                const info = enrichedInfo.contact_information || {};
+                const cs = info.customer_service || {};
+
+                if (info.business_address) updates.businessAddress = info.business_address;
+                if (cs.email) updates.email = cs.email;
+                if (cs.phone_number) updates.phone = cs.phone_number;
+                if (cs.instagram) updates.instagram = cs.instagram;
+                if (cs.website) updates.website = cs.website;
+                if (cs.tiktok) updates.tiktok = cs.tiktok;
+
+                const foundNewData = Object.keys(updates).length > 0;
+                updates.enriched = foundNewData || lead.enriched;
 
                 // Update status if criteria met
-                const updatedLead = { ...lead, ...newFields };
-                if (newFields.enriched || checkShouldBeEnriched(updatedLead)) {
+                // Update status if criteria met
+                const updatedLead = { ...lead, ...updates };
+                if (updates.enriched || checkShouldBeEnriched(updatedLead)) {
                     updatedLead.status = 'Enriched';
                 }
 

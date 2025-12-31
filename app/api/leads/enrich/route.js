@@ -195,8 +195,24 @@ export async function POST(req) {
                         throw new Error(result.error || 'Firecrawl agent failed');
                     }
 
+                    // Transform Firecrawl response to expected nested structure
+                    const rawData = result.data || result;
+                    const normalizedData = {
+                        seller_name: rawData.seller_name || name,
+                        contact_information: {
+                            business_address: rawData.business_address || rawData.contact_information?.business_address || null,
+                            customer_service: {
+                                phone_number: rawData.customer_service_phone || rawData.phone || rawData.contact_information?.customer_service?.phone_number || null,
+                                email: rawData.email || rawData.customer_service_email || rawData.contact_information?.customer_service?.email || null,
+                                website: rawData.website || rawData.contact_information?.customer_service?.website || null,
+                                tiktok: rawData.tiktok_url || rawData.tiktok || rawData.contact_information?.customer_service?.tiktok || null,
+                                instagram: rawData.instagram_handle || rawData.instagram || rawData.contact_information?.customer_service?.instagram || null
+                            }
+                        }
+                    };
+
                     send('status', 'Validation complete.');
-                    send('result', { enrichedData: result.data || result });
+                    send('result', { enrichedData: normalizedData });
                 }
 
             } catch (error) {
