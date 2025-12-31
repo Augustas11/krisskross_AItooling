@@ -43,6 +43,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isCrmInitialized, setIsCrmInitialized] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
+    const [crmSearchQuery, setCrmSearchQuery] = useState('');
     const [selectedCrmLeadIds, setSelectedCrmLeadIds] = useState(new Set());
     // Pagination & Bulk Processing State
     const [currentPage, setCurrentPage] = useState(1);
@@ -823,9 +824,27 @@ ${template.cta}`;
         { id: 'affiliate', label: 'Affiliate', icon: '💰' }
     ];
 
-    const filteredLeads = crmFilter === 'all'
+    // Filter by status first
+    const statusFilteredLeads = crmFilter === 'all'
         ? savedLeads
         : savedLeads.filter(l => l.status === crmFilter);
+
+    // Then apply search query
+    const filteredLeads = crmSearchQuery.trim() === ''
+        ? statusFilteredLeads
+        : statusFilteredLeads.filter(lead => {
+            const searchLower = crmSearchQuery.toLowerCase();
+            return (
+                lead.name?.toLowerCase().includes(searchLower) ||
+                lead.email?.toLowerCase().includes(searchLower) ||
+                lead.productCategory?.toLowerCase().includes(searchLower) ||
+                lead.instagram?.toLowerCase().includes(searchLower) ||
+                lead.phone?.toLowerCase().includes(searchLower) ||
+                lead.businessAddress?.toLowerCase().includes(searchLower) ||
+                lead.website?.toLowerCase().includes(searchLower) ||
+                lead.briefDescription?.toLowerCase().includes(searchLower)
+            );
+        });
 
     const tabs = [
         { id: 'discover', label: 'Lead Discovery', icon: Search },
@@ -1225,6 +1244,36 @@ ${template.cta}`;
                                         <div className="text-2xl font-bold text-green-600">{savedLeads.filter(l => l.status === 'Replied').length}</div>
                                         <div className="text-sm text-gray-600">Replied</div>
                                     </div>
+                                </div>
+
+                                {/* Search Bar */}
+                                <div className="px-4 pt-4 pb-2 border-b border-gray-200">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={crmSearchQuery}
+                                            onChange={(e) => {
+                                                setCrmSearchQuery(e.target.value);
+                                                setCurrentPage(1);
+                                            }}
+                                            placeholder="Search leads by name, email, category, Instagram..."
+                                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
+                                        />
+                                        {crmSearchQuery && (
+                                            <button
+                                                onClick={() => setCrmSearchQuery('')}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    {crmSearchQuery && (
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Found {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} matching "{crmSearchQuery}"
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Filters */}
