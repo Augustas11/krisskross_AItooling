@@ -30,6 +30,8 @@ export default function KrissKrossPitchGeneratorV3() {
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({});
     const [isEnrichingViewingLead, setIsEnrichingViewingLead] = useState(false);
+    const [enrichmentStatus, setEnrichmentStatus] = useState('');
+
 
     // CRM State
     const [savedLeads, setSavedLeads] = useState([]);
@@ -260,6 +262,23 @@ ${template.cta}`;
         if (!viewingLead || (!viewingLead.storeUrl && !sourceUrl)) return;
 
         setIsEnrichingViewingLead(true);
+
+        // Cycle status messages to keep user informed
+        const messages = [
+            "Initializing AI Agent...",
+            "Navigating to store page...",
+            "Scanning for contact details...",
+            "Extracting business info...",
+            "Verifying data points..."
+        ];
+        let msgIdx = 0;
+        setEnrichmentStatus(messages[0]);
+
+        const intervalId = setInterval(() => {
+            msgIdx = (msgIdx + 1) % messages.length;
+            setEnrichmentStatus(messages[msgIdx]);
+        }, 2000);
+
         try {
             const response = await fetch('/api/leads/enrich', {
                 method: 'POST',
@@ -275,8 +294,14 @@ ${template.cta}`;
 
             const enrichedInfo = data.enrichedData;
 
+            // Check if we actually found useful data
+            const hasData = enrichedInfo.contact_information?.business_address ||
+                enrichedInfo.contact_information?.customer_service?.email ||
+                enrichedInfo.contact_information?.customer_service?.phone_number ||
+                enrichedInfo.contact_information?.customer_service?.instagram;
+
             const newFields = {
-                enriched: true,
+                enriched: !!hasData, // Only mark enriched if we successfully found data
                 businessAddress: enrichedInfo.contact_information?.business_address,
                 email: enrichedInfo.contact_information?.customer_service?.email,
                 phone: enrichedInfo.contact_information?.customer_service?.phone_number,
@@ -289,11 +314,17 @@ ${template.cta}`;
                 l.id === viewingLead.id ? { ...l, ...newFields } : l
             ));
 
+            if (!hasData) {
+                console.log('Enrichment finished but no specific contact fields found.');
+            }
+
         } catch (error) {
             console.error('Enrichment error:', error);
             alert('Failed to enrich lead: ' + error.message);
         } finally {
+            clearInterval(intervalId);
             setIsEnrichingViewingLead(false);
+            setEnrichmentStatus('');
         }
     };
 
@@ -980,7 +1011,19 @@ ${template.cta}`;
                                 <div className="p-6 overflow-y-auto custom-scrollbar">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         {/* Contact Section */}
-                                        <div className="space-y-6">
+                                        <div className="space-y-6 relative">
+                                            {isEnrichingViewingLead && (
+                                                <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center text-center p-4 rounded-xl backdrop-blur-sm transition-all border border-indigo-100">
+                                                    <div className="relative mb-4">
+                                                        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <Sparkles className="w-6 h-6 text-indigo-600 animate-pulse" />
+                                                        </div>
+                                                    </div>
+                                                    <h3 className="text-base font-bold text-indigo-900 animate-pulse transition-all duration-300">{enrichmentStatus}</h3>
+                                                    <p className="text-xs text-indigo-400 mt-2 font-medium">Analyzing page content...</p>
+                                                </div>
+                                            )}
                                             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
                                                 <Users className="w-4 h-4" /> Contact Information
                                             </h3>
@@ -1042,16 +1085,16 @@ ${template.cta}`;
                                                     </div>
                                                 </div>
 
-                                                {/* Website */}
+                                                {/* TikTok Shop (Previously Website) */}
                                                 <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
-                                                        <Globe className="w-4 h-4 text-indigo-600" />
+                                                    <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
+                                                        <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok Shop</div>
                                                         <div className="text-sm text-gray-900">
                                                             {viewingLead.website ? (
-                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
+                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
                                                                     {viewingLead.website} <ExternalLink className="w-3 h-3" />
                                                                 </a>
                                                             ) : (
@@ -1116,8 +1159,8 @@ ${template.cta}`;
                                             onClick={enrichViewingLead}
                                             disabled={isEnrichingViewingLead || viewingLead.enriched}
                                             className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched
-                                                    ? 'border-green-200 bg-green-50 text-green-700'
-                                                    : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                                                ? 'border-green-200 bg-green-50 text-green-700'
+                                                : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                                                 } ${isEnrichingViewingLead ? 'opacity-70 cursor-wait' : ''}`}
                                         >
                                             {isEnrichingViewingLead ? (

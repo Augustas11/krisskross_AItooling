@@ -20,7 +20,7 @@ export async function POST(req) {
         console.log(`[DEBUG] Agent enrichment started for: ${name} at ${url}`);
 
         const result = await firecrawl.agent({
-            prompt: `Extract the seller name and all available contact information, including business address, customer service phone, email, and website for the seller "${name}" at the provided URL. Also find their official Instagram handle if possible.`,
+            prompt: `Extract the seller name and all available contact information, including business address, customer service phone, email, and their official TikTok profile URL (or general website if TikTok is not found) for the seller "${name}" at the provided URL. Also find their official Instagram handle if possible.`,
             schema: z.object({
                 seller_name: z.string().describe("The name of the seller"),
                 contact_information: z.object({
@@ -28,7 +28,7 @@ export async function POST(req) {
                     customer_service: z.object({
                         phone_number: z.string().describe("Customer service phone number").optional(),
                         email: z.string().describe("Customer service email address").optional(),
-                        website: z.string().describe("Customer service website").optional(),
+                        website: z.string().describe("TikTok profile URL or official website").optional(),
                         instagram: z.string().describe("Instagram handle or URL").optional()
                     }).describe("Customer service contact details").optional()
                 }).describe("Contact details for the seller").optional()
