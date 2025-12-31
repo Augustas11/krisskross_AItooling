@@ -4,23 +4,31 @@ import { z } from 'zod';
 
 // Helper for Perplexity Enrichment
 async function executePerplexityEnrich(url, name, apiKey) {
-    const prompt = `Research and extract contact information for the seller "${name}" associated with this URL: ${url}.
-    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, and Official Website URL.
-    Return a STRICT JSON object matching this schema:
-    {
-        "seller_name": "string",
-        "contact_information": {
-            "business_address": "string or null",
-            "customer_service": {
-                "phone_number": "string or null",
-                "email": "string or null",
-                "website": "string or null",
-                "tiktok": "string or null",
-                "instagram": "string or null"
-            }
+    const prompt = `Visit and analyze the website ${url} for the business "${name}".
+
+IMPORTANT: Navigate to the Contact section/page if available. Look for:
+1. Phone Number (may be formatted as +1 XXX-XXX-XXXX, 1-XXX-XXX-XXXX, or (XXX) XXX-XXXX)
+2. Email address (likely customer service, support, or info email)
+3. Physical/Business address
+4. Social media links (Instagram, TikTok, Facebook, Twitter)
+5. Official website domain
+
+Return a STRICT JSON object matching this schema:
+{
+    "seller_name": "${name}",
+    "contact_information": {
+        "business_address": "string or null",
+        "customer_service": {
+            "phone_number": "string or null (include country code if present)",
+            "email": "string or null",
+            "website": "${url}",
+            "tiktok": "string or null (full URL preferred)",
+            "instagram": "string or null (handle or URL)"
         }
     }
-    If a field is not found, use null. Do not include markdown or explanations. Output ONLY valid JSON.`;
+}
+
+CRITICAL: Do NOT make up or hallucinate phone numbers. If you cannot find the exact contact information on the website, set it to null. Output ONLY valid JSON, no markdown.`;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -57,23 +65,31 @@ async function executePerplexityEnrich(url, name, apiKey) {
 
 // Helper for Grok Enrichment
 async function executeGrokEnrich(url, name, apiKey) {
-    const prompt = `Research and extract contact information for the seller "${name}" associated with this URL: ${url}.
-    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, and Official Website URL.
-    Return a STRICT JSON object matching this schema:
-    {
-        "seller_name": "string",
-        "contact_information": {
-            "business_address": "string or null",
-            "customer_service": {
-                "phone_number": "string or null",
-                "email": "string or null",
-                "website": "string or null",
-                "tiktok": "string or null",
-                "instagram": "string or null"
-            }
+    const prompt = `Visit and analyze the website ${url} for the business "${name}".
+
+IMPORTANT: Navigate to the Contact section/page if available. Look for:
+1. Phone Number (may be formatted as +1 XXX-XXX-XXXX, 1-XXX-XXX-XXXX, or (XXX) XXX-XXXX)
+2. Email address (likely customer service, support, or info email)
+3. Physical/Business address
+4. Social media links (Instagram, TikTok, Facebook, Twitter)
+5. Official website domain
+
+Return a STRICT JSON object matching this schema:
+{
+    "seller_name": "${name}",
+    "contact_information": {
+        "business_address": "string or null",
+        "customer_service": {
+            "phone_number": "string or null (include country code if present)",
+            "email": "string or null",
+            "website": "${url}",
+            "tiktok": "string or null (full URL preferred)",
+            "instagram": "string or null (handle or URL)"
         }
     }
-    If a field is not found, use null. Do not include markdown or explanations. Output ONLY valid JSON.`;
+}
+
+CRITICAL: Do NOT make up or hallucinate phone numbers. If you cannot find the exact contact information on the website, set it to null. Output ONLY valid JSON, no markdown.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
@@ -174,7 +190,17 @@ export async function POST(req) {
                     send('status', 'Analyzing page content with LLM...');
 
                     const result = await firecrawl.agent({
-                        prompt: `Extract the seller name and all available contact information, including business address, customer service phone, email, their official TikTok profile URL, and their official website URL for the seller "${name}" at the provided URL. Also find their official Instagram handle if possible.`,
+                        prompt: `Extract the seller name and all available contact information for "${name}" at the provided URL.
+                        
+                        CRITICAL: Look carefully in footer sections, Contact pages, and social media icon links. Find:
+                        - Phone Number (including formats like +1 XXX-XXX-XXXX or (XXX) XXX-XXXX)
+                        - Email address (customer service, support, or info)
+                        - Business/Physical address
+                        - Instagram handle or profile URL
+                        - TikTok profile URL
+                        - Official website URL
+                        
+                        Return EXACTLY what you find on the page. Do not make up data.`,
                         schema: z.object({
                             seller_name: z.string().describe("The name of the seller"),
                             contact_information: z.object({
