@@ -388,8 +388,8 @@ ${template.cta}`;
                         <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-orange-600 to-amber-600 mb-4 tracking-tight">
                             KrissKross
                         </h1>
-                        <p className="text-2xl text-gray-700 font-semibold">Pitch Generator</p>
-                        <p className="text-gray-600 mt-2">On-brand outreach in seconds, not hours</p>
+                        <p className="text-2xl text-gray-700 font-semibold">Leads CRM</p>
+                        <p className="text-gray-600 mt-2">AI-powered lead discovery, enrichment & outreach</p>
                     </div>
                 </div>
 
