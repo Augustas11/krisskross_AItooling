@@ -46,8 +46,21 @@ export async function POST(req) {
             throw new Error(scrapeResult.error || 'Firecrawl scrape failed');
         }
 
+        console.log('Firecrawl Scrape Result:', JSON.stringify(scrapeResult, null, 2));
+
+        const extractedData = scrapeResult.json || scrapeResult.data?.json || (scrapeResult.data && typeof scrapeResult.data === 'object' ? scrapeResult.data : null);
+
+        if (!extractedData || !extractedData.shops) {
+            console.warn('No shops found in extraction. Result keys:', Object.keys(scrapeResult));
+            return NextResponse.json({
+                leads: [],
+                message: 'No shops were found on this page. Try a different URL or ensure the page contains shop listings.',
+                raw: scrapeResult
+            });
+        }
+
         return NextResponse.json({
-            leads: scrapeResult.json.shops,
+            leads: extractedData.shops,
             metadata: scrapeResult.metadata
         });
 
