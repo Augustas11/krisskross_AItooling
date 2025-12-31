@@ -396,7 +396,7 @@ ${template.cta}`;
                                         value={sourceUrl}
                                         onChange={(e) => setSourceUrl(e.target.value)}
                                         placeholder="Paste Amazon category URL or shop listing page..."
-                                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
                                     />
                                     <button
                                         onClick={handleSourceLeads}
@@ -724,7 +724,7 @@ ${template.cta}`;
                                             value={customName}
                                             onChange={(e) => setCustomName(e.target.value)}
                                             placeholder="e.g., Sarah, Mike, Jessica..."
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
                                         />
                                     </div>
 
@@ -738,7 +738,7 @@ ${template.cta}`;
                                             value={context}
                                             onChange={(e) => setContext(e.target.value)}
                                             placeholder="Paste social profile link, bio, or product details... Claude will use this to tailor the pitch."
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[120px] resize-none"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[120px] resize-none text-gray-900 placeholder-gray-400"
                                         />
                                     </div>
 

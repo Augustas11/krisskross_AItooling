@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-    title: 'KrissKross Pitch Generator',
-    description: 'AI-powered pitch generator for KrissKross',
+    title: 'KrissKross Leads CRM',
+    description: 'AI-powered lead discovery and CRM for KrissKross SDRs',
 }
 
 export default function RootLayout({ children }) {
