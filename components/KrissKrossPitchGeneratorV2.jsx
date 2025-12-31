@@ -30,14 +30,10 @@ export default function KrissKrossPitchGeneratorV3() {
     const [sourceError, setSourceError] = useState(null);
     const [provider, setProvider] = useState('perplexity'); // 'perplexity' | 'grok' (Firecrawl removed - out of credits)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [isBulkAction, setIsBulkAction] = useState(false);
     const [selectedLeadIndices, setSelectedLeadIndices] = useState(new Set());
 
-    // Enrichment State
-    const [enrichingLeads, setEnrichingLeads] = useState({});
+    // CRM State
     const [viewingLead, setViewingLead] = useState(null);
-    const [isEnrichingViewingLead, setIsEnrichingViewingLead] = useState(false);
-    const [enrichmentStatus, setEnrichmentStatus] = useState("Initializing AI...");
 
 
     // CRM State
@@ -306,74 +302,6 @@ ${template.cta}`;
         }
     };
 
-    const handleEnrichLead = async (lead, index) => {
-        if (!lead.storeUrl && !sourceUrl) return;
-
-        setEnrichingLeads(prev => ({ ...prev, [index]: true }));
-        try {
-            const response = await fetch('/api/leads/enrich', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: lead.storeUrl || sourceUrl,
-                    name: lead.name,
-                    provider
-                }),
-            });
-
-            if (!response.ok) throw new Error('Failed to enrich lead');
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let processBuffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                processBuffer += chunk;
-
-                const lines = processBuffer.split('\n');
-                processBuffer = lines.pop() || '';
-
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-
-                    try {
-                        const message = JSON.parse(line);
-                        if (message.type === 'result') {
-                            const enrichedInfo = message.data.enrichedData;
-                            setFoundLeads(prev => prev.map((l, i) => {
-                                if (i === index) {
-                                    const info = enrichedInfo.contact_information || {};
-                                    const cs = info.customer_service || {};
-                                    return {
-                                        ...l,
-                                        enriched: true,
-                                        businessAddress: info.business_address || l.businessAddress,
-                                        email: cs.email || l.email,
-                                        phone: cs.phone_number || l.phone,
-                                        instagram: cs.instagram || l.instagram,
-                                        website: cs.website || l.website,
-                                        tiktok: cs.tiktok || l.tiktok,
-                                        youtube: cs.youtube || l.youtube,
-                                        facebook: cs.facebook || l.facebook
-                                    };
-                                }
-                                return l;
-                            }));
-                        }
-                    } catch (e) { /* ignore parse errors */ }
-                }
-            }
-        } catch (error) {
-            console.error('Enrichment error:', error);
-        } finally {
-            setEnrichingLeads(prev => ({ ...prev, [index]: false }));
-        }
-    };
-
     // Helper to check if lead should be marked as enriched
     const checkShouldBeEnriched = (leadData) => {
         const contactFields = [
@@ -396,142 +324,6 @@ ${template.cta}`;
         if (!url) return '#';
         if (url.startsWith('http://') || url.startsWith('https://')) return url;
         return `https://${url}`;
-    };
-
-    const enrichViewingLead = async () => {
-        // Validation: For saved leads (CRM), we should strictly require a URL on the lead itself.
-        // Falling back to 'sourceUrl' (the search bar) is risky for CRM leads as they might be unrelated.
-        const targetUrl = viewingLead.storeUrl || viewingLead.website;
-
-        if (!targetUrl) {
-            // If we are in discovery mode (not saved yet), maybe sourceUrl is valid, but here we are likely viewing a saved lead or detailed view.
-            // Let's be strict: if it's imported or missing URL, we can't enrich.
-            alert("This lead doesn't have a Store URL or Website to analyze.\nPlease add a URL to the lead details before enriching.");
-            return;
-        }
-
-        setIsEnrichingViewingLead(true);
-        setEnrichmentStatus("Connecting to Agent...");
-
-        try {
-            const response = await fetch('/api/leads/enrich', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: targetUrl,
-                    name: viewingLead.name,
-                    provider
-                }),
-            });
-
-            if (!response.ok) throw new Error('Failed to start enrichment');
-
-            // Streaming Reader
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let processBuffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                processBuffer += chunk;
-
-                // NDJSON Splitting
-                const lines = processBuffer.split('\n');
-                // Keep the last partial line in the buffer
-                processBuffer = lines.pop() || '';
-
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-
-                    try {
-                        const message = JSON.parse(line);
-
-                        // Handle Different Message Types
-                        if (message.type === 'status') {
-                            setEnrichmentStatus(message.data);
-                        } else if (message.type === 'error') {
-                            throw new Error(message.data);
-                        } else if (message.type === 'result') {
-                            const enrichedInfo = message.data.enrichedData;
-
-                            // Check if we actually found useful data
-                            const hasData = enrichedInfo.contact_information?.business_address ||
-                                enrichedInfo.contact_information?.customer_service?.email ||
-                                enrichedInfo.contact_information?.customer_service?.phone_number ||
-                                enrichedInfo.contact_information?.customer_service?.instagram ||
-                                enrichedInfo.contact_information?.customer_service?.tiktok ||
-                                enrichedInfo.contact_information?.customer_service?.website;
-
-                            // Helper to check if a value is actually useful (not null/placeholder)
-                            const isVal = (v) => {
-                                if (!v) return false;
-                                const s = String(v).toLowerCase().trim();
-                                return !['null', 'not available', 'not found', 'n/a', 'unknown', 'undefined', '[none]', 'none'].includes(s);
-                            };
-
-                            // Construct valid updates ONLY to avoid wiping existing data
-                            const updates = {};
-                            const info = enrichedInfo.contact_information || {};
-                            const cs = info.customer_service || {};
-
-                            if (isVal(info.business_address)) updates.businessAddress = info.business_address;
-                            if (isVal(cs.email)) updates.email = cs.email;
-                            if (isVal(cs.phone_number)) updates.phone = cs.phone_number;
-                            if (isVal(cs.instagram)) updates.instagram = cs.instagram;
-                            if (isVal(cs.website)) updates.website = cs.website;
-                            if (isVal(cs.tiktok)) updates.tiktok = cs.tiktok;
-                            if (isVal(cs.youtube)) updates.youtube = cs.youtube;
-                            if (isVal(cs.facebook)) updates.facebook = cs.facebook;
-
-                            console.log('[DEBUG] Enrichment Updates payload:', updates);
-
-                            // Determine enriched status based on new OR existing data
-                            // If updates has any keys, we potentially found something new.
-                            // But 'enriched' flag implies we successfully ran enrichment at least once.
-                            const foundNewData = Object.keys(updates).length > 0;
-                            updates.enriched = foundNewData || viewingLead.enriched;
-                            let newStatus = viewingLead.status;
-                            if (updates.enriched || checkShouldBeEnriched({ ...viewingLead, ...updates })) {
-                                newStatus = 'Enriched';
-                            }
-
-                            setViewingLead(prev => ({ ...prev, ...updates, status: newStatus }));
-                            setSavedLeads(prev => prev.map(l =>
-                                l.id === viewingLead.id ? { ...l, ...updates, status: newStatus } : l
-                            ));
-
-                            if (!hasData) {
-                                setEnrichmentStatus('Search complete - No new data discovered');
-                                setTimeout(() => {
-                                    setIsEnrichingViewingLead(false);
-                                    setEnrichmentStatus('');
-                                }, 3000);
-                            } else {
-                                setEnrichmentStatus('Contact information updated!');
-                                setTimeout(() => {
-                                    setIsEnrichingViewingLead(false);
-                                    setEnrichmentStatus('');
-                                }, 2000);
-                            }
-                        }
-
-                    } catch (parseError) {
-                        console.warn('NDJSON Parse Error', parseError);
-                    }
-                }
-            }
-
-        } catch (error) {
-            console.error('Enrichment error:', error);
-            setEnrichmentStatus('Error: ' + error.message);
-            setTimeout(() => {
-                setIsEnrichingViewingLead(false);
-                setEnrichmentStatus('');
-            }, 5000); // Keep error visible for 5 seconds
-        }
     };
 
     const saveLeadToCrm = (lead) => {
@@ -603,127 +395,6 @@ ${template.cta}`;
             setSavedLeads(prev => prev.filter(l => !selectedCrmLeadIds.has(l.id)));
             setSelectedCrmLeadIds(new Set());
         }
-    };
-
-    const enrichCrmLead = async (lead) => {
-        const targetUrl = lead.storeUrl || lead.website;
-        if (!targetUrl) return false;
-
-        try {
-            const response = await fetch('/api/leads/enrich', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: targetUrl,
-                    name: lead.name,
-                    provider
-                }),
-            });
-            const data = await response.json();
-
-            // Handle if streaming response, but for headless generic enrich we might want to just wait for the end result or handle NDJSON.
-            // Our previous enrich implementation uses streaming. For bulk, we probably don't want to open a stream for each one in parallel if we can avoid it, 
-            // OR we can just ignore the stream updates and wait for the final result.
-            // Actually, the current /api/leads/enrich endpoint ONLY returns a stream now.
-            // So we MUST consume the stream to get the final result.
-
-            if (!response.ok) throw new Error('Failed to start enrichment');
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let processBuffer = '';
-            let finalResult = null;
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                processBuffer += chunk;
-                const lines = processBuffer.split('\n');
-                processBuffer = lines.pop() || '';
-
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    try {
-                        const message = JSON.parse(line);
-                        if (message.type === 'result') {
-                            finalResult = message.data;
-                        } else if (message.type === 'error') {
-                            throw new Error(message.data);
-                        }
-                    } catch (e) { /* ignore parse errors */ }
-                }
-            }
-
-            if (finalResult && finalResult.enrichedData) {
-                const enrichedInfo = finalResult.enrichedData;
-                const hasData = enrichedInfo.contact_information?.business_address ||
-                    enrichedInfo.contact_information?.customer_service?.email ||
-                    enrichedInfo.contact_information?.customer_service?.phone_number ||
-                    enrichedInfo.contact_information?.customer_service?.instagram ||
-                    enrichedInfo.contact_information?.customer_service?.tiktok ||
-                    enrichedInfo.contact_information?.customer_service?.youtube ||
-                    enrichedInfo.contact_information?.customer_service?.facebook ||
-                    enrichedInfo.contact_information?.customer_service?.website;
-
-                const isVal = (v) => {
-                    if (!v) return false;
-                    const s = String(v).toLowerCase().trim();
-                    return !['null', 'not available', 'not found', 'n/a', 'unknown', 'undefined', '[none]', 'none'].includes(s);
-                };
-
-                const updates = {};
-                const info = enrichedInfo.contact_information || {};
-                const cs = info.customer_service || {};
-
-                if (isVal(info.business_address)) updates.businessAddress = info.business_address;
-                if (isVal(cs.email)) updates.email = cs.email;
-                if (isVal(cs.phone_number)) updates.phone = cs.phone_number;
-                if (isVal(cs.instagram)) updates.instagram = cs.instagram;
-                if (isVal(cs.website)) updates.website = cs.website;
-                if (isVal(cs.tiktok)) updates.tiktok = cs.tiktok;
-                if (isVal(cs.youtube)) updates.youtube = cs.youtube;
-                if (isVal(cs.facebook)) updates.facebook = cs.facebook;
-
-                const foundNewData = Object.keys(updates).length > 0;
-                updates.enriched = foundNewData || lead.enriched;
-
-                // Update status if criteria met
-                // Update status if criteria met
-                const updatedLead = { ...lead, ...updates };
-                if (updates.enriched || checkShouldBeEnriched(updatedLead)) {
-                    updatedLead.status = 'Enriched';
-                }
-
-                setSavedLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error(`Failed to enrich lead ${lead.name}`, error);
-            return false;
-        }
-    };
-
-    const handleEnrichSelectedCrmLeads = async () => {
-        if (selectedCrmLeadIds.size === 0) return;
-        setCrmProcessing(true);
-
-        // Filter for leads that are selected AND not yet enriched (as per user request "un-enriched yet leads")
-        // But let's allow re-enriching if user explicitly selected them, just prioritize logic if needed.
-        // Actually, let's just enrich all selected to give user control.
-        const leadsToEnrich = savedLeads.filter(l => selectedCrmLeadIds.has(l.id));
-
-        let successCount = 0;
-        for (const lead of leadsToEnrich) {
-            // Sequential to avoid rate limits
-            const success = await enrichCrmLead(lead);
-            if (success) successCount++;
-        }
-
-        alert(`Bulk enrichment complete. Successfully enriched ${successCount} leads.`);
-        setCrmProcessing(false);
-        setSelectedCrmLeadIds(new Set()); // Clear selection after action
     };
 
     const exportToCsv = () => {
@@ -893,27 +564,6 @@ ${template.cta}`;
     };
 
     // Bulk Actions
-    const handleEnrichAll = async () => {
-        setIsBulkAction(true);
-        const unenrichedIndices = foundLeads
-            .map((lead, index) => ({ lead, index }))
-            .filter(({ lead }) => !lead.enriched);
-
-        if (unenrichedIndices.length === 0) {
-            alert('All leads are already enriched!');
-            setIsBulkAction(false);
-            return;
-        }
-
-        // Process sequentially to be safe with rate limits
-        for (const { lead, index } of unenrichedIndices) {
-            await handleEnrichLead(lead, index);
-            // Small delay between requests
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        setIsBulkAction(false);
-    };
-
     const handleSaveAllToCrm = () => {
         let addedCount = 0;
         const newLeads = [];
@@ -924,7 +574,7 @@ ${template.cta}`;
                 newLeads.push({
                     ...lead,
                     id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    status: (lead.enriched || (typeof checkShouldBeEnriched === 'function' && checkShouldBeEnriched(lead))) ? 'Enriched' : 'New',
+                    status: 'New',
                     addedAt: new Date().toLocaleDateString(),
                     lastInteraction: null
                 });
@@ -954,38 +604,6 @@ ${template.cta}`;
         });
     };
 
-    // Handle enriching selected leads (or all if none selected)
-    const handleEnrichSelected = async () => {
-        setIsBulkAction(true);
-
-        // If no leads are selected, enrich all unenriched leads
-        const leadsToEnrich = selectedLeadIndices.size > 0
-            ? foundLeads
-                .map((lead, index) => ({ lead, index }))
-                .filter(({ index }) => selectedLeadIndices.has(index) && !foundLeads[index].enriched)
-            : foundLeads
-                .map((lead, index) => ({ lead, index }))
-                .filter(({ lead }) => !lead.enriched);
-
-        if (leadsToEnrich.length === 0) {
-            alert(selectedLeadIndices.size > 0
-                ? 'All selected leads are already enriched!'
-                : 'All leads are already enriched!');
-            setIsBulkAction(false);
-            return;
-        }
-
-        // Process sequentially to be safe with rate limits
-        for (const { lead, index } of leadsToEnrich) {
-            await handleEnrichLead(lead, index);
-            // Small delay between requests
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
-        setIsBulkAction(false);
-        setSelectedLeadIndices(new Set()); // Clear selection after enrichment
-    };
-
     // Handle saving selected leads to CRM (or all if none selected)
     const handleSaveSelectedToCrm = () => {
         let addedCount = 0;
@@ -1002,7 +620,7 @@ ${template.cta}`;
                 newLeads.push({
                     ...lead,
                     id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    status: (lead.enriched || (typeof checkShouldBeEnriched === 'function' && checkShouldBeEnriched(lead))) ? 'Enriched' : 'New',
+                    status: 'New',
                     addedAt: new Date().toLocaleDateString(),
                     lastInteraction: null
                 });
@@ -1173,14 +791,14 @@ ${template.cta}`;
                                     </button>
                                 </div>
 
-                                {/* Search Settings Toggle */}
+                                {/* Search Settings Toggle - REMOVED Enrichment Options */}
                                 <div className="mt-4">
                                     <button
                                         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                                         className="text-xs font-semibold text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors"
                                     >
                                         <Settings className="w-3 h-3" />
-                                        {isSettingsOpen ? 'Hide Options' : 'Search & Enrich Options'}
+                                        {isSettingsOpen ? 'Hide Options' : 'Search Options'}
                                     </button>
 
                                     {isSettingsOpen && (
@@ -1189,32 +807,7 @@ ${template.cta}`;
                                             animate={{ height: 'auto', opacity: 1 }}
                                             className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100"
                                         >
-                                            {/* Provider Selection */}
-                                            <div className="mb-4">
-                                                <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Provider (Sourcing & Enrichment)</p>
-                                                <div className="flex gap-4">
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="radio"
-                                                            name="provider"
-                                                            checked={provider === 'perplexity'}
-                                                            onChange={() => setProvider('perplexity')}
-                                                            className="text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                        <span className="text-sm text-gray-700">Perplexity (Deep Search)</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="radio"
-                                                            name="provider"
-                                                            checked={provider === 'grok'}
-                                                            onChange={() => setProvider('grok')}
-                                                            className="text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                        <span className="text-sm text-gray-700">Grok (xAI)</span>
-                                                    </label>
-                                                </div>
-                                            </div>
+                                            <div className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Search settings (Coming Soon)</div>
                                         </motion.div>
                                     )}
                                 </div>
@@ -1234,20 +827,6 @@ ${template.cta}`;
                                         Found {foundLeads.length} Leads
                                     </h3>
                                     <div className="flex gap-2">
-                                        <button
-                                            onClick={handleEnrichSelected}
-                                            disabled={isBulkAction}
-                                            className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {isBulkAction ? (
-                                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Zap className="w-4 h-4" />
-                                            )}
-                                            {selectedLeadIndices.size > 0
-                                                ? `Enrich Selected (${selectedLeadIndices.size})`
-                                                : "Enrich All"}
-                                        </button>
                                         <button
                                             onClick={handleSaveSelectedToCrm}
                                             disabled={isBulkAction}
@@ -1282,50 +861,20 @@ ${template.cta}`;
                                                     />
                                                     <div>
                                                         <h4 className="font-semibold text-gray-900">{lead.name}</h4>
-                                                        {lead.enriched && (
-                                                            <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded inline-block mt-1">
-                                                                ENRICHED
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
                                             <p className="text-xs font-medium text-blue-600 mb-2">{lead.productCategory}</p>
                                             <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lead.briefDescription}</p>
 
-                                            {lead.enriched && (
-                                                <div className="space-y-1 mb-4 p-3 bg-gray-50 rounded-lg text-xs">
-                                                    {lead.instagram && (
-                                                        <div className="flex items-center gap-2 text-pink-600">
-                                                            <Instagram className="w-3 h-3" />
-                                                            {lead.instagram}
-                                                        </div>
-                                                    )}
-                                                    {lead.email && (
-                                                        <div className="flex items-center gap-2 text-blue-600">
-                                                            <Mail className="w-3 h-3" />
-                                                            {lead.email}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
+
 
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => saveLeadToCrm(lead)}
-                                                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                                                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
                                                 >
                                                     Save to CRM
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEnrichLead(lead, idx)}
-                                                    disabled={enrichingLeads[idx] || lead.enriched}
-                                                    className={`flex-1 py-2 border text-sm font-semibold rounded-lg transition-colors ${lead.enriched
-                                                        ? 'border-green-300 text-green-700 bg-green-50'
-                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                        } ${enrichingLeads[idx] ? 'opacity-50' : ''}`}
-                                                >
-                                                    {enrichingLeads[idx] ? 'Enriching...' : lead.enriched ? 'Enriched' : `Enrich (${['perplexity', 'grok'].includes(provider) ? 'AI' : 'Crawl'})`}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -1358,14 +907,6 @@ ${template.cta}`;
                                 <div className="flex gap-2">
                                     {selectedCrmLeadIds.size > 0 && (
                                         <>
-                                            <button
-                                                onClick={handleEnrichSelectedCrmLeads}
-                                                disabled={crmProcessing}
-                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-semibold rounded-lg transition-colors mr-2 border border-indigo-200 disabled:opacity-50"
-                                            >
-                                                {crmProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                                                Enrich Selected ({selectedCrmLeadIds.size})
-                                            </button>
                                             <button
                                                 onClick={deleteSelectedCrmLeads}
                                                 disabled={crmProcessing}
@@ -1442,10 +983,7 @@ ${template.cta}`;
                                         <div className="text-2xl font-bold text-blue-600">{savedLeads.filter(l => l.status === 'New').length}</div>
                                         <div className="text-sm text-gray-600">New</div>
                                     </div>
-                                    <div>
-                                        <div className="text-2xl font-bold text-teal-600">{savedLeads.filter(l => l.status === 'Enriched').length}</div>
-                                        <div className="text-sm text-gray-600">Enriched</div>
-                                    </div>
+
                                     <div>
                                         <div className="text-2xl font-bold text-indigo-600">{savedLeads.filter(l => l.status === 'Pitched').length}</div>
                                         <div className="text-sm text-gray-600">Pitched</div>
@@ -1492,7 +1030,7 @@ ${template.cta}`;
 
                                 {/* Filters */}
                                 <div className="flex gap-2 p-4 border-b border-gray-200 overflow-x-auto">
-                                    {['all', 'New', 'Enriched', 'Pitched', 'Replied', 'Dead'].map(filter => (
+                                    {['all', 'New', 'Pitched', 'Replied', 'Dead'].map(filter => (
                                         <button
                                             key={filter}
                                             onClick={() => {
@@ -1591,7 +1129,6 @@ ${template.cta}`;
                                                                         }`}
                                                                 >
                                                                     <option value="New">New</option>
-                                                                    <option value="Enriched">Enriched</option>
                                                                     <option value="Pitched">Pitched</option>
                                                                     <option value="Replied">Replied</option>
                                                                     <option value="Dead">Dead</option>
@@ -1912,18 +1449,7 @@ ${template.cta}`;
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         {/* Contact Section */}
                                         <div className="space-y-6 relative">
-                                            {isEnrichingViewingLead && (
-                                                <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center text-center p-4 rounded-xl backdrop-blur-sm transition-all border border-indigo-100">
-                                                    <div className="relative mb-4">
-                                                        <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <Sparkles className="w-6 h-6 text-indigo-600 animate-pulse" />
-                                                        </div>
-                                                    </div>
-                                                    <h3 className="text-base font-bold text-indigo-900 animate-pulse transition-all duration-300">{enrichmentStatus}</h3>
-                                                    <p className="text-xs text-indigo-400 mt-2 font-medium">Analyzing page content...</p>
-                                                </div>
-                                            )}
+
                                             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
                                                 <Users className="w-4 h-4" /> Contact Information
                                             </h3>
@@ -2108,37 +1634,7 @@ ${template.cta}`;
                                         Added {viewingLead.addedAt}
                                     </div>
                                     <div className="flex gap-3">
-                                        <button
-                                            onClick={enrichViewingLead}
-                                            disabled={isEnrichingViewingLead || (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website)}
-                                            className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website
-                                                ? 'border-green-200 bg-green-50 text-green-700'
-                                                : isEnrichingViewingLead ? 'border-gray-200 bg-gray-50 text-gray-400'
-                                                    : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                                                } ${isEnrichingViewingLead ? 'cursor-wait' : ''}`}
-                                        >
-                                            {isEnrichingViewingLead ? (
-                                                <>
-                                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                                    Enriching...
-                                                </>
-                                            ) : (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website) ? (
-                                                <>
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Fully Enriched
-                                                </>
-                                            ) : viewingLead.enriched ? (
-                                                <>
-                                                    <RefreshCw className="w-4 h-4" />
-                                                    Enrich Again
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Zap className="w-4 h-4" />
-                                                    Enrich Data
-                                                </>
-                                            )}
-                                        </button>
+
                                         <button
                                             onClick={() => {
                                                 selectLead(viewingLead);
