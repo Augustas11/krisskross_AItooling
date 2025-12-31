@@ -39,43 +39,67 @@ export default function KrissKrossPitchGeneratorV3() {
     // Load Leads from Server on mount
     React.useEffect(() => {
         const loadLeads = async () => {
+            console.log('🔄 [CRM] Loading leads from server...');
             try {
                 const response = await fetch('/api/crm/leads');
                 const data = await response.json();
+                console.log('📥 [CRM] Server response:', data);
                 if (data.leads) {
+                    console.log(`✅ [CRM] Loaded ${data.leads.length} leads from server`);
                     setSavedLeads(data.leads);
+                } else {
+                    console.warn('⚠️ [CRM] No leads property in server response');
                 }
             } catch (e) {
-                console.error('Failed to load leads from server', e);
+                console.error('❌ [CRM] Failed to load leads from server:', e);
                 const saved = localStorage.getItem('kk_leads_crm');
-                if (saved) setSavedLeads(JSON.parse(saved));
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    console.log(`📦 [CRM] Loaded ${parsed.length} leads from localStorage (fallback)`);
+                    setSavedLeads(parsed);
+                }
             } finally {
                 setIsCrmInitialized(true);
+                console.log('✓ [CRM] Initialization complete');
             }
         };
         loadLeads();
     }, []);
 
-    // Sync Leads to Server
+    // Sync Leads to Server (IMMEDIATE - no delay to prevent data loss)
     React.useEffect(() => {
-        if (isCrmInitialized) {
+        if (isCrmInitialized && savedLeads.length >= 0) {
             const syncLeads = async () => {
+                console.log(`💾 [CRM] Syncing ${savedLeads.length} leads to server...`);
                 setIsSyncing(true);
                 try {
+                    // Save to localStorage as backup
                     localStorage.setItem('kk_leads_crm', JSON.stringify(savedLeads));
-                    await fetch('/api/crm/leads', {
+                    console.log('📦 [CRM] Saved to localStorage');
+
+                    // Sync to server
+                    const response = await fetch('/api/crm/leads', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ leads: savedLeads }),
                     });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('✅ [CRM] Server sync successful:', result.message);
                 } catch (e) {
-                    console.error('Sync failed', e);
+                    console.error('❌ [CRM] Sync failed:', e);
+                    alert('Warning: Failed to sync leads to server. Data saved locally only.');
                 } finally {
                     setIsSyncing(false);
                 }
             };
-            const timeoutId = setTimeout(syncLeads, 1000);
-            return () => clearTimeout(timeoutId);
+
+            // Sync immediately (no delay)
+            syncLeads();
         }
     }, [savedLeads, isCrmInitialized]);
 
@@ -244,6 +268,7 @@ ${template.cta}`;
             addedAt: new Date().toLocaleDateString(),
             lastInteraction: null
         };
+        console.log('➕ [CRM] Adding new lead:', newLead.name);
         setSavedLeads(prev => [newLead, ...prev]);
         setActiveTab('crm'); // Auto-switch to CRM tab
     };
