@@ -5,7 +5,7 @@ import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
-    FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye
+    FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload
 } from 'lucide-react';
 
 export default function KrissKrossPitchGeneratorV3() {
@@ -373,7 +373,7 @@ ${template.cta}`;
     const exportToCsv = () => {
         if (savedLeads.length === 0) return;
 
-        const headers = ['Name', 'Category', 'Description', 'Status', 'Instagram', 'Email', 'Address', 'AddedAt'];
+        const headers = ['Name', 'Category', 'Description', 'Status', 'Instagram', 'Email', 'Address', 'AddedAt', 'StoreURL', 'Website'];
         const csvRows = [
             headers.join(','),
             ...savedLeads.map(l => [
@@ -384,7 +384,9 @@ ${template.cta}`;
                 `"${l.instagram || ''}"`,
                 `"${l.email || ''}"`,
                 `"${(l.businessAddress || '').replace(/"/g, '""')}"`,
-                `"${l.addedAt || ''}"`
+                `"${l.addedAt || ''}"`,
+                `"${l.storeUrl || ''}"`,
+                `"${l.website || ''}"`
             ].join(','))
         ];
 
@@ -397,6 +399,141 @@ ${template.cta}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    };
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target.result;
+
+            // Robust CSV Line Splitter (handles newlines inside quotes)
+            // Note: This is a simplified regex-based parser. For very complex CSVs, a library is better.
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let insideQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (char === '"') {
+                    if (insideQuotes && nextChar === '"') {
+                        currentField += '"';
+                        i++; // skip escaped quote
+                    } else {
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if (char === ',' && !insideQuotes) {
+                    currentRow.push(currentField);
+                    currentField = '';
+                } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+                    if (char === '\r' && nextChar === '\n') i++; // handle CRLF
+                    currentRow.push(currentField);
+                    if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0] !== '')) { // skip empty lines
+                        rows.push(currentRow);
+                    }
+                    currentRow = [];
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField);
+                rows.push(currentRow);
+            }
+
+            if (rows.length < 2) {
+                alert('Invalid CSV file or empty.');
+                return;
+            }
+
+            // Clean headers (remove BOM, trim, lowercase)
+            const headers = rows[0].map(h => h.trim().replace(/^"|"$/g, '').toLowerCase().replace(/^\ufeff/, ''));
+            const dataRows = rows.slice(1);
+
+            console.log('Parsed Headers:', headers);
+
+            // Smart Field Mapping
+            const map = {
+                name: headers.findIndex(h => /(name|company|business|shop|lead|title)/.test(h)),
+                storeUrl: headers.findIndex(h => /(url|website|link|store|site|web)/.test(h)),
+                productCategory: headers.findIndex(h => /(category|cat|niche|industry|type|segment)/.test(h)),
+                email: headers.findIndex(h => /(email|mail|contact)/.test(h)),
+                instagram: headers.findIndex(h => /(instagram|insta|ig|social)/.test(h)),
+                status: headers.findIndex(h => /(status|state|phase)/.test(h)),
+                briefDescription: headers.findIndex(h => /(description|desc|about|info)/.test(h)),
+                businessAddress: headers.findIndex(h => /(address|location|hq)/.test(h)),
+                phone: headers.findIndex(h => /(phone|tel|mobile)/.test(h)),
+            };
+
+            console.log('Field Mapping:', map);
+
+            const importedLeads = dataRows.map(row => {
+                // Helper to safely get value or empty string
+                const getVal = (idx) => idx !== -1 && row[idx] ? row[idx].trim() : '';
+
+                // If Name is missing, try to infer from URL or set Unknown
+                let name = getVal(map.name);
+                const url = getVal(map.storeUrl);
+
+                if (!name && url) {
+                    try {
+                        name = new URL(url).hostname.replace('www.', '').split('.')[0];
+                        name = name.charAt(0).toUpperCase() + name.slice(1);
+                    } catch (e) { name = 'Unknown Lead'; }
+                } else if (!name) {
+                    return null; // Skip completely empty value rows implies invalid data for our needs
+                }
+
+                return {
+                    id: `lead_imp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: name,
+                    productCategory: getVal(map.productCategory) || 'Imported',
+                    storeUrl: url,
+                    rating: 0,
+                    briefDescription: getVal(map.briefDescription) || 'Imported via CSV',
+                    status: getVal(map.status) || 'New',
+                    addedAt: new Date().toLocaleDateString(),
+                    lastInteraction: null,
+                    businessAddress: getVal(map.businessAddress),
+                    email: getVal(map.email),
+                    phone: getVal(map.phone),
+                    instagram: getVal(map.instagram),
+                    website: url, // Assuming storeUrl is the website
+                    enriched: false
+                };
+            }).filter(l => l !== null);
+
+            // Deduplicate against existing CRM
+            let addedCount = 0;
+            const newLeads = [];
+
+            importedLeads.forEach(lead => {
+                const isDuplicate = savedLeads.some(l =>
+                    (l.storeUrl && lead.storeUrl && l.storeUrl === lead.storeUrl) ||
+                    (l.name.toLowerCase() === lead.name.toLowerCase())
+                );
+                if (!isDuplicate) {
+                    newLeads.push(lead);
+                    addedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                setSavedLeads(prev => [...newLeads, ...prev]);
+                alert(`Successfully imported ${addedCount} leads! (${importedLeads.length - addedCount} duplicates skipped)`);
+            } else {
+                alert('No new leads found. All imported leads were duplicates.');
+            }
+        };
+        reader.readAsText(file);
+        // Reset input
+        event.target.value = '';
     };
 
     // Bulk Actions
@@ -801,14 +938,26 @@ ${template.cta}`;
                                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Leads CRM</h2>
                                     <p className="text-gray-600">Manage your prospecting pipeline</p>
                                 </div>
-                                <button
-                                    onClick={exportToCsv}
-                                    disabled={savedLeads.length === 0}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                >
-                                    <Download className="w-4 h-4" />
-                                    Export CSV
-                                </button>
+                                <div className="flex gap-2">
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition-colors cursor-pointer">
+                                        <Upload className="w-4 h-4" />
+                                        Import CSV
+                                        <input
+                                            type="file"
+                                            accept=".csv"
+                                            className="hidden"
+                                            onChange={handleFileUpload}
+                                        />
+                                    </label>
+                                    <button
+                                        onClick={exportToCsv}
+                                        disabled={savedLeads.length === 0}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Export CSV
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
