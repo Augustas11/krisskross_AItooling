@@ -14,6 +14,12 @@ export default function KrissKrossPitchGenerator() {
     const [genError, setGenError] = useState(null);
     const [lastTemplateIndex, setLastTemplateIndex] = useState(-1);
 
+    // Lead Sourcing State
+    const [sourceUrl, setSourceUrl] = useState('');
+    const [foundLeads, setFoundLeads] = useState([]);
+    const [isSourcing, setIsSourcing] = useState(false);
+    const [sourceError, setSourceError] = useState(null);
+
     // Keep templates as fallback
     const pitchTemplates = {
         'fashion-seller': [
@@ -148,6 +154,39 @@ ${template.cta}`;
         { id: 'affiliate', label: 'Online Affiliate', icon: '💰' }
     ];
 
+    const handleSourceLeads = async () => {
+        if (!sourceUrl) return;
+        setIsSourcing(true);
+        setSourceError(null);
+        try {
+            const response = await fetch('/api/leads/source', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: sourceUrl }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to source leads');
+
+            setFoundLeads(data.leads || []);
+        } catch (error) {
+            console.error('Lead sourcing error:', error);
+            setSourceError(error.message);
+        } finally {
+            setIsSourcing(false);
+        }
+    };
+
+    const selectLead = (lead) => {
+        setCustomName(lead.name || '');
+        setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
+        // Scroll to generator
+        const generatorElement = document.getElementById('main-generator');
+        if (generatorElement) {
+            generatorElement.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-8">
             <div className="max-w-4xl mx-auto">
@@ -165,8 +204,79 @@ ${template.cta}`;
                     </div>
                 </div>
 
+                {/* Lead Discovery Section - Step 1 */}
+                <div className="mb-12 bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-blue-500">
+                    <div className="bg-blue-500 p-6 text-white">
+                        <h2 className="text-2xl font-black flex items-center gap-3">
+                            <Sparkles className="w-8 h-8" />
+                            Step 1: AI Lead Discovery
+                        </h2>
+                        <p className="opacity-90 mt-1 font-medium">Automatic extraction from Amazon, eBay, or any shop listing</p>
+                    </div>
+
+                    <div className="p-8">
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex-1">
+                                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Target URL</label>
+                                <input
+                                    type="text"
+                                    value={sourceUrl}
+                                    onChange={(e) => setSourceUrl(e.target.value)}
+                                    placeholder="Paste Amazon category URL or Shop listing page..."
+                                    className="w-full px-4 py-3 border-3 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div className="flex items-end">
+                                <button
+                                    onClick={handleSourceLeads}
+                                    disabled={isSourcing || !sourceUrl}
+                                    className={`px-8 py-3 bg-blue-600 text-white font-bold rounded-xl transition-all flex items-center gap-2 ${isSourcing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 hover:scale-105 shadow-lg'
+                                        }`}
+                                >
+                                    {isSourcing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                                    {isSourcing ? 'Sourcing...' : 'Source Leads'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {sourceError && (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-xl mb-6 border border-red-100 italic">
+                                Sourcing failed: {sourceError}
+                            </div>
+                        )}
+
+                        {foundLeads.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {foundLeads.map((lead, idx) => (
+                                    <div key={idx} className="border-2 border-gray-100 rounded-xl p-4 hover:border-blue-300 transition-colors flex justify-between items-start bg-gray-50/50">
+                                        <div>
+                                            <h4 className="font-bold text-gray-800">{lead.name}</h4>
+                                            <p className="text-xs text-gray-500 mb-1">{lead.productCategory}</p>
+                                            <p className="text-sm text-gray-600 line-clamp-2">{lead.briefDescription}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => selectLead(lead)}
+                                            className="px-3 py-1 bg-white border-2 border-blue-500 text-blue-500 text-xs font-bold rounded-lg hover:bg-blue-500 hover:text-white transition-all transform hover:scale-110 shadow-sm"
+                                        >
+                                            USE LEAD
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {foundLeads.length === 0 && !isSourcing && (
+                            <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl">
+                                <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                                <p>No leads sourced yet. Paste a URL above to start.</p>
+                                <p className="text-xs mt-1">E.g. https://www.amazon.com/Fashion-Brands/...</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Main Card */}
-                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-rose-600">
+                <div id="main-generator" className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-rose-600">
                     {/* Stats Bar */}
                     <div className="bg-gradient-to-r from-rose-600 to-orange-600 p-6 grid grid-cols-3 gap-4 text-white">
                         <div className="text-center">
