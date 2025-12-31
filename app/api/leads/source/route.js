@@ -33,18 +33,85 @@ function detectUrlType(url) {
     return { isListing: false, type: 'unknown' };
 }
 
+async function executePerplexitySearch(url, apiKey) {
+    const prompt = `Analyze the content related to this URL: ${url}. 
+    Identify and extract all unique clothing brands, shops, and sellers associated with it.
+    Return a STRICT JSON object with a "shops" key containing an array of objects.
+    Each object must have: "name", "productCategory", "storeUrl" (if found), "briefDescription".
+    Do not include any markdown formatting or explanation, just the JSON string.`;
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'sonar-pro',
+            messages: [
+                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON.' },
+                { role: 'user', content: prompt }
+            ]
+        })
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Perplexity API failed: ${response.status} ${errText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    // Attempt to parse JSON from content (it might be wrapped in brackets or markdown)
+    const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (jsonMatch) {
+        try {
+            return JSON.parse(jsonMatch[0]);
+        } catch (e) {
+            console.error("JSON Parse Error in Perplexity match", e);
+            // Fallback to trying to parse the whole string if match failed
+        }
+    }
+    return JSON.parse(content);
+}
+
 export async function POST(req) {
     const logs = [];
 
     try {
         const apiKey = process.env.FIRECRAWL_API_KEY;
+        const perplexityKey = process.env.PERPLEXITY_API_KEY;
+
+        const { url, mode = 'smart', provider = 'firecrawl' } = await req.json(); // Default to 'smart' mode and 'firecrawl'
+        logs.push(createLog('info', `Analyzed URL: ${url}`, { mode, provider }));
+
+        if (provider === 'perplexity') {
+            if (!perplexityKey) {
+                return NextResponse.json({ error: 'Missing PERPLEXITY_API_KEY', logs }, { status: 500 });
+            }
+            logs.push(createLog('execution', 'Running Perplexity Search'));
+            try {
+                const startTime = Date.now();
+                const perplexityResult = await executePerplexitySearch(url, perplexityKey);
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                logs.push(createLog('api_response', `Perplexity completed in ${duration}s`));
+
+                return NextResponse.json({
+                    leads: perplexityResult.shops || [],
+                    method: 'perplexity_search',
+                    logs
+                });
+            } catch (e) {
+                logs.push(createLog('error', 'Perplexity Exception', e.message));
+                return NextResponse.json({ error: e.message, logs }, { status: 500 });
+            }
+        }
+
         if (!apiKey) {
             logs.push(createLog('error', 'Missing FIRECRAWL_API_KEY'));
             return NextResponse.json({ error: 'Missing FIRECRAWL_API_KEY', logs }, { status: 500 });
         }
-
-        const { url, mode = 'smart' } = await req.json(); // Default to 'smart' mode
-        logs.push(createLog('info', `Analyzed URL: ${url}`, { mode }));
 
         if (!url) {
             return NextResponse.json({ error: 'URL is required', logs }, { status: 400 });

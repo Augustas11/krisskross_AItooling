@@ -26,6 +26,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isSourcing, setIsSourcing] = useState(false);
     const [isDeepHunt, setIsDeepHunt] = useState(false);
     const [sourceError, setSourceError] = useState(null);
+    const [provider, setProvider] = useState('firecrawl'); // 'firecrawl' | 'perplexity'
 
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({});
@@ -197,7 +198,7 @@ ${template.cta}`;
             const response = await fetch('/api/leads/source', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: sourceUrl, deep: isDeepHunt }),
+                body: JSON.stringify({ url: sourceUrl, deep: isDeepHunt, provider }),
             });
 
             const data = await response.json();
@@ -229,7 +230,8 @@ ${template.cta}`;
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: lead.storeUrl || sourceUrl,
-                    name: lead.name
+                    name: lead.name,
+                    provider
                 }),
             });
 
@@ -285,7 +287,8 @@ ${template.cta}`;
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: viewingLead.storeUrl || sourceUrl,
-                    name: viewingLead.name
+                    name: viewingLead.name,
+                    provider
                 }),
             });
 
@@ -548,6 +551,30 @@ ${template.cta}`;
                                                     <span className="text-sm text-gray-700">Auto (Smart Detect)</span>
                                                 </label>
                                                 <span className="text-xs text-gray-400 italic self-center">- Forcing manual mode coming soon</span>
+                                            </div>
+
+                                            <p className="text-xs text-gray-500 mt-4 mb-2 font-medium uppercase tracking-wider">Provider</p>
+                                            <div className="flex gap-4">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        name="provider"
+                                                        checked={provider === 'firecrawl'}
+                                                        onChange={() => setProvider('firecrawl')}
+                                                        className="text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700">Firecrawl (Scraping)</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        name="provider"
+                                                        checked={provider === 'perplexity'}
+                                                        onChange={() => setProvider('perplexity')}
+                                                        className="text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700">Perplexity (Deep Search)</span>
+                                                </label>
                                             </div>
                                         </motion.div>
                                     )}

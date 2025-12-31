@@ -2,6 +2,58 @@ import { NextResponse } from 'next/server';
 import { Firecrawl } from '@mendable/firecrawl-js';
 import { z } from 'zod';
 
+// Helper for Perplexity Enrichment
+async function executePerplexityEnrich(url, name, apiKey) {
+    const prompt = `Research and extract contact information for the seller "${name}" associated with this URL: ${url}.
+    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, Instagram Handle.
+    Return a STRICT JSON object matching this schema:
+    {
+        "seller_name": "string",
+        "contact_information": {
+            "business_address": "string or null",
+            "customer_service": {
+                "phone_number": "string or null",
+                "email": "string or null",
+                "website": "string or null",
+                "instagram": "string or null"
+            }
+        }
+    }
+    If a field is not found, use null. Do not include markdown or explanations. Output ONLY valid JSON.`;
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'sonar-pro',
+            messages: [
+                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON.' },
+                { role: 'user', content: prompt }
+            ]
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Perplexity API failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+        try {
+            return JSON.parse(jsonMatch[0]);
+        } catch (e) {
+            console.error("JSON Parse Error", e);
+        }
+    }
+    return JSON.parse(content);
+}
+
 export async function POST(req) {
     try {
         const apiKey = process.env.FIRECRAWL_API_KEY;
@@ -11,7 +63,24 @@ export async function POST(req) {
 
         const firecrawl = new Firecrawl({ apiKey });
 
-        const { url, name } = await req.json();
+        const { url, name, provider = 'firecrawl' } = await req.json();
+
+        if (provider === 'perplexity') {
+            const perplexityKey = process.env.PERPLEXITY_API_KEY;
+            if (!perplexityKey) {
+                return NextResponse.json({ error: 'Missing PERPLEXITY_API_KEY' }, { status: 500 });
+            }
+
+            try {
+                const result = await executePerplexityEnrich(url, name, perplexityKey);
+                // Wrap in expected format
+                return NextResponse.json({
+                    enrichedData: result
+                });
+            } catch (e) {
+                return NextResponse.json({ error: e.message || 'Perplexity enrichment failed' }, { status: 500 });
+            }
+        }
 
         if (!url) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
