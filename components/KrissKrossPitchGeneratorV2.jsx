@@ -27,6 +27,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isDeepHunt, setIsDeepHunt] = useState(false);
     const [sourceError, setSourceError] = useState(null);
     const [provider, setProvider] = useState('firecrawl'); // 'firecrawl' | 'perplexity'
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({});
@@ -522,60 +523,78 @@ ${template.cta}`;
                                     </button>
                                 </div>
 
-                                {/* Advanced Options Toggle */}
+                                {/* Search Settings Toggle */}
                                 <div className="mt-4">
                                     <button
-                                        onClick={() => setIsDeepHunt(!isDeepHunt)}
+                                        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                                         className="text-xs font-semibold text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors"
                                     >
                                         <Settings className="w-3 h-3" />
-                                        Advanced Options
+                                        {isSettingsOpen ? 'Hide Options' : 'Search & Enrich Options'}
                                     </button>
 
-                                    {isDeepHunt && (
+                                    {isSettingsOpen && (
                                         <motion.div
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: 'auto', opacity: 1 }}
                                             className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100"
                                         >
-                                            <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Search Strategy</p>
-                                            <div className="flex gap-4">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        name="strategy"
-                                                        defaultChecked={!isDeepHunt}
-                                                        disabled
-                                                        className="text-blue-600 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-sm text-gray-700">Auto (Smart Detect)</span>
-                                                </label>
-                                                <span className="text-xs text-gray-400 italic self-center">- Forcing manual mode coming soon</span>
+                                            {/* Provider Selection */}
+                                            <div className="mb-4">
+                                                <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Provider (Sourcing & Enrichment)</p>
+                                                <div className="flex gap-4">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="radio"
+                                                            name="provider"
+                                                            checked={provider === 'firecrawl'}
+                                                            onChange={() => setProvider('firecrawl')}
+                                                            className="text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                        <span className="text-sm text-gray-700">Firecrawl (Scraping)</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="radio"
+                                                            name="provider"
+                                                            checked={provider === 'perplexity'}
+                                                            onChange={() => setProvider('perplexity')}
+                                                            className="text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                        <span className="text-sm text-gray-700">Perplexity (Deep Search)</span>
+                                                    </label>
+                                                </div>
                                             </div>
 
-                                            <p className="text-xs text-gray-500 mt-4 mb-2 font-medium uppercase tracking-wider">Provider</p>
-                                            <div className="flex gap-4">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        name="provider"
-                                                        checked={provider === 'firecrawl'}
-                                                        onChange={() => setProvider('firecrawl')}
-                                                        className="text-blue-600 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-sm text-gray-700">Firecrawl (Scraping)</span>
-                                                </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        name="provider"
-                                                        checked={provider === 'perplexity'}
-                                                        onChange={() => setProvider('perplexity')}
-                                                        className="text-blue-600 focus:ring-blue-500"
-                                                    />
-                                                    <span className="text-sm text-gray-700">Perplexity (Deep Search)</span>
-                                                </label>
-                                            </div>
+                                            {/* Firecrawl Specific Options */}
+                                            {provider === 'firecrawl' && (
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Firecrawl Strategy</p>
+                                                    <div className="flex flex-col gap-2">
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isDeepHunt}
+                                                                onChange={(e) => setIsDeepHunt(e.target.checked)}
+                                                                className="text-blue-600 focus:ring-blue-500 rounded"
+                                                            />
+                                                            <span className="text-sm text-gray-700">Enable Deep Hunt Agent (Slow but thorough)</span>
+                                                        </label>
+                                                        <div className="flex gap-4 ml-6">
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="strategy"
+                                                                    checked={!isDeepHunt} // Visual only if checkbox maps to it
+                                                                    disabled
+                                                                    className="text-gray-400"
+                                                                />
+                                                                <span className="text-sm text-gray-400">Auto (Smart Detect) - Active when Deep Hunt is off</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
                                 </div>
@@ -641,7 +660,7 @@ ${template.cta}`;
                                                         : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                         } ${enrichingLeads[idx] ? 'opacity-50' : ''}`}
                                                 >
-                                                    {enrichingLeads[idx] ? 'Enriching...' : lead.enriched ? 'Enriched' : 'Enrich'}
+                                                    {enrichingLeads[idx] ? 'Enriching...' : lead.enriched ? 'Enriched' : `Enrich (${provider === 'perplexity' ? 'AI' : 'Crawl'})`}
                                                 </button>
                                             </div>
                                         </motion.div>
