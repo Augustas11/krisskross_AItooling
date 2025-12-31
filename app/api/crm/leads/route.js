@@ -153,8 +153,12 @@ export async function POST(req) {
 
         console.log(`✅ [SUPABASE] Successfully synced ${leads.length} leads`);
 
-        // Also save to file as backup
-        writeDb({ leads });
+        // Also save to file as backup (ignore errors on Vercel/Read-only FS)
+        try {
+            writeDb({ leads });
+        } catch (fsError) {
+            console.warn('⚠️ [API] Could not backup to file (expected on Vercel):', fsError.message);
+        }
 
         return NextResponse.json({
             message: 'Leads synced to Supabase',
