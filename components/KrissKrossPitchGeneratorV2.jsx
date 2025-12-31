@@ -43,6 +43,7 @@ export default function KrissKrossPitchGeneratorV3() {
     // CRM State
     const [savedLeads, setSavedLeads] = useState([]);
     const [isCrmInitialized, setIsCrmInitialized] = useState(false);
+    const [isDataLoaded, setIsDataLoaded] = useState(false); // New flag to track if initial data fetch is complete
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
     const [crmSearchQuery, setCrmSearchQuery] = useState('');
@@ -60,75 +61,79 @@ export default function KrissKrossPitchGeneratorV3() {
     const [emailError, setEmailError] = useState(null);
 
     // Load Leads from Server (Supabase ONLY - NO localStorage)
-    React.useEffect(() => {
-        const loadLeads = async () => {
-            console.log('🔄 [CRM] Loading leads from Supabase...');
-            try {
-                const response = await fetch('/api/crm/leads');
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
-                const data = await response.json();
-                console.log('📥 [CRM] Server response:', data);
-                if (data.leads) {
-                    console.log(`✅ [CRM] Loaded ${data.leads.length} leads from Supabase`);
-                    setSavedLeads(data.leads);
-                } else {
-                    console.warn('⚠️ [CRM] No leads property in server response');
-                    setSavedLeads([]);
-                }
-            } catch (e) {
-                console.error('❌ [CRM] CRITICAL: Failed to load leads from Supabase:', e);
-                alert('CRITICAL ERROR: Cannot connect to database. Please check your internet connection and refresh the page.');
-                setSavedLeads([]);
-            } finally {
-                setIsCrmInitialized(true);
-                console.log('✓ [CRM] Initialization complete');
+    // Load Leads from Server (Supabase ONLY - NO localStorage)
+    const fetchLeads = async () => {
+        console.log('🔄 [CRM] Loading leads from Supabase...');
+        try {
+            const response = await fetch('/api/crm/leads');
+            if (!response.ok) {
+                throw new Error(`Server responded with ${response.status}`);
             }
-        };
-        loadLeads();
-    }, []);
+            const data = await response.json();
+            console.log('📥 [CRM] Server response:', data);
+            if (data.leads) {
+                console.log(`✅ [CRM] Loaded ${data.leads.length} leads from Supabase`);
+                // Use functional update to avoid dependency issues if needed, but direct set is fine here
+                setSavedLeads(data.leads);
+            } else {
+                console.warn('⚠️ [CRM] No leads property in server response');
+                setSavedLeads([]);
+            }
+        } catch (e) {
+            console.error('❌ [CRM] CRITICAL: Failed to load leads from Supabase:', e);
+            // Only alert on critical failures if user needs to know
+            // alert('Error loading leads: ' + e.message); 
+            setSavedLeads([]);
+        } finally {
+            setIsCrmInitialized(true);
+            setIsDataLoaded(true); // Only allow syncing AFTER this is true
+            console.log('✓ [CRM] Initialization complete');
+        }
+    };
 
-    // Track if this is initial load to prevent sync (use useState instead of useRef to avoid hydration issues)
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    React.useEffect(() => {
+        fetchLeads();
+    }, []);
 
     // Sync Leads to Supabase (ONLY when data is modified by user)
     React.useEffect(() => {
-        // Skip sync on initial load
-        if (isInitialLoad) {
-            setIsInitialLoad(false);
+        // Prevent sync until we have fully loaded the initial data
+        if (!isDataLoaded || !isCrmInitialized) {
             return;
         }
 
-        if (isCrmInitialized) {
-            const syncLeads = async () => {
-                console.log(`💾 [CRM] Syncing ${savedLeads.length} leads to server...`);
-                setIsSyncing(true);
-                try {
-                    const response = await fetch('/api/crm/leads', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ leads: savedLeads }),
-                    });
+        const syncLeads = async () => {
+            console.log(`💾 [CRM] Syncing ${savedLeads.length} leads to server...`);
+            setIsSyncing(true);
+            try {
+                const response = await fetch('/api/crm/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leads: savedLeads }),
+                });
 
-                    if (!response.ok) {
-                        throw new Error(`Server responded with ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    console.log('✅ [CRM] Server sync successful:', result.message);
-                } catch (e) {
-                    console.error('❌ [CRM] Sync failed:', e);
-                    alert('Warning: Failed to sync leads to server. Data saved locally only.');
-                } finally {
-                    setIsSyncing(false);
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
                 }
-            };
 
-            // Sync immediately (no delay)
+                const result = await response.json();
+                console.log('✅ [CRM] Server sync successful:', result.message);
+            } catch (e) {
+                console.error('❌ [CRM] Sync failed:', e);
+                // alert('Warning: Failed to sync leads to server. Data saved locally only.'); // Suppressed per user request
+            } finally {
+                setIsSyncing(false);
+            }
+        };
+
+        // Debounce sync slightly to avoid rapid updates
+        const timeoutId = setTimeout(() => {
             syncLeads();
-        }
-    }, [savedLeads, isCrmInitialized]);
+        }, 1000);
+
+        return () => clearTimeout(timeoutId);
+
+    }, [savedLeads, isCrmInitialized, isDataLoaded]);
 
     const pitchTemplates = {
         'fashion-seller': [
@@ -1388,6 +1393,40 @@ ${template.cta}`;
                                     >
                                         <Download className="w-4 h-4" />
                                         Export CSV
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            const btn = document.getElementById('check-mail-crm-btn');
+                                            if (btn) {
+                                                const originalText = btn.innerHTML;
+                                                btn.innerHTML = '<span class="animate-pulse">Checking...</span>';
+                                                btn.disabled = true;
+
+                                                try {
+                                                    const res = await fetch('/api/email/check-replies', { method: 'POST' });
+                                                    if (res.ok) {
+                                                        const result = await res.json();
+                                                        alert('Inbox check complete! Any new replies have been updated in the CRM.');
+                                                        // Refresh leads to show new status
+                                                        fetchLeads();
+                                                    } else {
+                                                        const err = await res.json();
+                                                        alert('Failed to check replies: ' + (err.error || 'Unknown error'));
+                                                    }
+                                                } catch (e) {
+                                                    console.error(e);
+                                                    alert('Error checking replies. Check console for details.');
+                                                } finally {
+                                                    btn.innerHTML = originalText;
+                                                    btn.disabled = false;
+                                                }
+                                            }
+                                        }}
+                                        id="check-mail-crm-btn"
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                    >
+                                        <Mail className="w-4 h-4" />
+                                        Check Mail
                                     </button>
                                 </div>
                             </div>

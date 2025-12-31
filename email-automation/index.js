@@ -1,6 +1,7 @@
 import { sendEmail } from './services/email-sender';
 import { generatePitchFromAPI } from './services/pitch-generator-client';
 import { logEmailActivity } from './services/crm-logger';
+import { checkForReplies } from './reply-checker';
 
 /**
  * Main orchestrator for sending personalized emails
@@ -57,3 +58,5 @@ export async function sendPersonalizedEmail({ leadId, leadEmail, leadContext, em
         };
     }
 }
+
+export { checkForReplies };
