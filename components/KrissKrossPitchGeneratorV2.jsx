@@ -816,6 +816,87 @@ ${template.cta}`;
         }
     };
 
+    // Toggle selection for individual leads in Lead Discovery
+    const toggleLeadSelection = (index) => {
+        setSelectedLeadIndices(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(index)) {
+                newSet.delete(index);
+            } else {
+                newSet.add(index);
+            }
+            return newSet;
+        });
+    };
+
+    // Handle enriching selected leads (or all if none selected)
+    const handleEnrichSelected = async () => {
+        setIsBulkAction(true);
+
+        // If no leads are selected, enrich all unenriched leads
+        const leadsToEnrich = selectedLeadIndices.size > 0
+            ? foundLeads
+                .map((lead, index) => ({ lead, index }))
+                .filter(({ index }) => selectedLeadIndices.has(index) && !foundLeads[index].enriched)
+            : foundLeads
+                .map((lead, index) => ({ lead, index }))
+                .filter(({ lead }) => !lead.enriched);
+
+        if (leadsToEnrich.length === 0) {
+            alert(selectedLeadIndices.size > 0
+                ? 'All selected leads are already enriched!'
+                : 'All leads are already enriched!');
+            setIsBulkAction(false);
+            return;
+        }
+
+        // Process sequentially to be safe with rate limits
+        for (const { lead, index } of leadsToEnrich) {
+            await handleEnrichLead(lead, index);
+            // Small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        setIsBulkAction(false);
+        setSelectedLeadIndices(new Set()); // Clear selection after enrichment
+    };
+
+    // Handle saving selected leads to CRM (or all if none selected)
+    const handleSaveSelectedToCrm = () => {
+        let addedCount = 0;
+        const newLeads = [];
+
+        // If no leads are selected, save all leads
+        const leadsToSave = selectedLeadIndices.size > 0
+            ? foundLeads.filter((_, index) => selectedLeadIndices.has(index))
+            : foundLeads;
+
+        leadsToSave.forEach(lead => {
+            const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
+            if (!isDuplicate) {
+                newLeads.push({
+                    ...lead,
+                    id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    status: 'New',
+                    addedAt: new Date().toLocaleDateString(),
+                    lastInteraction: null
+                });
+                addedCount++;
+            }
+        });
+
+        if (addedCount > 0) {
+            setSavedLeads(prev => [...newLeads, ...prev]);
+            alert(`Saved ${addedCount} new lead${addedCount > 1 ? 's' : ''} to CRM!`);
+            setActiveTab('crm');
+            setSelectedLeadIndices(new Set()); // Clear selection after saving
+        } else {
+            alert(selectedLeadIndices.size > 0
+                ? 'All selected leads are already in the CRM!'
+                : 'All leads are already in the CRM!');
+        }
+    };
+
     const selectLead = (lead) => {
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
