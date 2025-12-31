@@ -415,6 +415,8 @@ ${template.cta}`;
                             if (isVal(cs.youtube)) updates.youtube = cs.youtube;
                             if (isVal(cs.facebook)) updates.facebook = cs.facebook;
 
+                            console.log('[DEBUG] Enrichment Updates payload:', updates);
+
                             // Determine enriched status based on new OR existing data
                             // If updates has any keys, we potentially found something new.
                             // But 'enriched' flag implies we successfully ran enrichment at least once.

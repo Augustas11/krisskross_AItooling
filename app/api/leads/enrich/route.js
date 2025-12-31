@@ -27,20 +27,18 @@ function sanitizeAiData(data) {
 
 // Helper for Perplexity Enrichment
 async function executePerplexityEnrich(url, name, apiKey) {
-    const prompt = `Visit and analyze the website ${url} for the business "${name}".
+    const prompt = `Perform a deep search for the business "${name}" (Website: ${url}).
 
-IMPORTANT: I specifically need the TikTok link. Check the footer and header very carefully for ANY link containing "tiktok.com". Even if it's just an icon with no text, you MUST find the URL.
+TASKS:
+1. Find Contact Info: Email (full domain), Phone, Physical Address.
+2. Find Social Profiles: Instagram, TikTok, YouTube, Facebook.
 
-EXTRACTION RULES:
-- DO NOT include citations like [1], [2] in your JSON values.
-- If a field is missing, use null (do NOT use "Not found" or "N/A").
-- Ensure Emails include the full domain.
-
-Look for:
-1. Phone Number (Full format)
-2. Email address (Full domain, no truncation)
-3. Physical address
-4. Social profiles: tiktok (MANDATORY if exists), instagram, youtube, facebook (Full URLs)
+CRITICAL INSTRUCTIONS:
+- If links are not on the homepage, search the FOOTER and "Contact Us" pages.
+- If still not found, SEARCH THE BROADER WEB (Instagram, TikTok, LinkedIn) to find their official profiles.
+- DO NOT include citations like [1] or [2] in JSON values.
+- Return null for missing fields (NEVER use "Not found" or "N/A").
+- Focus on finding URLs containing 'tiktok.com' and 'instagram.com'.
 
 Return STRICT JSON:
 {
@@ -59,7 +57,7 @@ Return STRICT JSON:
     }
 }
 
-CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`;
+Output ONLY JSON.`;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -110,22 +108,12 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`
 
 // Helper for Grok Enrichment
 async function executeGrokEnrich(url, name, apiKey) {
-    const prompt = `Visit and analyze the website ${url} for the business "${name}".
+    const prompt = `Analyze "${name}" (${url}) and find all social media (TikTok, Instagram, YouTube, Facebook) and contact info.
 
-IMPORTANT: Look for ALL social media links in the HEADER and FOOTER. 
-Specifically hunt for TikTok (MANDATORY), Instagram, YouTube, and Facebook.
-Find any links containing "tiktok.com" or handles like "@${name}".
-
-EXTRACTION RULES:
-- DO NOT include citations like [1], [2].
-- Use null for missing data.
-- Full domain required for emails.
-
-Look for:
-1. Phone Number (Full format)
-2. Email address (Full domain, no truncation)
-3. Physical address
-4. Social profiles: tiktok, instagram, youtube, facebook (Full URLs)
+Search the footer icons and the web to find official profiles.
+- No citations [1][2].
+- Use null for missing.
+- Capture full email domains.
 
 Return STRICT JSON:
 {
@@ -144,7 +132,7 @@ Return STRICT JSON:
     }
 }
 
-CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL if it exists in the footer Icons. Output ONLY JSON.`;
+Output ONLY JSON.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
@@ -207,7 +195,39 @@ export async function POST(req) {
                     send('status', 'Connecting to Perplexity Sonar-Pro Network...');
                     send('status', 'Searching and analyzing live web data...');
 
-                    const result = await executePerplexityEnrich(url, name, perplexityKey);
+                    let result = await executePerplexityEnrich(url, name, perplexityKey);
+
+                    // --- RECOVERY PASS: If socials missing, trigger Firecrawl Scrape ---
+                    const cs = result.contact_information?.customer_service || {};
+                    if (!cs.instagram || !cs.tiktok) {
+                        try {
+                            send('status', 'Verifying social handles via Page Scrape...');
+                            const firecrawl = new Firecrawl({ apiKey });
+                            const scrapeResult = await firecrawl.scrapeJs(url, {
+                                formats: ['json'],
+                                jsonOptions: {
+                                    schema: z.object({
+                                        instagram: z.string().optional(),
+                                        tiktok: z.string().optional(),
+                                        youtube: z.string().optional(),
+                                        facebook: z.string().optional()
+                                    }),
+                                    prompt: "Find the social media URLs for this business. Look in the footer icons."
+                                }
+                            });
+
+                            if (scrapeResult.success && scrapeResult.json) {
+                                const sj = scrapeResult.json;
+                                if (sj.instagram && !cs.instagram) cs.instagram = sj.instagram;
+                                if (sj.tiktok && !cs.tiktok) cs.tiktok = sj.tiktok;
+                                if (sj.youtube && !cs.youtube) cs.youtube = sj.youtube;
+                                if (sj.facebook && !cs.facebook) cs.facebook = sj.facebook;
+                                console.log('[RECOVERY] Firecrawl found missing socials:', sj);
+                            }
+                        } catch (recoveryErr) {
+                            console.warn('[RECOVERY] Social discovery failed:', recoveryErr.message);
+                        }
+                    }
 
                     send('status', 'Extracting contact entities...');
                     send('result', { enrichedData: result });
