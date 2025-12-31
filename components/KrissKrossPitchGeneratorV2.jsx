@@ -5,7 +5,8 @@ import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
-    FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload
+    FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
+    Youtube, Facebook
 } from 'lucide-react';
 
 export default function KrissKrossPitchGeneratorV3() {
@@ -284,7 +285,9 @@ ${template.cta}`;
                                         phone: cs.phone_number || l.phone,
                                         instagram: cs.instagram || l.instagram,
                                         website: cs.website || l.website,
-                                        tiktok: cs.tiktok || l.tiktok
+                                        tiktok: cs.tiktok || l.tiktok,
+                                        youtube: cs.youtube || l.youtube,
+                                        facebook: cs.facebook || l.facebook
                                     };
                                 }
                                 return l;
@@ -402,6 +405,8 @@ ${template.cta}`;
                             if (cs.instagram) updates.instagram = cs.instagram;
                             if (cs.website) updates.website = cs.website;
                             if (cs.tiktok) updates.tiktok = cs.tiktok;
+                            if (cs.youtube) updates.youtube = cs.youtube;
+                            if (cs.facebook) updates.facebook = cs.facebook;
 
                             // Determine enriched status based on new OR existing data
                             // If updates has any keys, we potentially found something new.
@@ -1802,7 +1807,7 @@ ${template.cta}`;
                                                     </div>
                                                     <div className="flex-1">
                                                         <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
-                                                        <div className="text-sm text-gray-900">
+                                                        <div className="text-sm text-gray-900 break-all">
                                                             {viewingLead.instagram ? (
                                                                 <a
                                                                     href={viewingLead.instagram.startsWith('http') ? viewingLead.instagram : `https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
@@ -1818,6 +1823,40 @@ ${template.cta}`;
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {/* YouTube */}
+                                                {viewingLead.youtube && (
+                                                    <div className="group flex items-start gap-4">
+                                                        <div className="mt-1 w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 transition-colors">
+                                                            <Youtube className="w-4 h-4 text-red-600" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="text-xs text-gray-500 font-medium mb-0.5">YouTube</div>
+                                                            <div className="text-sm text-gray-900 break-all">
+                                                                <a href={ensureAbsoluteUrl(viewingLead.youtube)} target="_blank" rel="noreferrer" className="hover:text-red-600 hover:underline flex items-center gap-1">
+                                                                    {viewingLead.youtube} <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Facebook */}
+                                                {viewingLead.facebook && (
+                                                    <div className="group flex items-start gap-4">
+                                                        <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                                                            <Facebook className="w-4 h-4 text-blue-600" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="text-xs text-gray-500 font-medium mb-0.5">Facebook</div>
+                                                            <div className="text-sm text-gray-900 break-all">
+                                                                <a href={ensureAbsoluteUrl(viewingLead.facebook)} target="_blank" rel="noreferrer" className="hover:text-blue-600 hover:underline flex items-center gap-1">
+                                                                    {viewingLead.facebook} <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 {/* TikTok Shop */}
                                                 <div className="group flex items-start gap-4">

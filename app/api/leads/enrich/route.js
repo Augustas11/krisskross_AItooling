@@ -6,12 +6,12 @@ import { z } from 'zod';
 async function executePerplexityEnrich(url, name, apiKey) {
     const prompt = `Visit and analyze the website ${url} for the business "${name}".
 
-IMPORTANT: Look for:
+IMPORTANT: Thoroughly check the HEADER and FOOTER for social media icons. Look for:
 1. Phone Number (Full format)
-2. Email address (MUST include full domain, e.g., info@domain.com. DO NOT TRUNCATE.)
+2. Email address (Full domain required, e.g., service@wiholl.com)
 3. Physical address
-4. Social media: Instagram (URL), TikTok (URL), YouTube, Facebook.
-5. Official website domain
+4. Social handles: Instagram (Full URL), TikTok (Full URL), YouTube, and Facebook.
+5. Search for any text like "Follow us" or social icon links.
 
 Return STRICT JSON:
 {
