@@ -270,6 +270,30 @@ ${template.cta}`;
         }
     };
 
+    // Helper to check if lead should be marked as enriched
+    const checkShouldBeEnriched = (leadData) => {
+        const contactFields = [
+            leadData.email,
+            leadData.phone,
+            leadData.instagram,
+            leadData.tiktok,
+            leadData.website,
+            leadData.businessAddress
+        ];
+        // Count fields that are not null/undefined/empty string
+        const populatedCount = contactFields.filter(field => field && field.trim().length > 0).length;
+
+        // "more than 2 fields" means > 2, i.e., 3 or more.
+        return populatedCount > 2;
+    };
+
+    // Helper to ensure URLs are absolute
+    const ensureAbsoluteUrl = (url) => {
+        if (!url) return '#';
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return `https://${url}`;
+    };
+
     const enrichViewingLead = async () => {
         // Validation: For saved leads (CRM), we should strictly require a URL on the lead itself.
         // Falling back to 'sourceUrl' (the search bar) is risky for CRM leads as they might be unrelated.
@@ -347,9 +371,15 @@ ${template.cta}`;
                                 tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
                             };
 
-                            setViewingLead(prev => ({ ...prev, ...newFields }));
+                            // Determine status update
+                            let newStatus = viewingLead.status;
+                            if (newFields.enriched || checkShouldBeEnriched({ ...viewingLead, ...newFields })) {
+                                newStatus = 'Enriched';
+                            }
+
+                            setViewingLead(prev => ({ ...prev, ...newFields, status: newStatus }));
                             setSavedLeads(prev => prev.map(l =>
-                                l.id === viewingLead.id ? { ...l, ...newFields } : l
+                                l.id === viewingLead.id ? { ...l, ...newFields, status: newStatus } : l
                             ));
 
                             if (!hasData) {
@@ -390,10 +420,16 @@ ${template.cta}`;
         const newLead = {
             ...lead,
             id: `lead_${Date.now()}`,
-            status: 'New',
+            status: 'New', // Default, will override below if enriched criteria met
             addedAt: new Date().toLocaleDateString(),
             lastInteraction: null
         };
+
+        // Check availability of contact info on import/save
+        if (checkShouldBeEnriched(newLead)) {
+            newLead.status = 'Enriched';
+        }
+
         console.log('➕ [CRM] Adding new lead:', newLead.name);
         setSavedLeads(prev => [newLead, ...prev]);
         setActiveTab('crm'); // Auto-switch to CRM tab
@@ -512,7 +548,13 @@ ${template.cta}`;
                     tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
                 };
 
-                setSavedLeads(prev => prev.map(l => l.id === lead.id ? { ...l, ...newFields } : l));
+                // Update status if criteria met
+                const updatedLead = { ...lead, ...newFields };
+                if (newFields.enriched || checkShouldBeEnriched(updatedLead)) {
+                    updatedLead.status = 'Enriched';
+                }
+
+                setSavedLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
                 return true;
             }
             return false;
@@ -1656,7 +1698,7 @@ ${template.cta}`;
                                                         <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok Shop</div>
                                                         <div className="text-sm text-gray-900">
                                                             {viewingLead.tiktok ? (
-                                                                <a href={viewingLead.tiktok} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
+                                                                <a href={ensureAbsoluteUrl(viewingLead.tiktok)} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
                                                                     {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
                                                                 </a>
                                                             ) : (
@@ -1675,7 +1717,7 @@ ${template.cta}`;
                                                         <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
                                                         <div className="text-sm text-gray-900">
                                                             {viewingLead.website ? (
-                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
+                                                                <a href={ensureAbsoluteUrl(viewingLead.website)} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
                                                                     {viewingLead.website} <ExternalLink className="w-3 h-3" />
                                                                 </a>
                                                             ) : (
@@ -1716,7 +1758,7 @@ ${template.cta}`;
                                                     <div>
                                                         <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
                                                         {viewingLead.storeUrl ? (
-                                                            <a href={viewingLead.storeUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
+                                                            <a href={ensureAbsoluteUrl(viewingLead.storeUrl)} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
                                                                 {viewingLead.storeUrl}
                                                             </a>
                                                         ) : (
