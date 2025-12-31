@@ -7,6 +7,9 @@ const anthropic = new Anthropic({
 
 export async function POST(req) {
     try {
+        if (!process.env.ANTHROPIC_API_KEY) {
+            return NextResponse.json({ error: 'Missing ANTHROPIC_API_KEY in environment variables' }, { status: 500 });
+        }
         const { targetType, customName, context } = await req.json();
 
         const systemPrompt = `You are the KrissKross AI Brand Voice Expert. Your goal is to generate high-converting outreach pitches for SDRs.

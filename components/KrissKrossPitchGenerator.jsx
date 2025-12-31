@@ -10,6 +10,8 @@ export default function KrissKrossPitchGenerator() {
     const [copied, setCopied] = useState(false);
     const [outreaches, setOutreaches] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [wasAiGenerated, setWasAiGenerated] = useState(false);
+    const [genError, setGenError] = useState(null);
     const [lastTemplateIndex, setLastTemplateIndex] = useState(-1);
 
     // Keep templates as fallback
@@ -66,6 +68,8 @@ export default function KrissKrossPitchGenerator() {
 
     const generatePitch = async () => {
         setIsLoading(true);
+        setGenError(null);
+        setWasAiGenerated(false);
         try {
             const response = await fetch('/api/generate', {
                 method: 'POST',
@@ -73,12 +77,18 @@ export default function KrissKrossPitchGenerator() {
                 body: JSON.stringify({ targetType, customName, context }),
             });
 
-            if (!response.ok) throw new Error('API failed');
-
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'AI Generation failed');
+            }
+
             setGeneratedPitch(data.pitch);
+            setWasAiGenerated(true);
         } catch (error) {
             console.error('AI Generation failed, using fallback template:', error);
+            setGenError(error.message);
+
             // Fallback logic
             const templates = pitchTemplates[targetType] || pitchTemplates['fashion-seller'];
             let templateIndex;
@@ -98,6 +108,7 @@ ${template.proof}
 
 ${template.cta}`;
             setGeneratedPitch(fallbackPitch);
+            setWasAiGenerated(false);
         } finally {
             setIsLoading(false);
         }
@@ -261,9 +272,15 @@ ${template.cta}`;
                                     <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Sparkles className="w-5 h-5 text-rose-600" />
                                         Your KrissKross Pitch
-                                        <span className="ml-2 px-2 py-0.5 bg-rose-600 text-white text-[10px] uppercase tracking-widest rounded-full animate-pulse">
-                                            AI Optimized
-                                        </span>
+                                        {wasAiGenerated ? (
+                                            <span className="ml-2 px-2 py-0.5 bg-rose-600 text-white text-[10px] uppercase tracking-widest rounded-full animate-pulse">
+                                                AI Optimized
+                                            </span>
+                                        ) : (
+                                            <span className="ml-2 px-2 py-0.5 bg-gray-400 text-white text-[10px] uppercase tracking-widest rounded-full">
+                                                Template Fallback
+                                            </span>
+                                        )}
                                     </h3>
                                     <button
                                         onClick={copyToClipboard}
@@ -273,7 +290,12 @@ ${template.cta}`;
                                         {copied ? 'Copied & Logged!' : 'Copy & Log Sent'}
                                     </button>
                                 </div>
-                                <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed text-lg">
+                                {genError && (
+                                    <div className="mb-4 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-100 italic">
+                                        AI specifically tailored message failed: {genError}. Showing safest template instead.
+                                    </div>
+                                )}
+                                <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed text-lg text-left">
                                     {generatedPitch}
                                 </pre>
                             </div>
