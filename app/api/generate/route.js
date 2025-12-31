@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export async function POST(req) {
     try {
-        if (!process.env.ANTHROPIC_API_KEY) {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
             return NextResponse.json({ error: 'Missing ANTHROPIC_API_KEY in environment variables' }, { status: 500 });
         }
+
+        const anthropic = new Anthropic({
+            apiKey: apiKey,
+        });
+
         const { targetType, customName, context } = await req.json();
 
         const systemPrompt = `You are the KrissKross AI Brand Voice Expert. Your goal is to generate high-converting outreach pitches for SDRs.
@@ -41,7 +43,10 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
 
         return NextResponse.json({ pitch: response.content[0].text });
     } catch (error) {
-        console.error('Claude API Error:', error);
-        return NextResponse.json({ error: 'Failed to generate pitch' }, { status: 500 });
+        console.error('Claude API Error Details:', error);
+        return NextResponse.json({
+            error: error.message || 'Unknown error occurred during generation',
+            details: error.stack
+        }, { status: 500 });
     }
 }
