@@ -24,20 +24,101 @@ function sanitizeAiData(data) {
     return data;
 }
 
-// Helper for Perplexity Enrichment
-async function executePerplexityEnrich(url, name, apiKey) {
-    const prompt = `Perform a deep search for the business "${name}" (Website: ${url}).
+// Helper to fetch HTML content using Firecrawl
+async function fetchHtmlContent(url, firecrawlApiKey) {
+    if (!firecrawlApiKey) {
+        // Fallback: try direct fetch with axios
+        const axios = (await import('axios')).default;
+        try {
+            const response = await axios.get(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                },
+                timeout: 10000
+            });
+            return response.data;
+        } catch (e) {
+            console.warn('[HTML Fetch] Direct fetch failed:', e.message);
+            return null;
+        }
+    }
+
+    // Use Firecrawl for better HTML extraction (handles JavaScript rendering)
+    try {
+        const { FirecrawlAppV1 } = await import('@mendable/firecrawl-js');
+        const app = new FirecrawlAppV1({ apiKey: firecrawlApiKey });
+
+        const result = await app.scrapeUrl(url, {
+            formats: ['markdown', 'html']
+        });
+
+        if (result.success) {
+            // Return both markdown (cleaner) and HTML (more complete)
+            return {
+                html: result.html || '',
+                markdown: result.markdown || '',
+                text: result.markdown || result.html || ''
+            };
+        }
+    } catch (e) {
+        console.warn('[Firecrawl] Scrape failed:', e.message);
+    }
+
+    return null;
+}
+
+// Helper to extract footer and contact sections from HTML
+function extractRelevantSections(htmlContent) {
+    if (!htmlContent) return '';
+
+    const html = typeof htmlContent === 'string' ? htmlContent : htmlContent.html || htmlContent.text || '';
+
+    // Try to extract footer section
+    const footerMatch = html.match(/<footer[\s\S]*?<\/footer>/i);
+    const contactMatch = html.match(/<[^>]*(contact|about)[\s\S]*?<\/[^>]+>/gi);
+
+    let relevantHtml = '';
+
+    if (footerMatch) {
+        relevantHtml += '\n=== FOOTER SECTION ===\n' + footerMatch[0];
+    }
+
+    if (contactMatch && contactMatch.length > 0) {
+        relevantHtml += '\n=== CONTACT SECTIONS ===\n' + contactMatch.slice(0, 3).join('\n');
+    }
+
+    // If we have markdown, use it as it's cleaner
+    if (htmlContent.markdown) {
+        relevantHtml = htmlContent.markdown.slice(0, 8000) + '\n\n' + relevantHtml;
+    } else if (!relevantHtml) {
+        // Fallback to first 8000 chars of HTML
+        relevantHtml = html.slice(0, 8000);
+    }
+
+    return relevantHtml.slice(0, 10000); // Limit total size
+}
+
+// Helper for Perplexity Enrichment (FIXED: Now receives HTML content)
+async function executePerplexityEnrich(url, name, apiKey, htmlContent = null) {
+    const relevantHtml = htmlContent ? extractRelevantSections(htmlContent) : '';
+
+    const prompt = relevantHtml
+        ? `Extract contact information for the business "${name}" from the following website content.
+
+WEBSITE CONTENT FROM ${url}:
+${relevantHtml}
 
 TASKS:
-1. Find Contact Info: Email (full domain), Phone, Physical Address.
-2. Find Social Profiles: Instagram, TikTok, YouTube, Facebook.
+1. Find Contact Info: Email (full domain), Phone, Physical Address
+2. Find Social Profiles: Instagram, TikTok, YouTube, Facebook (look for URLs in the content above)
 
 CRITICAL INSTRUCTIONS:
-- PRIORITY 1: key links found on the website footer/header/contact page.
-- PRIORITY 2: Official profiles found via search (e.g., "Wiholl Instagram").
-- STRICTLY FORBIDDEN: Do NOT guess or construct URLs (e.g., do not just add the name to facebook.com/).
-- ONLY return URLs you have verified exist.
-- If a handle uses underscores (_) or dots (.), be precise (e.g., 'wiholl.official' vs 'wiholl_official').
+- Extract information ONLY from the website content provided above
+- Look for social media links (instagram.com, tiktok.com, etc.) in the HTML
+- Extract email addresses from mailto: links or text patterns
+- STRICTLY FORBIDDEN: Do NOT guess or construct URLs
+- ONLY return information you can verify from the content above
+- If a handle uses underscores (_) or dots (.), be precise
 
 Return STRICT JSON:
 {
@@ -56,7 +137,15 @@ Return STRICT JSON:
     }
 }
 
-Output ONLY JSON.`;
+Output ONLY JSON.`
+        : `Search the web for the business "${name}" (Website: ${url}).
+
+TASKS:
+1. Find Contact Info: Email, Phone, Address
+2. Find Social Profiles: Instagram, TikTok, YouTube, Facebook
+
+Return STRICT JSON with the structure above. Output ONLY JSON.`;
+
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -105,15 +194,26 @@ Output ONLY JSON.`;
     }
 }
 
-// Helper for Grok Enrichment
-async function executeGrokEnrich(url, name, apiKey) {
-    const prompt = `Analyze "${name}" (${url}) and find all social media (TikTok, Instagram, YouTube, Facebook) and contact info.
+// Helper for Grok Enrichment (FIXED: Now receives HTML content)
+async function executeGrokEnrich(url, name, apiKey, htmlContent = null) {
+    const relevantHtml = htmlContent ? extractRelevantSections(htmlContent) : '';
 
-Search the footer icons and the web to find official profiles.
-- No citations [1][2].
-- Use null for missing.
-- Capture full email domains.
-- DO NOT guess or construct URLs (e.g. facebook.com/name). ONLY return found links.
+    const prompt = relevantHtml
+        ? `Extract contact information for "${name}" from the following website content.
+
+WEBSITE CONTENT FROM ${url}:
+${relevantHtml}
+
+TASKS:
+- Find all social media links (TikTok, Instagram, YouTube, Facebook) in the content above
+- Extract contact info (email, phone, address) from the content above
+
+INSTRUCTIONS:
+- Extract information ONLY from the website content provided above
+- Look for social media URLs (instagram.com, tiktok.com, etc.)
+- No citations [1][2]
+- Use null for missing
+- DO NOT guess or construct URLs - ONLY return links found in the content
 
 Return STRICT JSON:
 {
@@ -132,7 +232,9 @@ Return STRICT JSON:
     }
 }
 
-Output ONLY JSON.`;
+Output ONLY JSON.`
+        : `Search the web for "${name}" (${url}) and find social media and contact info.
+Return STRICT JSON with the structure above. Output ONLY JSON.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
@@ -189,10 +291,23 @@ export async function POST(req) {
                     const perplexityKey = process.env.PERPLEXITY_API_KEY;
                     if (!perplexityKey) throw new Error('Missing PERPLEXITY_API_KEY');
 
-                    send('status', 'Connecting to Perplexity Sonar-Pro Network...');
-                    send('status', 'Searching and analyzing live web data...');
+                    // FIXED: Fetch HTML content first
+                    send('status', 'Fetching website content...');
+                    const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+                    const htmlContent = await fetchHtmlContent(url, firecrawlKey);
 
-                    let result = await executePerplexityEnrich(url, name, perplexityKey);
+                    if (htmlContent) {
+                        send('status', 'Website content retrieved successfully');
+                        console.log('[HTML Fetch] Content retrieved for', url);
+                    } else {
+                        send('status', 'Direct HTML fetch failed, falling back to web search');
+                        console.warn('[HTML Fetch] Failed for', url);
+                    }
+
+                    send('status', 'Connecting to Perplexity Sonar-Pro Network...');
+                    send('status', 'Analyzing content and extracting contact information...');
+
+                    let result = await executePerplexityEnrich(url, name, perplexityKey, htmlContent);
 
                     // --- RECOVERY PASS: If Perplexity misses socials, try Grok ---
                     const cs = result.contact_information?.customer_service || {};
@@ -200,8 +315,8 @@ export async function POST(req) {
                         const grokKey = process.env.GROK_API_KEY;
                         if (grokKey) {
                             try {
-                                send('status', 'Performing secondary Search via Grok...');
-                                const grokResult = await executeGrokEnrich(url, name, grokKey);
+                                send('status', 'Performing secondary analysis via Grok...');
+                                const grokResult = await executeGrokEnrich(url, name, grokKey, htmlContent);
                                 const gcs = grokResult.contact_information?.customer_service || {};
 
                                 if (gcs.instagram && !cs.instagram) cs.instagram = gcs.instagram;
@@ -223,10 +338,21 @@ export async function POST(req) {
                     const grokKey = process.env.GROK_API_KEY;
                     if (!grokKey) throw new Error('Missing GROK_API_KEY');
 
-                    send('status', 'Connecting to xAI Grok API...');
-                    send('status', 'Reasoning about page content...');
+                    // FIXED: Fetch HTML content first
+                    send('status', 'Fetching website content...');
+                    const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+                    const htmlContent = await fetchHtmlContent(url, firecrawlKey);
 
-                    const result = await executeGrokEnrich(url, name, grokKey);
+                    if (htmlContent) {
+                        send('status', 'Website content retrieved successfully');
+                    } else {
+                        send('status', 'Direct HTML fetch failed, falling back to web search');
+                    }
+
+                    send('status', 'Connecting to xAI Grok API...');
+                    send('status', 'Analyzing content and extracting contact information...');
+
+                    const result = await executeGrokEnrich(url, name, grokKey, htmlContent);
 
                     send('status', 'Formatting extracted data...');
                     send('result', { enrichedData: result });
