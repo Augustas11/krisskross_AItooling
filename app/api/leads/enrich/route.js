@@ -24,60 +24,72 @@ function sanitizeAiData(data) {
     return data;
 }
 
-// Helper to fetch HTML content - tries multiple methods
-async function fetchHtmlContent(url) {
-    // Method 1: Try Firecrawl if available (best - handles JS rendering)
-    const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-    if (firecrawlKey) {
-        try {
-            const { FirecrawlAppV1 } = await import('@mendable/firecrawl-js');
-            const app = new FirecrawlAppV1({ apiKey: firecrawlKey });
+// Helper: Use Perplexity to search for social media profiles directly
+async function searchForSocialMedia(url, name, apiKey) {
+    console.log('[Social Search] Performing targeted search for', name);
 
-            console.log('[Firecrawl] Attempting to scrape', url);
-            const result = await app.scrapeUrl(url, {
-                formats: ['markdown', 'html'],
-                timeout: 30000
-            });
-
-            if (result.success) {
-                console.log('[Firecrawl] Successfully retrieved content for', url);
-                return {
-                    html: result.html || '',
-                    markdown: result.markdown || '',
-                    text: result.markdown || result.html || ''
-                };
-            }
-        } catch (e) {
-            console.warn('[Firecrawl] Scrape failed:', e.message);
-        }
-    } else {
-        console.log('[Firecrawl] API key not available, skipping');
-    }
-
-    // Method 2: Try axios with anti-bot headers (works for some sites)
-    const axios = (await import('axios')).default;
     try {
-        console.log('[Axios] Attempting direct fetch for', url);
-        const response = await axios.get(url, {
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Cache-Control': 'max-age=0'
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
             },
-            timeout: 15000,
-            maxRedirects: 5
+            body: JSON.stringify({
+                model: 'sonar-pro',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a social media research assistant. You search the web to find verified social media profiles for businesses.'
+                    },
+                    {
+                        role: 'user',
+                        content: `Find ALL social media profiles for "${name}" (website: ${url}).
+
+SEARCH EACH PLATFORM:
+1. "${name}" TikTok profile
+2. "${name}" Instagram profile
+3. "${name}" Facebook page
+4. "${name}" YouTube channel
+
+Also search:
+- "${name}" contact email
+- "${name}" phone number
+- Check ${url} for contact information
+
+Return findings as JSON:
+{
+  "tiktok": "full URL or null",
+  "instagram": "full URL or null",
+  "facebook": "full URL or null",
+  "youtube": "full URL or null",
+  "email": "email address or null",
+  "phone": "phone number or null"
+}
+
+CRITICAL: Only return URLs you actually FOUND via search. Verify they match the business.`
+                    }
+                ]
+            })
         });
-        console.log('[Axios] Successfully retrieved HTML for', url);
-        return response.data;
+
+        if (response.ok) {
+            const data = await response.json();
+            const content = data.choices[0].message.content;
+            console.log('[Social Search] Response:', content);
+
+            // Try to extract JSON
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    return JSON.parse(jsonMatch[0]);
+                } catch (e) {
+                    console.warn('[Social Search] JSON parse failed');
+                }
+            }
+        }
     } catch (e) {
-        console.warn('[Axios] Direct fetch failed:', e.message, '- falling back to AI search');
+        console.warn('[Social Search] Search failed:', e.message);
     }
 
     return null;
@@ -365,25 +377,28 @@ export async function POST(req) {
                     const perplexityKey = process.env.PERPLEXITY_API_KEY;
                     if (!perplexityKey) throw new Error('Missing PERPLEXITY_API_KEY');
 
-                    // Fetch HTML content using Firecrawl (if available) or axios
-                    send('status', 'Fetching website content...');
-                    const htmlContent = await fetchHtmlContent(url);
+                    // NEW APPROACH: Do targeted social media search first
+                    send('status', 'Searching for social media profiles...');
+                    const socialSearchResults = await searchForSocialMedia(url, name, perplexityKey);
 
-                    if (htmlContent) {
-                        send('status', 'Website content retrieved successfully');
-                        console.log('[HTML Fetch] Content retrieved for', url);
-                    } else {
-                        send('status', 'Direct HTML fetch failed, falling back to web search');
-                        console.warn('[HTML Fetch] Failed for', url);
+                    send('status', 'Connecting to Perplexity for detailed extraction...');
+                    send('status', 'Analyzing and enriching contact information...');
+
+                    let result = await executePerplexityEnrich(url, name, perplexityKey, null);
+
+                    // Merge social search results
+                    const cs = result.contact_information?.customer_service || {};
+                    if (socialSearchResults) {
+                        console.log('[Social Search] Merging results:', socialSearchResults);
+                        if (socialSearchResults.tiktok && !cs.tiktok) cs.tiktok = socialSearchResults.tiktok;
+                        if (socialSearchResults.instagram && !cs.instagram) cs.instagram = socialSearchResults.instagram;
+                        if (socialSearchResults.facebook && !cs.facebook) cs.facebook = socialSearchResults.facebook;
+                        if (socialSearchResults.youtube && !cs.youtube) cs.youtube = socialSearchResults.youtube;
+                        if (socialSearchResults.email && !cs.email) cs.email = socialSearchResults.email;
+                        if (socialSearchResults.phone && !cs.phone_number) cs.phone_number = socialSearchResults.phone;
                     }
 
-                    send('status', 'Connecting to Perplexity Sonar-Pro Network...');
-                    send('status', 'Analyzing content and extracting contact information...');
-
-                    let result = await executePerplexityEnrich(url, name, perplexityKey, htmlContent);
-
-                    // --- RECOVERY PASS: If Perplexity misses socials, try Grok ---
-                    const cs = result.contact_information?.customer_service || {};
+                    // --- RECOVERY PASS: If still missing socials, try Grok ---
                     if (!cs.instagram || !cs.tiktok) {
                         const grokKey = process.env.GROK_API_KEY;
                         if (grokKey) {
@@ -411,20 +426,10 @@ export async function POST(req) {
                     const grokKey = process.env.GROK_API_KEY;
                     if (!grokKey) throw new Error('Missing GROK_API_KEY');
 
-                    // Fetch HTML content using Firecrawl (if available) or axios
-                    send('status', 'Fetching website content...');
-                    const htmlContent = await fetchHtmlContent(url);
-
-                    if (htmlContent) {
-                        send('status', 'Website content retrieved successfully');
-                    } else {
-                        send('status', 'Direct HTML fetch failed, falling back to web search');
-                    }
-
                     send('status', 'Connecting to xAI Grok API...');
-                    send('status', 'Analyzing content and extracting contact information...');
+                    send('status', 'Searching and analyzing contact information...');
 
-                    const result = await executeGrokEnrich(url, name, grokKey, htmlContent);
+                    const result = await executeGrokEnrich(url, name, grokKey, null);
 
                     send('status', 'Formatting extracted data...');
                     send('result', { enrichedData: result });
