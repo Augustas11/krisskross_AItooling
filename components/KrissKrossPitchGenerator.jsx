@@ -23,6 +23,30 @@ export default function KrissKrossPitchGenerator() {
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({}); // { [index]: boolean }
 
+    // CRM State (Persistent)
+    const [savedLeads, setSavedLeads] = useState([]);
+    const [isCrmInitialized, setIsCrmInitialized] = useState(false);
+
+    // Load Leads from LocalStorage on mount
+    React.useEffect(() => {
+        const saved = localStorage.getItem('kk_leads_crm');
+        if (saved) {
+            try {
+                setSavedLeads(JSON.parse(saved));
+            } catch (e) {
+                console.error('Failed to parse saved leads', e);
+            }
+        }
+        setIsCrmInitialized(true);
+    }, []);
+
+    // Save Leads to LocalStorage whenever they change
+    React.useEffect(() => {
+        if (isCrmInitialized) {
+            localStorage.setItem('kk_leads_crm', JSON.stringify(savedLeads));
+        }
+    }, [savedLeads, isCrmInitialized]);
+
     // Keep templates as fallback
     const pitchTemplates = {
         'fashion-seller': [
@@ -249,6 +273,35 @@ ${template.cta}`;
         }
     };
 
+    const saveLeadToCrm = (lead) => {
+        const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
+        if (isDuplicate) {
+            alert('Lead already in CRM!');
+            return;
+        }
+
+        const newLead = {
+            ...lead,
+            id: `lead_${Date.now()}`,
+            status: 'New',
+            addedAt: new Date().toLocaleDateString(),
+            lastInteraction: null
+        };
+        setSavedLeads(prev => [newLead, ...prev]);
+    };
+
+    const updateLeadStatus = (leadId, newStatus) => {
+        setSavedLeads(prev => prev.map(l =>
+            l.id === leadId ? { ...l, status: newStatus, lastInteraction: new Date().toLocaleDateString() } : l
+        ));
+    };
+
+    const deleteFromCrm = (leadId) => {
+        if (window.confirm('Are you sure you want to remove this lead from the CRM?')) {
+            setSavedLeads(prev => prev.filter(l => l.id !== leadId));
+        }
+    };
+
     const selectLead = (lead) => {
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
@@ -360,23 +413,26 @@ ${template.cta}`;
 
                                         <div className="flex gap-2 mt-6">
                                             <button
-                                                onClick={() => selectLead(lead)}
+                                                onClick={() => {
+                                                    selectLead(lead);
+                                                    saveLeadToCrm(lead);
+                                                }}
                                                 className="flex-1 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-md"
                                             >
-                                                USE FOR PITCH
+                                                SAVE & PITCH
                                             </button>
                                             <button
                                                 onClick={() => handleEnrichLead(lead, idx)}
                                                 disabled={enrichingLeads[idx] || lead.enriched}
                                                 className={`flex-1 py-3 border-2 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${lead.enriched
-                                                        ? 'border-green-500 text-green-600 bg-green-50'
-                                                        : 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                                                    ? 'border-green-500 text-green-600 bg-green-50'
+                                                    : 'border-blue-500 text-blue-600 hover:bg-blue-50'
                                                     } ${enrichingLeads[idx] ? 'opacity-50 cursor-wait' : ''}`}
                                             >
                                                 {enrichingLeads[idx] ? (
                                                     <>
                                                         <RefreshCw className="w-3 h-3 animate-spin" />
-                                                        AI AGENT BUSY...
+                                                        ENRICH...
                                                     </>
                                                 ) : lead.enriched ? (
                                                     <>
@@ -386,7 +442,7 @@ ${template.cta}`;
                                                 ) : (
                                                     <>
                                                         <Sparkles className="w-3 h-3" />
-                                                        FIND CONTACTS
+                                                        ENRICH CONTACTS
                                                     </>
                                                 )}
                                             </button>
@@ -401,6 +457,115 @@ ${template.cta}`;
                                 <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-20" />
                                 <p>No leads sourced yet. Paste a URL above to start.</p>
                                 <p className="text-xs mt-1">E.g. https://www.amazon.com/Fashion-Brands/...</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Lead CRM Section - New Dashboard */}
+                <div className="mb-12 bg-white rounded-3xl shadow-xl overflow-hidden border-4 border-indigo-600">
+                    <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-black flex items-center gap-3">
+                                <Clock className="w-8 h-8" />
+                                KrissKross Leads CRM
+                            </h2>
+                            <p className="opacity-90 mt-1 font-medium">Your permanent prospecting pipeline</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="text-center">
+                                <div className="text-2xl font-black">{savedLeads.length}</div>
+                                <div className="text-[10px] uppercase font-bold opacity-70">Total Leads</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-2xl font-black text-green-300">{savedLeads.filter(l => l.status === 'Replied').length}</div>
+                                <div className="text-[10px] uppercase font-bold opacity-70">Replies</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-8">
+                        {savedLeads.length === 0 ? (
+                            <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl">
+                                <Trash2 className="w-16 h-16 mx-auto mb-4 opacity-10" />
+                                <p className="text-lg font-bold">Your CRM is empty</p>
+                                <p className="text-sm">Source leads above and click "Save & Pitch" to start building your list.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="border-b-2 border-gray-100">
+                                            <th className="py-4 font-black text-gray-400 uppercase text-xs tracking-widest">Lead / Brand</th>
+                                            <th className="py-4 font-black text-gray-400 uppercase text-xs tracking-widest">Contact Info</th>
+                                            <th className="py-4 font-black text-gray-400 uppercase text-xs tracking-widest">Status</th>
+                                            <th className="py-4 font-black text-gray-400 uppercase text-xs tracking-widest text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {savedLeads.map((lead) => (
+                                            <tr key={lead.id} className="group hover:bg-gray-50/50 transition-colors">
+                                                <td className="py-4">
+                                                    <div className="font-black text-gray-800">{lead.name}</div>
+                                                    <div className="text-[10px] text-indigo-500 font-bold uppercase">{lead.productCategory || 'Sourced Lead'}</div>
+                                                    <div className="text-xs text-gray-400 mt-1">Added: {lead.addedAt}</div>
+                                                </td>
+                                                <td className="py-4">
+                                                    <div className="space-y-1">
+                                                        {lead.instagram ? (
+                                                            <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
+                                                                <span className="opacity-50 text-[8px]">IG</span> {lead.instagram}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-[10px] text-gray-300 italic">No social found</div>
+                                                        )}
+                                                        {lead.email && (
+                                                            <div className="text-xs font-bold text-blue-600 flex items-center gap-1">
+                                                                <span className="opacity-50 text-[8px]">EM</span> {lead.email}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-4">
+                                                    <select
+                                                        value={lead.status}
+                                                        onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                                                        className={`text-xs font-black px-3 py-1.5 rounded-full border-2 focus:outline-none ${lead.status === 'Replied' ? 'bg-green-100 border-green-500 text-green-700' :
+                                                            lead.status === 'Pitched' ? 'bg-blue-100 border-blue-500 text-blue-700' :
+                                                                'bg-gray-100 border-gray-300 text-gray-600'
+                                                            }`}
+                                                    >
+                                                        <option value="New">NEW</option>
+                                                        <option value="Enriched">ENRICHED</option>
+                                                        <option value="Pitched">PITCHED</option>
+                                                        <option value="Replied">REPLIED</option>
+                                                        <option value="Dead">DEAD</option>
+                                                    </select>
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => {
+                                                                selectLead(lead);
+                                                                updateLeadStatus(lead.id, 'Pitched');
+                                                            }}
+                                                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all"
+                                                            title="Pitch again"
+                                                        >
+                                                            <Sparkles className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => deleteFromCrm(lead.id)}
+                                                            className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>
