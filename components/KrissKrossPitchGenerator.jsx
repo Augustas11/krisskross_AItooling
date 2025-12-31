@@ -225,27 +225,6 @@ ${template.cta}`;
         setSourceError(null);
         setActivityLog([]);
 
-        // Simulate activity log for Deep Hunt
-        if (isDeepHunt) {
-            const activities = [
-                { time: 0, message: '🚀 Initializing Deep Hunt agent...' },
-                { time: 2000, message: '🔍 Loading search results page...' },
-                { time: 5000, message: '📋 Identifying product listings...' },
-                { time: 8000, message: '🔗 Navigating to first product page...' },
-                { time: 12000, message: '🏪 Extracting seller information...' },
-                { time: 16000, message: '📍 Following seller profile link...' },
-                { time: 20000, message: '✉️ Searching for contact details...' },
-                { time: 24000, message: '🔗 Navigating to next product...' },
-                { time: 28000, message: '📊 Compiling results...' },
-            ];
-
-            activities.forEach(({ time, message }) => {
-                setTimeout(() => {
-                    setActivityLog(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), message }]);
-                }, time);
-            });
-        }
-
         try {
             console.log('[DEBUG] Sending request to /api/leads/source...');
             const response = await fetch('/api/leads/source', {
@@ -260,6 +239,16 @@ ${template.cta}`;
             console.log('[DEBUG] Response status:', response.status);
             const data = await response.json();
             console.log('[DEBUG] Received data:', data);
+
+            // Update activity log with real API logs
+            if (data.logs && Array.isArray(data.logs)) {
+                setActivityLog(data.logs.map(log => ({
+                    timestamp: new Date(log.timestamp).toLocaleTimeString(),
+                    type: log.type,
+                    message: log.message,
+                    data: log.data
+                })));
+            }
 
             if (!response.ok) {
                 const errorMsg = data.error || 'Failed to source leads';
@@ -284,9 +273,6 @@ ${template.cta}`;
         } finally {
             console.log('[DEBUG] Sourcing process finished.');
             setIsSourcing(false);
-            if (isDeepHunt) {
-                setActivityLog(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), message: '✅ Deep Hunt completed!' }]);
-            }
         }
     };
 
@@ -483,18 +469,43 @@ ${template.cta}`;
                             </div>
                         </div>
 
-                        {/* Activity Log - Only show during Deep Hunt */}
-                        {isDeepHunt && isSourcing && activityLog.length > 0 && (
-                            <div className="mb-6 bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-3 h-3 bg-indigo-600 rounded-full animate-pulse"></div>
-                                    <h3 className="font-black text-indigo-900 uppercase text-sm tracking-wider">Live Agent Activity</h3>
+                        {/* Activity Log - Real API Events */}
+                        {activityLog.length > 0 && (
+                            <div className="mb-6 bg-slate-900 border-2 border-slate-700 rounded-2xl p-6 font-mono text-xs">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        <h3 className="font-black text-green-400 uppercase tracking-wider">API Activity Log</h3>
+                                    </div>
+                                    <span className="text-slate-500 text-[10px]">{activityLog.length} events</span>
                                 </div>
-                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                <div className="space-y-1 max-h-96 overflow-y-auto">
                                     {activityLog.map((log, idx) => (
-                                        <div key={idx} className="flex items-start gap-3 text-sm">
-                                            <span className="text-[10px] text-indigo-400 font-mono mt-0.5 min-w-[60px]">{log.timestamp}</span>
-                                            <span className="text-indigo-700 font-medium">{log.message}</span>
+                                        <div key={idx} className={`p-2 rounded border-l-2 ${log.type === 'error' ? 'bg-red-950/30 border-red-500 text-red-300' :
+                                                log.type === 'success' ? 'bg-green-950/30 border-green-500 text-green-300' :
+                                                    log.type === 'api_call' ? 'bg-blue-950/30 border-blue-500 text-blue-300' :
+                                                        log.type === 'api_response' ? 'bg-purple-950/30 border-purple-500 text-purple-300' :
+                                                            'bg-slate-800 border-slate-600 text-slate-300'
+                                            }`}>
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-[9px] text-slate-500 mt-0.5 min-w-[65px]">{log.timestamp}</span>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${log.type === 'error' ? 'bg-red-500/20 text-red-400' :
+                                                                log.type === 'success' ? 'bg-green-500/20 text-green-400' :
+                                                                    log.type === 'api_call' ? 'bg-blue-500/20 text-blue-400' :
+                                                                        log.type === 'api_response' ? 'bg-purple-500/20 text-purple-400' :
+                                                                            'bg-slate-500/20 text-slate-400'
+                                                            }`}>{log.type}</span>
+                                                        <span className="font-medium">{log.message}</span>
+                                                    </div>
+                                                    {log.data && (
+                                                        <pre className="mt-1 text-[10px] text-slate-400 overflow-x-auto">
+                                                            {JSON.stringify(log.data, null, 2)}
+                                                        </pre>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
