@@ -13,6 +13,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [activeTab, setActiveTab] = useState('discover');
     const [targetType, setTargetType] = useState('fashion-seller');
     const [customName, setCustomName] = useState('');
+    const [recipientEmail, setRecipientEmail] = useState('');
     const [context, setContext] = useState('');
     const [generatedPitch, setGeneratedPitch] = useState('');
     const [copied, setCopied] = useState(false);
@@ -213,14 +214,13 @@ ${template.cta}`;
         if (!generatedPitch) return;
 
         // Ensure we have a valid email recipient
-        // If we have a pitchLead context, use it. 
-        // If not, we can't auto-send without an email address.
-        const recipientEmail = pitchLead?.email;
-
+        // Use the editable recipientEmail state
         if (!recipientEmail) {
-            alert('No email address associated with this pitch. Please select a lead with an email address.');
+            alert('Please enter a recipient email address.');
             return;
         }
+
+
 
         setIsSendingEmail(true);
         setEmailError(null);
@@ -1019,6 +1019,7 @@ ${template.cta}`;
 
     const selectLead = (lead) => {
         setPitchLead(lead); // Store complete lead for emailing
+        setRecipientEmail(lead.email || ''); // Pre-fill email, allow editing
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
         setActiveTab('pitch');
@@ -1028,11 +1029,7 @@ ${template.cta}`;
         setEmailError(null);
     };
 
-    const targetTypes = [
-        { id: 'fashion-seller', label: 'Fashion Seller', icon: '👗' },
-        { id: 'ecommerce-owner', label: 'E-commerce', icon: '🛍️' },
-        { id: 'affiliate', label: 'Affiliate', icon: '💰' }
-    ];
+
 
     // Filter by status first
     const statusFilteredLeads = crmFilter === 'all'
@@ -1662,29 +1659,20 @@ ${template.cta}`;
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                                 <div className="space-y-6">
                                     {/* Target Type */}
+
+
+                                    {/* Email Input */}
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-3">
-                                            Target Audience
+                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                            Recipient Email
                                         </label>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {targetTypes.map(type => (
-                                                <button
-                                                    key={type.id}
-                                                    onClick={() => {
-                                                        setTargetType(type.id);
-                                                        setLastTemplateIndex(-1);
-                                                        setGeneratedPitch('');
-                                                    }}
-                                                    className={`p-4 rounded-lg border-2 transition-all ${targetType === type.id
-                                                        ? 'border-blue-600 bg-blue-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                >
-                                                    <div className="text-3xl mb-2">{type.icon}</div>
-                                                    <div className="font-semibold text-gray-900 text-sm">{type.label}</div>
-                                                </button>
-                                            ))}
-                                        </div>
+                                        <input
+                                            type="email"
+                                            value={recipientEmail}
+                                            onChange={(e) => setRecipientEmail(e.target.value)}
+                                            placeholder="lead@example.com"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
+                                        />
                                     </div>
 
                                     {/* Name Input */}
