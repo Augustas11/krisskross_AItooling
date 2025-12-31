@@ -81,6 +81,55 @@ async function executePerplexitySearch(url, apiKey) {
     return JSON.parse(content);
 }
 
+async function executeGrokSearch(url, apiKey) {
+    const prompt = `Analyze the content related to this URL: ${url}. 
+    This is likely a product listing page, category page, or search result.
+    Your task is to identify and extract ALL unique clothing brands, shops, and sellers visible on this page.
+    IMPORTANT:
+    1. Look for lists of products or sellers.
+    2. Try to find as many distinct shops/sellers as possible (aim for 20+ if available).
+    3. If the page seems to load dynamically or scroll, simulate the context of a fully loaded page in your analysis to find more than just the top few results.
+    4. Return a STRICT JSON object with a "shops" key containing an array of objects.
+    5. Each object must have: "name", "productCategory", "storeUrl" (if found), "briefDescription".
+    6. Do not include any markdown formatting or explanation, just the JSON string.`;
+
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'grok-4-latest',
+            messages: [
+                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON.' },
+                { role: 'user', content: prompt }
+            ],
+            stream: false,
+            temperature: 0
+        })
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Grok API failed: ${response.status} ${errText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    // Attempt to parse JSON from content (it might be wrapped in brackets or markdown)
+    const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (jsonMatch) {
+        try {
+            return JSON.parse(jsonMatch[0]);
+        } catch (e) {
+            console.error("JSON Parse Error in Grok match", e);
+        }
+    }
+    return JSON.parse(content);
+}
+
 export async function POST(req) {
     const logs = [];
 
@@ -109,6 +158,29 @@ export async function POST(req) {
                 });
             } catch (e) {
                 logs.push(createLog('error', 'Perplexity Exception', e.message));
+                return NextResponse.json({ error: e.message, logs }, { status: 500 });
+            }
+        }
+
+        if (provider === 'grok') {
+            const grokKey = process.env.GROK_API_KEY;
+            if (!grokKey) {
+                return NextResponse.json({ error: 'Missing GROK_API_KEY', logs }, { status: 500 });
+            }
+            logs.push(createLog('execution', 'Running Grok Search'));
+            try {
+                const startTime = Date.now();
+                const grokResult = await executeGrokSearch(url, grokKey);
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                logs.push(createLog('api_response', `Grok completed in ${duration}s`));
+
+                return NextResponse.json({
+                    leads: grokResult.shops || [],
+                    method: 'grok_search',
+                    logs
+                });
+            } catch (e) {
+                logs.push(createLog('error', 'Grok Exception', e.message));
                 return NextResponse.json({ error: e.message, logs }, { status: 500 });
             }
         }

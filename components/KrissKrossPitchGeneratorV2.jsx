@@ -26,7 +26,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isSourcing, setIsSourcing] = useState(false);
     const [isDeepHunt, setIsDeepHunt] = useState(false);
     const [sourceError, setSourceError] = useState(null);
-    const [provider, setProvider] = useState('firecrawl'); // 'firecrawl' | 'perplexity'
+    const [provider, setProvider] = useState('firecrawl'); // 'firecrawl' | 'perplexity' | 'grok'
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Enrichment State
@@ -563,6 +563,16 @@ ${template.cta}`;
                                                         />
                                                         <span className="text-sm text-gray-700">Perplexity (Deep Search)</span>
                                                     </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="radio"
+                                                            name="provider"
+                                                            checked={provider === 'grok'}
+                                                            onChange={() => setProvider('grok')}
+                                                            className="text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                        <span className="text-sm text-gray-700">Grok (xAI)</span>
+                                                    </label>
                                                 </div>
                                             </div>
 
@@ -660,7 +670,7 @@ ${template.cta}`;
                                                         : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                         } ${enrichingLeads[idx] ? 'opacity-50' : ''}`}
                                                 >
-                                                    {enrichingLeads[idx] ? 'Enriching...' : lead.enriched ? 'Enriched' : `Enrich (${provider === 'perplexity' ? 'AI' : 'Crawl'})`}
+                                                    {enrichingLeads[idx] ? 'Enriching...' : lead.enriched ? 'Enriched' : `Enrich (${['perplexity', 'grok'].includes(provider) ? 'AI' : 'Crawl'})`}
                                                 </button>
                                             </div>
                                         </motion.div>
