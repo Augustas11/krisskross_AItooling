@@ -24,6 +24,7 @@ CREATE TABLE leads (
     email TEXT,
     phone TEXT,
     instagram TEXT,
+    tiktok TEXT,
     website TEXT,
     
     -- Metadata
@@ -66,6 +67,7 @@ CREATE POLICY "Allow all operations" ON leads
 | `email` | TEXT | Contact email (enriched data) |
 | `phone` | TEXT | Contact phone (enriched data) |
 | `instagram` | TEXT | Instagram handle (enriched data) |
+| `tiktok` | TEXT | TikTok profile URL (enriched data) |
 | `website` | TEXT | Website URL (enriched data) |
 | `enriched` | BOOLEAN | Whether lead has been enriched with contact info |
 | `created_at` | TIMESTAMP | Auto-generated creation timestamp |

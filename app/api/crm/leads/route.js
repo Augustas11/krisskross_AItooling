@@ -46,6 +46,7 @@ function transformFromDb(row) {
         email: row.email,
         phone: row.phone,
         instagram: row.instagram,
+        tiktok: row.tiktok,
         website: row.website,
         enriched: row.enriched,
     };
@@ -67,6 +68,7 @@ function transformToDb(lead) {
         email: lead.email,
         phone: lead.phone,
         instagram: lead.instagram,
+        tiktok: lead.tiktok,
         website: lead.website,
         enriched: lead.enriched || false,
     };

@@ -6,29 +6,31 @@ import { z } from 'zod';
 async function executePerplexityEnrich(url, name, apiKey) {
     const prompt = `Visit and analyze the website ${url} for the business "${name}".
 
-IMPORTANT: Navigate to the Contact section/page if available. Look for:
-1. Phone Number (may be formatted as +1 XXX-XXX-XXXX, 1-XXX-XXX-XXXX, or (XXX) XXX-XXXX)
-2. Email address (likely customer service, support, or info email)
-3. Physical/Business address
-4. Social media links (Instagram, TikTok, Facebook, Twitter)
+IMPORTANT: Look for:
+1. Phone Number (Full format)
+2. Email address (MUST include full domain, e.g., info@domain.com. DO NOT TRUNCATE.)
+3. Physical address
+4. Social media: Instagram (URL), TikTok (URL), YouTube, Facebook.
 5. Official website domain
 
-Return a STRICT JSON object matching this schema:
+Return STRICT JSON:
 {
     "seller_name": "${name}",
     "contact_information": {
         "business_address": "string or null",
         "customer_service": {
-            "phone_number": "string or null (include country code if present)",
+            "phone_number": "string or null",
             "email": "string or null",
             "website": "${url}",
-            "tiktok": "string or null (full URL preferred)",
-            "instagram": "string or null (handle or URL)"
+            "tiktok": "string or null",
+            "instagram": "string or null",
+            "youtube": "string or null",
+            "facebook": "string or null"
         }
     }
 }
 
-CRITICAL: Do NOT make up or hallucinate phone numbers. If you cannot find the exact contact information on the website, set it to null. Output ONLY valid JSON, no markdown.`;
+CRITICAL: capture FULL domain for emails. Output ONLY JSON.`;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -67,29 +69,31 @@ CRITICAL: Do NOT make up or hallucinate phone numbers. If you cannot find the ex
 async function executeGrokEnrich(url, name, apiKey) {
     const prompt = `Visit and analyze the website ${url} for the business "${name}".
 
-IMPORTANT: Navigate to the Contact section/page if available. Look for:
-1. Phone Number (may be formatted as +1 XXX-XXX-XXXX, 1-XXX-XXX-XXXX, or (XXX) XXX-XXXX)
-2. Email address (likely customer service, support, or info email)
-3. Physical/Business address
-4. Social media links (Instagram, TikTok, Facebook, Twitter)
+IMPORTANT: Look for:
+1. Phone Number (Full format)
+2. Email address (MUST include full domain, e.g., info@domain.com. DO NOT TRUNCATE.)
+3. Physical address
+4. Social media: Instagram (URL), TikTok (URL), YouTube, Facebook.
 5. Official website domain
 
-Return a STRICT JSON object matching this schema:
+Return STRICT JSON:
 {
     "seller_name": "${name}",
     "contact_information": {
         "business_address": "string or null",
         "customer_service": {
-            "phone_number": "string or null (include country code if present)",
+            "phone_number": "string or null",
             "email": "string or null",
             "website": "${url}",
-            "tiktok": "string or null (full URL preferred)",
-            "instagram": "string or null (handle or URL)"
+            "tiktok": "string or null",
+            "instagram": "string or null",
+            "youtube": "string or null",
+            "facebook": "string or null"
         }
     }
 }
 
-CRITICAL: Do NOT make up or hallucinate phone numbers. If you cannot find the exact contact information on the website, set it to null. Output ONLY valid JSON, no markdown.`;
+CRITICAL: capture FULL domain for emails. Output ONLY JSON.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
@@ -232,7 +236,9 @@ export async function POST(req) {
                                 email: rawData.email || rawData.customer_service_email || rawData.contact_information?.customer_service?.email || null,
                                 website: rawData.website || rawData.contact_information?.customer_service?.website || null,
                                 tiktok: rawData.tiktok_url || rawData.tiktok || rawData.contact_information?.customer_service?.tiktok || null,
-                                instagram: rawData.instagram_handle || rawData.instagram || rawData.contact_information?.customer_service?.instagram || null
+                                instagram: rawData.instagram_handle || rawData.instagram || rawData.contact_information?.customer_service?.instagram || null,
+                                youtube: rawData.youtube || rawData.contact_information?.customer_service?.youtube || null,
+                                facebook: rawData.facebook || rawData.contact_information?.customer_service?.facebook || null
                             }
                         }
                     };

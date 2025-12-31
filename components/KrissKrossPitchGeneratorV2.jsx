@@ -249,25 +249,50 @@ ${template.cta}`;
                 }),
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Failed to enrich lead');
+            if (!response.ok) throw new Error('Failed to enrich lead');
 
-            const enrichedInfo = data.enrichedData;
-            setFoundLeads(prev => prev.map((l, i) => {
-                if (i === index) {
-                    return {
-                        ...l,
-                        enriched: true,
-                        businessAddress: enrichedInfo.contact_information?.business_address,
-                        email: enrichedInfo.contact_information?.customer_service?.email,
-                        phone: enrichedInfo.contact_information?.customer_service?.phone_number,
-                        instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                        website: enrichedInfo.contact_information?.customer_service?.website,
-                        tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
-                    };
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let processBuffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                processBuffer += chunk;
+
+                const lines = processBuffer.split('\n');
+                processBuffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+
+                    try {
+                        const message = JSON.parse(line);
+                        if (message.type === 'result') {
+                            const enrichedInfo = message.data.enrichedData;
+                            setFoundLeads(prev => prev.map((l, i) => {
+                                if (i === index) {
+                                    const info = enrichedInfo.contact_information || {};
+                                    const cs = info.customer_service || {};
+                                    return {
+                                        ...l,
+                                        enriched: true,
+                                        businessAddress: info.business_address || l.businessAddress,
+                                        email: cs.email || l.email,
+                                        phone: cs.phone_number || l.phone,
+                                        instagram: cs.instagram || l.instagram,
+                                        website: cs.website || l.website,
+                                        tiktok: cs.tiktok || l.tiktok
+                                    };
+                                }
+                                return l;
+                            }));
+                        }
+                    } catch (e) { /* ignore parse errors */ }
                 }
-                return l;
-            }));
+            }
         } catch (error) {
             console.error('Enrichment error:', error);
         } finally {
@@ -1780,7 +1805,7 @@ ${template.cta}`;
                                                         <div className="text-sm text-gray-900">
                                                             {viewingLead.instagram ? (
                                                                 <a
-                                                                    href={`https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
+                                                                    href={viewingLead.instagram.startsWith('http') ? viewingLead.instagram : `https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
                                                                     target="_blank"
                                                                     rel="noreferrer"
                                                                     className="hover:text-pink-600 hover:underline flex items-center gap-1"
