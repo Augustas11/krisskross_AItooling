@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { Firecrawl } from '@mendable/firecrawl-js';
 import { z } from 'zod';
 
 // Helper to clean AI strings (strip citations, etc.)
@@ -171,7 +170,7 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const { url, name, provider = 'perplexity' } = body; // Default to Perplexity (Firecrawl out of credits)
+    const { url, name, provider = 'perplexity' } = body;
 
     const stream = new ReadableStream({
         async start(controller) {
@@ -181,14 +180,11 @@ export async function POST(req) {
             };
 
             try {
-                const apiKey = process.env.FIRECRAWL_API_KEY;
-                if (!apiKey) throw new Error('Missing FIRECRAWL_API_KEY');
-
                 if (!url) throw new Error('URL is required');
 
                 send('status', `Initializing ${provider} agent...`);
 
-                if (provider === 'perplexity') {
+                if (provider === 'perplexity' || provider === 'firecrawl') {
                     const perplexityKey = process.env.PERPLEXITY_API_KEY;
                     if (!perplexityKey) throw new Error('Missing PERPLEXITY_API_KEY');
 
@@ -197,35 +193,25 @@ export async function POST(req) {
 
                     let result = await executePerplexityEnrich(url, name, perplexityKey);
 
-                    // --- RECOVERY PASS: If socials missing, trigger Firecrawl Scrape ---
+                    // --- RECOVERY PASS: If Perplexity misses socials, try Grok ---
                     const cs = result.contact_information?.customer_service || {};
                     if (!cs.instagram || !cs.tiktok) {
-                        try {
-                            send('status', 'Verifying social handles via Page Scrape...');
-                            const firecrawl = new Firecrawl({ apiKey });
-                            const scrapeResult = await firecrawl.scrapeJs(url, {
-                                formats: ['json'],
-                                jsonOptions: {
-                                    schema: z.object({
-                                        instagram: z.string().optional(),
-                                        tiktok: z.string().optional(),
-                                        youtube: z.string().optional(),
-                                        facebook: z.string().optional()
-                                    }),
-                                    prompt: "Find the social media URLs for this business. Look in the footer icons."
-                                }
-                            });
+                        const grokKey = process.env.GROK_API_KEY;
+                        if (grokKey) {
+                            try {
+                                send('status', 'Performing secondary Search via Grok...');
+                                const grokResult = await executeGrokEnrich(url, name, grokKey);
+                                const gcs = grokResult.contact_information?.customer_service || {};
 
-                            if (scrapeResult.success && scrapeResult.json) {
-                                const sj = scrapeResult.json;
-                                if (sj.instagram && !cs.instagram) cs.instagram = sj.instagram;
-                                if (sj.tiktok && !cs.tiktok) cs.tiktok = sj.tiktok;
-                                if (sj.youtube && !cs.youtube) cs.youtube = sj.youtube;
-                                if (sj.facebook && !cs.facebook) cs.facebook = sj.facebook;
-                                console.log('[RECOVERY] Firecrawl found missing socials:', sj);
+                                if (gcs.instagram && !cs.instagram) cs.instagram = gcs.instagram;
+                                if (gcs.tiktok && !cs.tiktok) cs.tiktok = gcs.tiktok;
+                                if (gcs.youtube && !cs.youtube) cs.youtube = gcs.youtube;
+                                if (gcs.facebook && !cs.facebook) cs.facebook = gcs.facebook;
+
+                                console.log('[RECOVERY] Grok found missing socials:', gcs);
+                            } catch (recoveryErr) {
+                                console.warn('[RECOVERY] Grok fallback failed:', recoveryErr.message);
                             }
-                        } catch (recoveryErr) {
-                            console.warn('[RECOVERY] Social discovery failed:', recoveryErr.message);
                         }
                     }
 
@@ -245,68 +231,7 @@ export async function POST(req) {
                     send('result', { enrichedData: result });
 
                 } else {
-                    // Firecrawl Default
-                    send('status', 'Initializing Firecrawl Agent...');
-                    send('status', 'Navigating to target URL...');
-                    send('status', 'Scraping page DOM & Assets...');
-
-                    const firecrawl = new Firecrawl({ apiKey });
-                    console.log(`[DEBUG] Firecrawl Agent started for: ${name}`);
-
-                    send('status', 'Analyzing page content with LLM...');
-
-                    const result = await firecrawl.agent({
-                        prompt: `Extract the seller name and all available contact information for "${name}" at the provided URL.
-                        
-                        CRITICAL: Look carefully in footer sections, Contact pages, and social media icon links. Find:
-                        - Phone Number (including formats like +1 XXX-XXX-XXXX or (XXX) XXX-XXXX)
-                        - Email address (customer service, support, or info)
-                        - Business/Physical address
-                        - Instagram handle or profile URL
-                        - TikTok profile URL
-                        - Official website URL
-                        
-                        Return EXACTLY what you find on the page. Do not make up data.`,
-                        schema: z.object({
-                            seller_name: z.string().describe("The name of the seller"),
-                            contact_information: z.object({
-                                business_address: z.string().describe("The seller's business address").optional(),
-                                customer_service: z.object({
-                                    phone_number: z.string().describe("Customer service phone number").optional(),
-                                    email: z.string().describe("Customer service email address").optional(),
-                                    website: z.string().describe("Official website URL").optional(),
-                                    tiktok: z.string().describe("Official TikTok profile URL").optional(),
-                                    instagram: z.string().describe("Instagram handle or URL").optional()
-                                }).describe("Customer service contact details").optional()
-                            }).describe("Contact details for the seller").optional()
-                        }),
-                        urls: [url],
-                    });
-
-                    if (!result.success) {
-                        throw new Error(result.error || 'Firecrawl agent failed');
-                    }
-
-                    // Transform Firecrawl response to expected nested structure
-                    const rawData = result.data || result;
-                    const normalizedData = {
-                        seller_name: rawData.seller_name || name,
-                        contact_information: {
-                            business_address: rawData.business_address || rawData.contact_information?.business_address || null,
-                            customer_service: {
-                                phone_number: rawData.customer_service_phone || rawData.phone || rawData.contact_information?.customer_service?.phone_number || null,
-                                email: rawData.email || rawData.customer_service_email || rawData.contact_information?.customer_service?.email || null,
-                                website: rawData.website || rawData.contact_information?.customer_service?.website || null,
-                                tiktok: rawData.tiktok_url || rawData.tiktok || rawData.contact_information?.customer_service?.tiktok || null,
-                                instagram: rawData.instagram_handle || rawData.instagram || rawData.contact_information?.customer_service?.instagram || null,
-                                youtube: rawData.youtube || rawData.contact_information?.customer_service?.youtube || null,
-                                facebook: rawData.facebook || rawData.contact_information?.customer_service?.facebook || null
-                            }
-                        }
-                    };
-
-                    send('status', 'Validation complete.');
-                    send('result', { enrichedData: normalizedData });
+                    throw new Error(`Unsupported provider: ${provider}`);
                 }
 
             } catch (error) {
