@@ -835,7 +835,7 @@ ${template.cta}`;
                 newLeads.push({
                     ...lead,
                     id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    status: 'New',
+                    status: (lead.enriched || (typeof checkShouldBeEnriched === 'function' && checkShouldBeEnriched(lead))) ? 'Enriched' : 'New',
                     addedAt: new Date().toLocaleDateString(),
                     lastInteraction: null
                 });
@@ -913,7 +913,7 @@ ${template.cta}`;
                 newLeads.push({
                     ...lead,
                     id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    status: 'New',
+                    status: (lead.enriched || (typeof checkShouldBeEnriched === 'function' && checkShouldBeEnriched(lead))) ? 'Enriched' : 'New',
                     addedAt: new Date().toLocaleDateString(),
                     lastInteraction: null
                 });
@@ -948,7 +948,7 @@ ${template.cta}`;
     // Filter by status first
     const statusFilteredLeads = crmFilter === 'all'
         ? savedLeads
-        : savedLeads.filter(l => l.status === crmFilter);
+        : savedLeads.filter(l => (l.status || '').toLowerCase() === crmFilter.toLowerCase());
 
     // Then apply search query
     const filteredLeads = crmSearchQuery.trim() === ''
@@ -1308,10 +1308,10 @@ ${template.cta}`;
 
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                 {/* Stats Row */}
-                                <div className="grid grid-cols-4 gap-4 p-6 bg-gray-50 border-b border-gray-200">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-6 bg-gray-50 border-b border-gray-200">
                                     <div>
                                         <div className="text-2xl font-bold text-gray-900">{savedLeads.length}</div>
-                                        <div className="text-sm text-gray-600">Total Leads</div>
+                                        <div className="text-sm text-gray-600">Total</div>
                                     </div>
                                     <div>
                                         <div className="text-2xl font-bold text-blue-600">{savedLeads.filter(l => l.status === 'New').length}</div>
@@ -1324,6 +1324,14 @@ ${template.cta}`;
                                     <div>
                                         <div className="text-2xl font-bold text-indigo-600">{savedLeads.filter(l => l.status === 'Pitched').length}</div>
                                         <div className="text-sm text-gray-600">Pitched</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold text-green-600">{savedLeads.filter(l => l.status === 'Replied').length}</div>
+                                        <div className="text-sm text-gray-600">Replied</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold text-red-600">{savedLeads.filter(l => l.status === 'Dead').length}</div>
+                                        <div className="text-sm text-gray-600">Dead</div>
                                     </div>
                                 </div>
 
