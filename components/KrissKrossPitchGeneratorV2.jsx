@@ -269,22 +269,7 @@ ${template.cta}`;
         if (!viewingLead || (!viewingLead.storeUrl && !sourceUrl)) return;
 
         setIsEnrichingViewingLead(true);
-
-        // Cycle status messages to keep user informed
-        const messages = [
-            "Initializing AI Agent...",
-            "Navigating to store page...",
-            "Scanning for contact details...",
-            "Extracting business info...",
-            "Verifying data points..."
-        ];
-        let msgIdx = 0;
-        setEnrichmentStatus(messages[0]);
-
-        const intervalId = setInterval(() => {
-            msgIdx = (msgIdx + 1) % messages.length;
-            setEnrichmentStatus(messages[msgIdx]);
-        }, 2000);
+        setEnrichmentStatus("Connecting to Agent...");
 
         try {
             const response = await fetch('/api/leads/enrich', {
@@ -297,45 +282,81 @@ ${template.cta}`;
                 }),
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Failed to enrich lead');
+            if (!response.ok) throw new Error('Failed to start enrichment');
 
-            const enrichedInfo = data.enrichedData;
+            // Streaming Reader
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let processBuffer = '';
 
-            // Check if we actually found useful data
-            const hasData = enrichedInfo.contact_information?.business_address ||
-                enrichedInfo.contact_information?.customer_service?.email ||
-                enrichedInfo.contact_information?.customer_service?.phone_number ||
-                enrichedInfo.contact_information?.customer_service?.instagram ||
-                enrichedInfo.contact_information?.customer_service?.tiktok ||
-                enrichedInfo.contact_information?.customer_service?.website;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-            const newFields = {
-                enriched: !!hasData, // Only mark enriched if we successfully found data
-                businessAddress: enrichedInfo.contact_information?.business_address,
-                email: enrichedInfo.contact_information?.customer_service?.email,
-                phone: enrichedInfo.contact_information?.customer_service?.phone_number,
-                instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                website: enrichedInfo.contact_information?.customer_service?.website,
-                tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
-            };
+                const chunk = decoder.decode(value, { stream: true });
+                processBuffer += chunk;
 
-            setViewingLead(prev => ({ ...prev, ...newFields }));
-            setSavedLeads(prev => prev.map(l =>
-                l.id === viewingLead.id ? { ...l, ...newFields } : l
-            ));
+                // NDJSON Splitting
+                const lines = processBuffer.split('\n');
+                // Keep the last partial line in the buffer
+                processBuffer = lines.pop() || '';
 
-            if (!hasData) {
-                console.log('Enrichment finished but no specific contact fields found.');
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+
+                    try {
+                        const message = JSON.parse(line);
+
+                        // Handle Different Message Types
+                        if (message.type === 'status') {
+                            setEnrichmentStatus(message.data);
+                        } else if (message.type === 'error') {
+                            throw new Error(message.data);
+                        } else if (message.type === 'result') {
+                            const enrichedInfo = message.data.enrichedData;
+
+                            // Check if we actually found useful data
+                            const hasData = enrichedInfo.contact_information?.business_address ||
+                                enrichedInfo.contact_information?.customer_service?.email ||
+                                enrichedInfo.contact_information?.customer_service?.phone_number ||
+                                enrichedInfo.contact_information?.customer_service?.instagram ||
+                                enrichedInfo.contact_information?.customer_service?.tiktok ||
+                                enrichedInfo.contact_information?.customer_service?.website;
+
+                            const newFields = {
+                                enriched: !!hasData, // Only mark enriched if we successfully found data
+                                businessAddress: enrichedInfo.contact_information?.business_address,
+                                email: enrichedInfo.contact_information?.customer_service?.email,
+                                phone: enrichedInfo.contact_information?.customer_service?.phone_number,
+                                instagram: enrichedInfo.contact_information?.customer_service?.instagram,
+                                website: enrichedInfo.contact_information?.customer_service?.website,
+                                tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
+                            };
+
+                            setViewingLead(prev => ({ ...prev, ...newFields }));
+                            setSavedLeads(prev => prev.map(l =>
+                                l.id === viewingLead.id ? { ...l, ...newFields } : l
+                            ));
+
+                            if (!hasData) {
+                                console.log('Enrichment finished but no specific contact fields found.');
+                            }
+                        }
+
+                    } catch (parseError) {
+                        console.warn('NDJSON Parse Error', parseError);
+                    }
+                }
             }
 
         } catch (error) {
             console.error('Enrichment error:', error);
-            alert('Failed to enrich lead: ' + error.message);
+            // alert('Failed to enrich lead: ' + error.message);
+            setEnrichmentStatus('Error: ' + error.message);
         } finally {
-            clearInterval(intervalId);
             setIsEnrichingViewingLead(false);
-            setEnrichmentStatus('');
+            // Clear status after a short delay so user can see final success/error
+            setTimeout(() => setEnrichmentStatus(''), 2000);
         }
     };
 
