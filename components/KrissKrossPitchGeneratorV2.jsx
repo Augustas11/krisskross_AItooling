@@ -51,28 +51,28 @@ export default function KrissKrossPitchGeneratorV3() {
     const [crmProcessing, setCrmProcessing] = useState(false);
     // duplicate viewingLead removed
 
-    // Load Leads from Server on mount
+    // Load Leads from Server (Supabase ONLY - NO localStorage)
     React.useEffect(() => {
         const loadLeads = async () => {
-            console.log('🔄 [CRM] Loading leads from server...');
+            console.log('🔄 [CRM] Loading leads from Supabase...');
             try {
                 const response = await fetch('/api/crm/leads');
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
                 const data = await response.json();
                 console.log('📥 [CRM] Server response:', data);
                 if (data.leads) {
-                    console.log(`✅ [CRM] Loaded ${data.leads.length} leads from server`);
+                    console.log(`✅ [CRM] Loaded ${data.leads.length} leads from Supabase`);
                     setSavedLeads(data.leads);
                 } else {
                     console.warn('⚠️ [CRM] No leads property in server response');
+                    setSavedLeads([]);
                 }
             } catch (e) {
-                console.error('❌ [CRM] Failed to load leads from server:', e);
-                const saved = localStorage.getItem('kk_leads_crm');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    console.log(`📦 [CRM] Loaded ${parsed.length} leads from localStorage (fallback)`);
-                    setSavedLeads(parsed);
-                }
+                console.error('❌ [CRM] CRITICAL: Failed to load leads from Supabase:', e);
+                alert('CRITICAL ERROR: Cannot connect to database. Please check your internet connection and refresh the page.');
+                setSavedLeads([]);
             } finally {
                 setIsCrmInitialized(true);
                 console.log('✓ [CRM] Initialization complete');
@@ -81,18 +81,22 @@ export default function KrissKrossPitchGeneratorV3() {
         loadLeads();
     }, []);
 
-    // Sync Leads to Server (IMMEDIATE - no delay to prevent data loss)
+    // Track if this is initial load to prevent sync
+    const isInitialLoad = React.useRef(true);
+
+    // Sync Leads to Supabase (ONLY when data is modified by user)
     React.useEffect(() => {
-        if (isCrmInitialized && savedLeads.length >= 0) {
+        // Skip sync on initial load
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
+            return;
+        }
+
+        if (isCrmInitialized) {
             const syncLeads = async () => {
                 console.log(`💾 [CRM] Syncing ${savedLeads.length} leads to server...`);
                 setIsSyncing(true);
                 try {
-                    // Save to localStorage as backup
-                    localStorage.setItem('kk_leads_crm', JSON.stringify(savedLeads));
-                    console.log('📦 [CRM] Saved to localStorage');
-
-                    // Sync to server
                     const response = await fetch('/api/crm/leads', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
