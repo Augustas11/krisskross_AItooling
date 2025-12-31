@@ -20,6 +20,7 @@ export default function KrissKrossPitchGenerator() {
     const [isSourcing, setIsSourcing] = useState(false);
     const [isDeepHunt, setIsDeepHunt] = useState(false);
     const [sourceError, setSourceError] = useState(null);
+    const [activityLog, setActivityLog] = useState([]);
 
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({}); // { [index]: boolean }
@@ -222,6 +223,28 @@ ${template.cta}`;
         console.log('[DEBUG] Sourcing started for URL:', sourceUrl);
         setIsSourcing(true);
         setSourceError(null);
+        setActivityLog([]);
+
+        // Simulate activity log for Deep Hunt
+        if (isDeepHunt) {
+            const activities = [
+                { time: 0, message: '🚀 Initializing Deep Hunt agent...' },
+                { time: 2000, message: '🔍 Loading search results page...' },
+                { time: 5000, message: '📋 Identifying product listings...' },
+                { time: 8000, message: '🔗 Navigating to first product page...' },
+                { time: 12000, message: '🏪 Extracting seller information...' },
+                { time: 16000, message: '📍 Following seller profile link...' },
+                { time: 20000, message: '✉️ Searching for contact details...' },
+                { time: 24000, message: '🔗 Navigating to next product...' },
+                { time: 28000, message: '📊 Compiling results...' },
+            ];
+
+            activities.forEach(({ time, message }) => {
+                setTimeout(() => {
+                    setActivityLog(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), message }]);
+                }, time);
+            });
+        }
 
         try {
             console.log('[DEBUG] Sending request to /api/leads/source...');
@@ -261,6 +284,9 @@ ${template.cta}`;
         } finally {
             console.log('[DEBUG] Sourcing process finished.');
             setIsSourcing(false);
+            if (isDeepHunt) {
+                setActivityLog(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), message: '✅ Deep Hunt completed!' }]);
+            }
         }
     };
 
@@ -456,6 +482,24 @@ ${template.cta}`;
                                 }
                             </div>
                         </div>
+
+                        {/* Activity Log - Only show during Deep Hunt */}
+                        {isDeepHunt && isSourcing && activityLog.length > 0 && (
+                            <div className="mb-6 bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-3 h-3 bg-indigo-600 rounded-full animate-pulse"></div>
+                                    <h3 className="font-black text-indigo-900 uppercase text-sm tracking-wider">Live Agent Activity</h3>
+                                </div>
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {activityLog.map((log, idx) => (
+                                        <div key={idx} className="flex items-start gap-3 text-sm">
+                                            <span className="text-[10px] text-indigo-400 font-mono mt-0.5 min-w-[60px]">{log.timestamp}</span>
+                                            <span className="text-indigo-700 font-medium">{log.message}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {sourceError && (
                             <div className="p-4 bg-red-50 text-red-600 rounded-xl mb-6 border border-red-100 italic">
