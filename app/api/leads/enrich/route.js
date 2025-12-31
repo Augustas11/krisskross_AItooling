@@ -33,11 +33,11 @@ TASKS:
 2. Find Social Profiles: Instagram, TikTok, YouTube, Facebook.
 
 CRITICAL INSTRUCTIONS:
-- If links are not on the homepage, search the FOOTER and "Contact Us" pages.
-- If still not found, SEARCH THE BROADER WEB (Instagram, TikTok, LinkedIn) to find their official profiles.
-- DO NOT include citations like [1] or [2] in JSON values.
-- Return null for missing fields (NEVER use "Not found" or "N/A").
-- Focus on finding URLs containing 'tiktok.com' and 'instagram.com'.
+- PRIORITY 1: key links found on the website footer/header/contact page.
+- PRIORITY 2: Official profiles found via search (e.g., "Wiholl Instagram").
+- STRICTLY FORBIDDEN: Do NOT guess or construct URLs (e.g., do not just add the name to facebook.com/).
+- ONLY return URLs you have verified exist.
+- If a handle uses underscores (_) or dots (.), be precise (e.g., 'wiholl.official' vs 'wiholl_official').
 
 Return STRICT JSON:
 {
@@ -113,6 +113,7 @@ Search the footer icons and the web to find official profiles.
 - No citations [1][2].
 - Use null for missing.
 - Capture full email domains.
+- DO NOT guess or construct URLs (e.g. facebook.com/name). ONLY return found links.
 
 Return STRICT JSON:
 {

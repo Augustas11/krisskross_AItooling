@@ -6,7 +6,7 @@ import {
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
-    Youtube, Facebook
+    Youtube, Facebook, Send
 } from 'lucide-react';
 
 export default function KrissKrossPitchGeneratorV3() {
@@ -51,6 +51,12 @@ export default function KrissKrossPitchGeneratorV3() {
     const itemsPerPage = 10;
     const [crmProcessing, setCrmProcessing] = useState(false);
     // duplicate viewingLead removed
+
+    // Email Sending State
+    const [pitchLead, setPitchLead] = useState(null);
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [emailSent, setEmailSent] = useState(false);
+    const [emailError, setEmailError] = useState(null);
 
     // Load Leads from Server (Supabase ONLY - NO localStorage)
     React.useEffect(() => {
@@ -201,6 +207,66 @@ ${template.cta}`;
         navigator.clipboard.writeText(generatedPitch);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleSendEmail = async () => {
+        if (!generatedPitch) return;
+
+        // Ensure we have a valid email recipient
+        // If we have a pitchLead context, use it. 
+        // If not, we can't auto-send without an email address.
+        const recipientEmail = pitchLead?.email;
+
+        if (!recipientEmail) {
+            alert('No email address associated with this pitch. Please select a lead with an email address.');
+            return;
+        }
+
+        setIsSendingEmail(true);
+        setEmailError(null);
+        setEmailSent(false);
+
+        try {
+            const response = await fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    leadId: pitchLead.id,
+                    leadEmail: recipientEmail,
+                    leadContext: {
+                        ...pitchLead
+                    },
+                    emailBody: generatedPitch,
+                    emailSubject: generatedPitch.split('\n')[0].replace(/^Subject:\s*/i, '') || 'KrissKross Outreach'
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send email');
+            }
+
+            setEmailSent(true);
+
+            // Update CRM status
+            if (pitchLead && pitchLead.id) {
+                updateLeadStatus(pitchLead.id, 'Pitched');
+            }
+
+            setTimeout(() => {
+                setEmailSent(false);
+            }, 3000);
+
+            // Log success or show notification
+            console.log('Email sent successfully:', data);
+
+        } catch (error) {
+            console.error('Email sending error:', error);
+            setEmailError(error.message);
+        } finally {
+            setIsSendingEmail(false);
+        }
     };
 
     const handleSourceLeads = async () => {
@@ -952,9 +1018,14 @@ ${template.cta}`;
     };
 
     const selectLead = (lead) => {
+        setPitchLead(lead); // Store complete lead for emailing
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
         setActiveTab('pitch');
+        setGeneratedPitch('');
+        setWasAiGenerated(false);
+        setEmailSent(false);
+        setEmailError(null);
     };
 
     const targetTypes = [
@@ -1687,6 +1758,31 @@ ${template.cta}`;
                                                     )}
                                                 </h3>
                                                 <button
+                                                    onClick={handleSendEmail}
+                                                    disabled={isSendingEmail || emailSent || !pitchLead}
+                                                    className={`flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors ${emailSent ? 'bg-green-600 hover:bg-green-700' :
+                                                        !pitchLead ? 'bg-gray-400 cursor-not-allowed' :
+                                                            'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                                                        }`}
+                                                >
+                                                    {isSendingEmail ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                                            Sending...
+                                                        </>
+                                                    ) : emailSent ? (
+                                                        <>
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            Sent!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Send className="w-4 h-4" />
+                                                            Send Email
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
                                                     onClick={copyToClipboard}
                                                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
                                                 >
@@ -1703,9 +1799,12 @@ ${template.cta}`;
                                                     )}
                                                 </button>
                                             </div>
-                                            <div className="bg-white rounded-lg p-4 text-gray-800 whitespace-pre-wrap font-mono text-sm border border-blue-200">
-                                                {generatedPitch}
-                                            </div>
+                                            <textarea
+                                                value={generatedPitch}
+                                                onChange={(e) => setGeneratedPitch(e.target.value)}
+                                                className="w-full h-64 bg-white rounded-lg p-4 text-gray-800 font-mono text-sm border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
+                                                placeholder="Pitch content will appear here..."
+                                            />
                                         </motion.div>
                                     )}
                                 </div>
@@ -2015,8 +2114,8 @@ ${template.cta}`;
                                         </button>
                                         <button
                                             onClick={() => {
-                                                const body = `Hey ${viewingLead.name},\n\nI was checking out your store and loved your products!`;
-                                                window.open(`mailto:${viewingLead.email}?subject=Collaboration&body=${encodeURIComponent(body)}`);
+                                                selectLead(viewingLead);
+                                                setViewingLead(null);
                                             }}
                                             disabled={!viewingLead.email}
                                             className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
