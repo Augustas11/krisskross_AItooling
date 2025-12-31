@@ -81,17 +81,24 @@ async function executePerplexitySearch(url, apiKey) {
     return JSON.parse(content);
 }
 
-async function executeGrokSearch(url, apiKey) {
-    const prompt = `Analyze the content related to this URL: ${url}. 
+async function executeGrokSearch(content, apiKey) {
+    // Truncate content to avoid token limits (approx 50k chars is safe for Grok)
+    const truncatedContent = content.slice(0, 50000);
+
+    const prompt = `Analyze the following website content. 
     This is likely a product listing page, category page, or search result.
-    Your task is to identify and extract ALL unique clothing brands, shops, and sellers visible on this page.
+    Your task is to identify and extract ALL unique clothing brands, shops, and sellers visible in this content.
+    
+    CONTENT START:
+    ${truncatedContent}
+    CONTENT END
+    
     IMPORTANT:
-    1. Look for lists of products or sellers.
+    1. Look for lists of products or sellers in the text.
     2. Try to find as many distinct shops/sellers as possible (aim for 20+ if available).
-    3. If the page seems to load dynamically or scroll, simulate the context of a fully loaded page in your analysis to find more than just the top few results.
-    4. Return a STRICT JSON object with a "shops" key containing an array of objects.
-    5. Each object must have: "name", "productCategory", "storeUrl" (if found), "briefDescription".
-    6. Do not include any markdown formatting or explanation, just the JSON string.`;
+    3. Return a STRICT JSON object with a "shops" key containing an array of objects.
+    4. Each object must have: "name", "productCategory", "storeUrl" (if found), "briefDescription".
+    5. Do not include any markdown formatting or explanation, just the JSON string.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
@@ -116,10 +123,10 @@ async function executeGrokSearch(url, apiKey) {
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const contentResp = data.choices[0].message.content;
 
     // Attempt to parse JSON from content (it might be wrapped in brackets or markdown)
-    const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    const jsonMatch = contentResp.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
     if (jsonMatch) {
         try {
             return JSON.parse(jsonMatch[0]);
@@ -127,7 +134,7 @@ async function executeGrokSearch(url, apiKey) {
             console.error("JSON Parse Error in Grok match", e);
         }
     }
-    return JSON.parse(content);
+    return JSON.parse(contentResp);
 }
 
 export async function POST(req) {
@@ -167,12 +174,40 @@ export async function POST(req) {
             if (!grokKey) {
                 return NextResponse.json({ error: 'Missing GROK_API_KEY', logs }, { status: 500 });
             }
+
+            if (!apiKey) {
+                return NextResponse.json({ error: 'Missing FIRECRAWL_API_KEY (required for scraping before Grok analysis)', logs }, { status: 500 });
+            }
+
             logs.push(createLog('execution', 'Running Grok Search'));
+
+            // Step 1: Scrape with Firecrawl
+            logs.push(createLog('info', 'Scraping page content for Grok analysis...'));
+            const app = new FirecrawlApp({ apiKey });
+            let scrapeResult;
+
+            try {
+                const scrapeStart = Date.now();
+                scrapeResult = await app.scrapeUrl(url, {
+                    formats: ['markdown'],
+                });
+                const scrapeDuration = ((Date.now() - scrapeStart) / 1000).toFixed(2);
+                logs.push(createLog('info', `Scraping completed in ${scrapeDuration}s`, { success: scrapeResult.success }));
+
+                if (!scrapeResult.success || !scrapeResult.markdown) {
+                    throw new Error(scrapeResult.error || 'Failed to retrieve page content');
+                }
+            } catch (scrapeError) {
+                logs.push(createLog('error', 'Scraping failed', scrapeError.message));
+                return NextResponse.json({ error: `Scraping failed: ${scrapeError.message}`, logs }, { status: 500 });
+            }
+
+            // Step 2: Analyze with Grok
             try {
                 const startTime = Date.now();
-                const grokResult = await executeGrokSearch(url, grokKey);
+                const grokResult = await executeGrokSearch(scrapeResult.markdown, grokKey);
                 const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-                logs.push(createLog('api_response', `Grok completed in ${duration}s`));
+                logs.push(createLog('api_response', `Grok analysis completed in ${duration}s`));
 
                 return NextResponse.json({
                     leads: grokResult.shops || [],

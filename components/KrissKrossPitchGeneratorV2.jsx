@@ -28,11 +28,14 @@ export default function KrissKrossPitchGeneratorV3() {
     const [sourceError, setSourceError] = useState(null);
     const [provider, setProvider] = useState('firecrawl'); // 'firecrawl' | 'perplexity' | 'grok'
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isBulkAction, setIsBulkAction] = useState(false);
+    const [selectedLeadIndices, setSelectedLeadIndices] = useState(new Set());
 
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({});
+    const [viewingLead, setViewingLead] = useState(null);
     const [isEnrichingViewingLead, setIsEnrichingViewingLead] = useState(false);
-    const [enrichmentStatus, setEnrichmentStatus] = useState('');
+    const [enrichmentStatus, setEnrichmentStatus] = useState("Initializing AI...");
 
 
     // CRM State
@@ -40,7 +43,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isCrmInitialized, setIsCrmInitialized] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
-    const [viewingLead, setViewingLead] = useState(null);
+    // duplicate viewingLead removed
 
     // Load Leads from Server on mount
     React.useEffect(() => {
@@ -396,6 +399,55 @@ ${template.cta}`;
         document.body.removeChild(a);
     };
 
+    // Bulk Actions
+    const handleEnrichAll = async () => {
+        setIsBulkAction(true);
+        const unenrichedIndices = foundLeads
+            .map((lead, index) => ({ lead, index }))
+            .filter(({ lead }) => !lead.enriched);
+
+        if (unenrichedIndices.length === 0) {
+            alert('All leads are already enriched!');
+            setIsBulkAction(false);
+            return;
+        }
+
+        // Process sequentially to be safe with rate limits
+        for (const { lead, index } of unenrichedIndices) {
+            await handleEnrichLead(lead, index);
+            // Small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        setIsBulkAction(false);
+    };
+
+    const handleSaveAllToCrm = () => {
+        let addedCount = 0;
+        const newLeads = [];
+
+        foundLeads.forEach(lead => {
+            const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
+            if (!isDuplicate) {
+                newLeads.push({
+                    ...lead,
+                    id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    status: 'New',
+                    addedAt: new Date().toLocaleDateString(),
+                    lastInteraction: null
+                });
+                addedCount++;
+            }
+        });
+
+        if (addedCount > 0) {
+            setSavedLeads(prev => [...newLeads, ...prev]);
+            alert(`Saved ${addedCount} new leads to CRM!`);
+            setActiveTab('crm');
+        } else {
+            alert('All leads are already in the CRM!');
+        }
+    };
+
     const selectLead = (lead) => {
         setCustomName(lead.name || '');
         setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
@@ -621,6 +673,41 @@ ${template.cta}`;
                                 )}
                             </div>
 
+                            {/* Bulk Actions Header */}
+                            {foundLeads.length > 0 && (
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                        Found {foundLeads.length} Leads
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleEnrichSelected}
+                                            disabled={isBulkAction}
+                                            className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isBulkAction ? (
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Zap className="w-4 h-4" />
+                                            )}
+                                            {selectedLeadIndices.size > 0
+                                                ? `Enrich Selected (${selectedLeadIndices.size})`
+                                                : "Enrich All"}
+                                        </button>
+                                        <button
+                                            onClick={handleSaveSelectedToCrm}
+                                            disabled={isBulkAction}
+                                            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <Users className="w-4 h-4" />
+                                            {selectedLeadIndices.size > 0
+                                                ? `Save Selected (${selectedLeadIndices.size})`
+                                                : "Save All to CRM"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {foundLeads.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {foundLeads.map((lead, idx) => (
@@ -632,12 +719,22 @@ ${template.cta}`;
                                             className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
                                         >
                                             <div className="flex justify-between items-start mb-3">
-                                                <h4 className="font-semibold text-gray-900">{lead.name}</h4>
-                                                {lead.enriched && (
-                                                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">
-                                                        ENRICHED
-                                                    </span>
-                                                )}
+                                                <div className="flex items-start gap-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedLeadIndices.has(idx)}
+                                                        onChange={() => toggleLeadSelection(idx)}
+                                                        className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                    />
+                                                    <div>
+                                                        <h4 className="font-semibold text-gray-900">{lead.name}</h4>
+                                                        {lead.enriched && (
+                                                            <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded inline-block mt-1">
+                                                                ENRICHED
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                             <p className="text-xs font-medium text-blue-600 mb-2">{lead.productCategory}</p>
                                             <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lead.briefDescription}</p>
