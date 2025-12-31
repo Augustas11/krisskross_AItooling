@@ -394,19 +394,26 @@ ${template.cta}`;
                                 enrichedInfo.contact_information?.customer_service?.tiktok ||
                                 enrichedInfo.contact_information?.customer_service?.website;
 
+                            // Helper to check if a value is actually useful (not null/placeholder)
+                            const isVal = (v) => {
+                                if (!v) return false;
+                                const s = String(v).toLowerCase().trim();
+                                return !['null', 'not available', 'not found', 'n/a', 'unknown', 'undefined', '[none]', 'none'].includes(s);
+                            };
+
                             // Construct valid updates ONLY to avoid wiping existing data
                             const updates = {};
                             const info = enrichedInfo.contact_information || {};
                             const cs = info.customer_service || {};
 
-                            if (info.business_address) updates.businessAddress = info.business_address;
-                            if (cs.email) updates.email = cs.email;
-                            if (cs.phone_number) updates.phone = cs.phone_number;
-                            if (cs.instagram) updates.instagram = cs.instagram;
-                            if (cs.website) updates.website = cs.website;
-                            if (cs.tiktok) updates.tiktok = cs.tiktok;
-                            if (cs.youtube) updates.youtube = cs.youtube;
-                            if (cs.facebook) updates.facebook = cs.facebook;
+                            if (isVal(info.business_address)) updates.businessAddress = info.business_address;
+                            if (isVal(cs.email)) updates.email = cs.email;
+                            if (isVal(cs.phone_number)) updates.phone = cs.phone_number;
+                            if (isVal(cs.instagram)) updates.instagram = cs.instagram;
+                            if (isVal(cs.website)) updates.website = cs.website;
+                            if (isVal(cs.tiktok)) updates.tiktok = cs.tiktok;
+                            if (isVal(cs.youtube)) updates.youtube = cs.youtube;
+                            if (isVal(cs.facebook)) updates.facebook = cs.facebook;
 
                             // Determine enriched status based on new OR existing data
                             // If updates has any keys, we potentially found something new.
@@ -586,18 +593,24 @@ ${template.cta}`;
                     enrichedInfo.contact_information?.customer_service?.facebook ||
                     enrichedInfo.contact_information?.customer_service?.website;
 
+                const isVal = (v) => {
+                    if (!v) return false;
+                    const s = String(v).toLowerCase().trim();
+                    return !['null', 'not available', 'not found', 'n/a', 'unknown', 'undefined', '[none]', 'none'].includes(s);
+                };
+
                 const updates = {};
                 const info = enrichedInfo.contact_information || {};
                 const cs = info.customer_service || {};
 
-                if (info.business_address) updates.businessAddress = info.business_address;
-                if (cs.email) updates.email = cs.email;
-                if (cs.phone_number) updates.phone = cs.phone_number;
-                if (cs.instagram) updates.instagram = cs.instagram;
-                if (cs.website) updates.website = cs.website;
-                if (cs.tiktok) updates.tiktok = cs.tiktok;
-                if (cs.youtube) updates.youtube = cs.youtube;
-                if (cs.facebook) updates.facebook = cs.facebook;
+                if (isVal(info.business_address)) updates.businessAddress = info.business_address;
+                if (isVal(cs.email)) updates.email = cs.email;
+                if (isVal(cs.phone_number)) updates.phone = cs.phone_number;
+                if (isVal(cs.instagram)) updates.instagram = cs.instagram;
+                if (isVal(cs.website)) updates.website = cs.website;
+                if (isVal(cs.tiktok)) updates.tiktok = cs.tiktok;
+                if (isVal(cs.youtube)) updates.youtube = cs.youtube;
+                if (isVal(cs.facebook)) updates.facebook = cs.facebook;
 
                 const foundNewData = Object.keys(updates).length > 0;
                 updates.enriched = foundNewData || lead.enriched;

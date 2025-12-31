@@ -165,6 +165,38 @@ export async function POST(req) {
                 console.error('❌ [SUPABASE] Error inserting leads:', insertError);
                 throw insertError;
             }
+
+            // --- DATA TIME MACHINE: INTERNAL BACKUP ---
+            // Save a full snapshot of the current state to the backups table
+            try {
+                const { error: backupError } = await supabase
+                    .from('leads_backups')
+                    .insert([{
+                        snapshot_data: leads,
+                        lead_count: leads.length,
+                        source: 'auto_sync'
+                    }]);
+
+                if (backupError) {
+                    console.warn('⚠️ [BACKUP] Internal snapshot failed (Table might not exist yet):', backupError.message);
+                } else {
+                    console.log('📦 [BACKUP] Internal snapshot created successfully.');
+
+                    // Cleanup: Keep only last 20 snapshots
+                    const { data: oldBackups } = await supabase
+                        .from('leads_backups')
+                        .select('id')
+                        .order('created_at', { ascending: false })
+                        .range(20, 100);
+
+                    if (oldBackups && oldBackups.length > 0) {
+                        const idsToDelete = oldBackups.map(b => b.id);
+                        await supabase.from('leads_backups').delete().in('id', idsToDelete);
+                    }
+                }
+            } catch (backupErr) {
+                console.warn('⚠️ [BACKUP] Critical backup logic failed:', backupErr.message);
+            }
         }
 
         console.log(`✅ [SUPABASE] Successfully synced ${leads.length} leads (Previous count: ${currentCount})`);
@@ -177,7 +209,7 @@ export async function POST(req) {
         }
 
         return NextResponse.json({
-            message: 'Leads synced to Supabase + Local Mirror',
+            message: 'Leads synced + Internal Snapshot Saved',
             count: leads.length,
             previousCount: currentCount
         });

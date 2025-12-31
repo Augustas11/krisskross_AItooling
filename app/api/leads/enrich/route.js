@@ -2,18 +2,45 @@ import { NextResponse } from 'next/server';
 import { Firecrawl } from '@mendable/firecrawl-js';
 import { z } from 'zod';
 
+// Helper to clean AI strings (strip citations, etc.)
+function sanitizeAiData(data) {
+    if (typeof data === 'string') {
+        // Strip Perplexity citations like [1], [2], [1, 2]
+        let cleaned = data.replace(/\[\s*\d+(?:\s*,\s*\d+)*\s*\]/g, '').trim();
+        // Ignore obvious "not found" placeholders
+        const placeholders = ['not available', 'not found', 'n/a', 'unknown', 'null'];
+        if (placeholders.includes(cleaned.toLowerCase())) return null;
+        return cleaned;
+    }
+    if (Array.isArray(data)) {
+        return data.map(sanitizeAiData);
+    }
+    if (data !== null && typeof data === 'object') {
+        const sanitized = {};
+        for (const [key, value] of Object.entries(data)) {
+            sanitized[key] = sanitizeAiData(value);
+        }
+        return sanitized;
+    }
+    return data;
+}
+
 // Helper for Perplexity Enrichment
 async function executePerplexityEnrich(url, name, apiKey) {
     const prompt = `Visit and analyze the website ${url} for the business "${name}".
 
 IMPORTANT: I specifically need the TikTok link. Check the footer and header very carefully for ANY link containing "tiktok.com". Even if it's just an icon with no text, you MUST find the URL.
 
+EXTRACTION RULES:
+- DO NOT include citations like [1], [2] in your JSON values.
+- If a field is missing, use null (do NOT use "Not found" or "N/A").
+- Ensure Emails include the full domain.
+
 Look for:
 1. Phone Number (Full format)
 2. Email address (Full domain, no truncation)
 3. Physical address
 4. Social profiles: tiktok (MANDATORY if exists), instagram, youtube, facebook (Full URLs)
-5. Look for any text like "@zeagoo" or "tiktok.com/@" on the page.
 
 Return STRICT JSON:
 {
@@ -43,7 +70,7 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`
         body: JSON.stringify({
             model: 'sonar-pro',
             messages: [
-                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON.' },
+                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON. NEVER include citations like [1] or [2] in the JSON values.' },
                 { role: 'user', content: prompt }
             ]
         })
@@ -64,7 +91,8 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`
     const jsonMatch = content.match(/(\{[\s\S]*\})/);
     if (jsonMatch) {
         try {
-            return JSON.parse(jsonMatch[1]);
+            const rawJson = JSON.parse(jsonMatch[1]);
+            return sanitizeAiData(rawJson);
         } catch (e) {
             console.error("JSON Parse Error for matched content:", e);
         }
@@ -72,7 +100,8 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL. Output ONLY JSON.`
 
     // Fallback: try parsing the whole content
     try {
-        return JSON.parse(content);
+        const rawJson = JSON.parse(content);
+        return sanitizeAiData(rawJson);
     } catch (e) {
         console.error("Final JSON Parse Error:", e);
         throw new Error("AI returned malformed data. Please try again.");
@@ -86,6 +115,11 @@ async function executeGrokEnrich(url, name, apiKey) {
 IMPORTANT: Look for ALL social media links in the HEADER and FOOTER. 
 Specifically hunt for TikTok (MANDATORY), Instagram, YouTube, and Facebook.
 Find any links containing "tiktok.com" or handles like "@${name}".
+
+EXTRACTION RULES:
+- DO NOT include citations like [1], [2].
+- Use null for missing data.
+- Full domain required for emails.
 
 Look for:
 1. Phone Number (Full format)
@@ -121,7 +155,7 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL if it exists in the
         body: JSON.stringify({
             model: 'grok-4-latest',
             messages: [
-                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON.' },
+                { role: 'system', content: 'You are a precise data extraction assistant. You only output valid JSON. NEVER include citations in the JSON values.' },
                 { role: 'user', content: prompt }
             ],
             stream: false,
@@ -134,17 +168,8 @@ CRITICAL: capture FULL domain for emails. INCLUDE TIKTOK URL if it exists in the
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-        try {
-            return JSON.parse(jsonMatch[0]);
-        } catch (e) {
-            console.error("JSON Parse Error", e);
-        }
-    }
-    return JSON.parse(content);
+    const rawJson = JSON.parse(data.choices[0].message.content);
+    return sanitizeAiData(rawJson);
 }
 
 export async function POST(req) {
