@@ -171,47 +171,68 @@ export async function POST(req) {
 
         if (provider === 'grok') {
             const grokKey = process.env.GROK_API_KEY;
+
             if (!grokKey) {
                 return NextResponse.json({ error: 'Missing GROK_API_KEY', logs }, { status: 500 });
             }
 
-            if (!apiKey) {
-                return NextResponse.json({ error: 'Missing FIRECRAWL_API_KEY (required for scraping before Grok analysis)', logs }, { status: 500 });
+            if (!perplexityKey) {
+                return NextResponse.json({ error: 'Missing PERPLEXITY_API_KEY (required for fetching content before Grok analysis)', logs }, { status: 500 });
             }
 
-            logs.push(createLog('execution', 'Running Grok Search'));
+            logs.push(createLog('execution', 'Running Grok Search with Perplexity content fetching'));
 
-            // Step 1: Scrape with Firecrawl
-            logs.push(createLog('info', 'Scraping page content for Grok analysis...'));
-            const app = new FirecrawlApp({ apiKey });
-            let scrapeResult;
+            // Step 1: Use Perplexity to fetch and summarize page content
+            logs.push(createLog('info', 'Fetching page content via Perplexity...'));
+            let pageContent;
 
             try {
-                const scrapeStart = Date.now();
-                scrapeResult = await app.scrapeUrl(url, {
-                    formats: ['markdown'],
+                const fetchStart = Date.now();
+                const response = await fetch('https://api.perplexity.ai/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${perplexityKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'sonar-pro',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are a web content extraction assistant. Extract and summarize the full text content of web pages.'
+                            },
+                            {
+                                role: 'user',
+                                content: `Visit this URL: ${url} and extract ALL the visible text content, product listings, and seller information. Return the content in plain text format, preserving all important details like seller names, product descriptions, and links.`
+                            }
+                        ]
+                    })
                 });
-                const scrapeDuration = ((Date.now() - scrapeStart) / 1000).toFixed(2);
-                logs.push(createLog('info', `Scraping completed in ${scrapeDuration}s`, { success: scrapeResult.success }));
 
-                if (!scrapeResult.success || !scrapeResult.markdown) {
-                    throw new Error(scrapeResult.error || 'Failed to retrieve page content');
+                if (!response.ok) {
+                    throw new Error(`Perplexity fetch failed: ${response.status}`);
                 }
-            } catch (scrapeError) {
-                logs.push(createLog('error', 'Scraping failed', scrapeError.message));
-                return NextResponse.json({ error: `Scraping failed: ${scrapeError.message}`, logs }, { status: 500 });
+
+                const data = await response.json();
+                pageContent = data.choices[0].message.content;
+
+                const fetchDuration = ((Date.now() - fetchStart) / 1000).toFixed(2);
+                logs.push(createLog('info', `Content fetching completed in ${fetchDuration}s`));
+            } catch (fetchError) {
+                logs.push(createLog('error', 'Content fetching failed', fetchError.message));
+                return NextResponse.json({ error: `Failed to fetch content: ${fetchError.message}`, logs }, { status: 500 });
             }
 
             // Step 2: Analyze with Grok
             try {
                 const startTime = Date.now();
-                const grokResult = await executeGrokSearch(scrapeResult.markdown, grokKey);
+                const grokResult = await executeGrokSearch(pageContent, grokKey);
                 const duration = ((Date.now() - startTime) / 1000).toFixed(2);
                 logs.push(createLog('api_response', `Grok analysis completed in ${duration}s`));
 
                 return NextResponse.json({
                     leads: grokResult.shops || [],
-                    method: 'grok_search',
+                    method: 'perplexity_fetch_grok_analysis',
                     logs
                 });
             } catch (e) {
