@@ -24,63 +24,63 @@ function sanitizeAiData(data) {
     return data;
 }
 
-// Helper to fetch HTML content using axios and Perplexity for rendering
-async function fetchHtmlContent(url, perplexityApiKey) {
-    // Strategy: Use Perplexity to fetch the rendered page content
-    // This handles JavaScript-rendered sites without needing Firecrawl
-
-    if (perplexityApiKey) {
+// Helper to fetch HTML content - tries multiple methods
+async function fetchHtmlContent(url) {
+    // Method 1: Try Firecrawl if available (best - handles JS rendering)
+    const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+    if (firecrawlKey) {
         try {
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${perplexityApiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'sonar-pro',
-                    messages: [
-                        {
-                            role: 'system',
-                            content: 'You are a web content extraction assistant. Extract the full visible text and HTML structure from web pages.'
-                        },
-                        {
-                            role: 'user',
-                            content: `Visit ${url} and extract ALL visible content including footer, header, and contact sections. Return the content in a structured format showing all text, links, and social media URLs found on the page.`
-                        }
-                    ]
-                })
+            const { FirecrawlAppV1 } = await import('@mendable/firecrawl-js');
+            const app = new FirecrawlAppV1({ apiKey: firecrawlKey });
+
+            console.log('[Firecrawl] Attempting to scrape', url);
+            const result = await app.scrapeUrl(url, {
+                formats: ['markdown', 'html'],
+                timeout: 30000
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                const content = data.choices[0].message.content;
-                console.log('[Perplexity Fetch] Successfully retrieved content for', url);
-                return { text: content, markdown: content };
+            if (result.success) {
+                console.log('[Firecrawl] Successfully retrieved content for', url);
+                return {
+                    html: result.html || '',
+                    markdown: result.markdown || '',
+                    text: result.markdown || result.html || ''
+                };
             }
         } catch (e) {
-            console.warn('[Perplexity Fetch] Failed:', e.message);
+            console.warn('[Firecrawl] Scrape failed:', e.message);
         }
+    } else {
+        console.log('[Firecrawl] API key not available, skipping');
     }
 
-    // Fallback: Direct axios fetch (works for server-rendered sites)
+    // Method 2: Try axios with anti-bot headers (works for some sites)
     const axios = (await import('axios')).default;
     try {
+        console.log('[Axios] Attempting direct fetch for', url);
         const response = await axios.get(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Cache-Control': 'max-age=0'
             },
             timeout: 15000,
             maxRedirects: 5
         });
-        console.log('[Axios Fetch] Successfully retrieved HTML for', url);
+        console.log('[Axios] Successfully retrieved HTML for', url);
         return response.data;
     } catch (e) {
-        console.warn('[HTML Fetch] Direct fetch failed:', e.message);
-        return null;
+        console.warn('[Axios] Direct fetch failed:', e.message, '- falling back to AI search');
     }
+
+    return null;
 }
 
 // Helper to extract footer and contact sections from HTML
@@ -154,13 +154,43 @@ Return STRICT JSON:
 }
 
 Output ONLY JSON.`
-        : `Search the web for the business "${name}" (Website: ${url}).
+        : `CRITICAL: Unable to fetch website HTML. Perform a comprehensive web search to find contact information and social media profiles.
 
-TASKS:
-1. Find Contact Info: Email, Phone, Address
-2. Find Social Profiles: Instagram, TikTok, YouTube, Facebook
+Business: "${name}"
+Website: ${url}
 
-Return STRICT JSON with the structure above. Output ONLY JSON.`;
+SEARCH STRATEGY:
+1. Search for "${name} TikTok" to find their TikTok profile
+2. Search for "${name} Instagram" to find their Instagram profile
+3. Search for "${name} contact email" or check their website's contact page
+4. Search for "${name} Facebook" and "${name} YouTube"
+5. Look for social media links in articles, reviews, or business directories mentioning this business
+
+CRITICAL INSTRUCTIONS:
+- Actively SEARCH for each social platform separately
+- Find REAL, VERIFIED URLs (e.g., https://www.tiktok.com/@username)
+- Do NOT construct URLs - only return URLs you find through search
+- Check business directories (Yelp, Google Business, etc.) which often list social media
+- Verify the social account matches the business name and website
+
+Return STRICT JSON:
+{
+    "seller_name": "${name}",
+    "contact_information": {
+        "business_address": "string or null",
+        "customer_service": {
+            "phone_number": "string or null",
+            "email": "string or null",
+            "website": "${url}",
+            "tiktok": "string or null (Full URL from search)",
+            "instagram": "string or null (Full URL from search)",
+            "youtube": "string or null",
+            "facebook": "string or null"
+        }
+    }
+}
+
+Output ONLY JSON.`;
 
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -249,8 +279,36 @@ Return STRICT JSON:
 }
 
 Output ONLY JSON.`
-        : `Search the web for "${name}" (${url}) and find social media and contact info.
-Return STRICT JSON with the structure above. Output ONLY JSON.`;
+        : `CRITICAL: Unable to fetch website HTML. Perform a comprehensive web search.
+
+Business: "${name}"
+Website: ${url}
+
+SEARCH for:
+- "${name} TikTok" -> Find TikTok profile URL
+- "${name} Instagram" -> Find Instagram profile URL
+- "${name} contact email"
+- "${name} Facebook"
+- "${name} YouTube"
+
+Return STRICT JSON with actual found URLs (not constructed):
+{
+    "seller_name": "${name}",
+    "contact_information": {
+        "business_address": "string or null",
+        "customer_service": {
+            "phone_number": "string or null",
+            "email": "string or null",
+            "website": "${url}",
+            "tiktok": "full URL or null",
+            "instagram": "full URL or null",
+            "youtube": "full URL or null",
+            "facebook": "full URL or null"
+        }
+    }
+}
+
+Output ONLY JSON.`;
 
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
@@ -307,9 +365,9 @@ export async function POST(req) {
                     const perplexityKey = process.env.PERPLEXITY_API_KEY;
                     if (!perplexityKey) throw new Error('Missing PERPLEXITY_API_KEY');
 
-                    // FIXED: Fetch HTML content first using Perplexity + axios fallback
+                    // Fetch HTML content using Firecrawl (if available) or axios
                     send('status', 'Fetching website content...');
-                    const htmlContent = await fetchHtmlContent(url, perplexityKey);
+                    const htmlContent = await fetchHtmlContent(url);
 
                     if (htmlContent) {
                         send('status', 'Website content retrieved successfully');
@@ -353,10 +411,9 @@ export async function POST(req) {
                     const grokKey = process.env.GROK_API_KEY;
                     if (!grokKey) throw new Error('Missing GROK_API_KEY');
 
-                    // FIXED: Fetch HTML content first using Perplexity + axios fallback
+                    // Fetch HTML content using Firecrawl (if available) or axios
                     send('status', 'Fetching website content...');
-                    const perplexityKey = process.env.PERPLEXITY_API_KEY;
-                    const htmlContent = await fetchHtmlContent(url, perplexityKey);
+                    const htmlContent = await fetchHtmlContent(url);
 
                     if (htmlContent) {
                         send('status', 'Website content retrieved successfully');
