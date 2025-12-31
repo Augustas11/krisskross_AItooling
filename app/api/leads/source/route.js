@@ -12,143 +12,190 @@ function createLog(type, message, data = null) {
     };
 }
 
+const KNOWN_LISTING_PATTERNS = [
+    { regex: /amazon\..*\/s\?/, type: 'amazon_search' },
+    { regex: /amazon\..*\/b\//, type: 'amazon_category' },
+    { regex: /ebay\..*\/sch\//, type: 'ebay_search' },
+    { regex: /etsy\..*\/c\//, type: 'etsy_category' },
+    { regex: /shopify\.com\/collections/, type: 'shopify_collection' },
+    { regex: /\/collections\/[^/]+$/, type: 'general_collection' },
+    { regex: /\/category\/[^/]+$/, type: 'general_category' },
+    { regex: /\/shop\/?$/, type: 'general_shop_root' },
+];
+
+function detectUrlType(url) {
+    const urlLower = url.toLowerCase();
+    for (const pattern of KNOWN_LISTING_PATTERNS) {
+        if (pattern.regex.test(urlLower)) {
+            return { isListing: true, type: pattern.type };
+        }
+    }
+    return { isListing: false, type: 'unknown' };
+}
+
 export async function POST(req) {
     const logs = [];
 
     try {
         const apiKey = process.env.FIRECRAWL_API_KEY;
         if (!apiKey) {
-            logs.push(createLog('error', 'Missing FIRECRAWL_API_KEY in environment variables'));
+            logs.push(createLog('error', 'Missing FIRECRAWL_API_KEY'));
             return NextResponse.json({ error: 'Missing FIRECRAWL_API_KEY', logs }, { status: 500 });
         }
 
-        const { url, deep } = await req.json();
-        logs.push(createLog('request', 'Received lead sourcing request', { url, mode: deep ? 'Deep Hunt' : 'Fast Scrape' }));
+        const { url, mode = 'smart' } = await req.json(); // Default to 'smart' mode
+        logs.push(createLog('info', `Analyzed URL: ${url}`, { mode }));
 
         if (!url) {
-            logs.push(createLog('error', 'URL is required'));
             return NextResponse.json({ error: 'URL is required', logs }, { status: 400 });
         }
 
-        if (deep) {
-            logs.push(createLog('info', 'Starting Deep Hunt mode with Firecrawl Agent'));
-            const firecrawl = new Firecrawl({ apiKey });
+        // --- STRATEGY DETERMINATION ---
+        const urlAnalysis = detectUrlType(url);
+        let executeDeepHunt = false;
 
-            logs.push(createLog('api_call', 'Calling Firecrawl Agent API', { url }));
-            const startTime = Date.now();
-
-            const result = await firecrawl.agent({
-                prompt: "Navigate this fashion listing/search page. For at least 5 unique product listings, navigate to their individual product pages. On each page, identify the seller (usually in 'Sold by'). Follow the seller link to their brand/profile page and extract: Seller Name, Business Address, Contact Email if available, and a brief description of their brand vibe. Return this as a list of unique sellers found.",
-                schema: z.object({
-                    shops: z.array(z.object({
-                        name: z.string(),
-                        productCategory: z.string().optional(),
-                        storeUrl: z.string().optional(),
-                        briefDescription: z.string().optional(),
-                        enriched: z.boolean().default(true),
-                        businessAddress: z.string().optional(),
-                        email: z.string().optional(),
-                        instagram: z.string().optional()
-                    }))
-                }),
-                urls: [url]
-            });
-
-            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-            logs.push(createLog('api_response', `Firecrawl Agent completed in ${duration}s`, {
-                success: result.success,
-                status: result.status,
-                creditsUsed: result.creditsUsed
-            }));
-
-            if (!result.success) {
-                logs.push(createLog('error', 'Deep hunt failed', { error: result.error }));
-                throw new Error(result.error || 'Deep hunt failed');
+        // If user explicitly requested deep or fast, prompt respects it. 
+        // If 'smart' (default), we decide.
+        if (mode === 'deep') {
+            executeDeepHunt = true;
+        } else if (mode === 'fast') {
+            executeDeepHunt = false;
+        } else {
+            // SMART MODE LOGIC:
+            // 1. If it looks like a known massive listing (Amazon Search), keep it Fast.
+            // 2. If it's unknown, try Fast first, but enable Auto-Escalation.
+            if (urlAnalysis.isListing) {
+                logs.push(createLog('strategy', `Identified known listing pattern (${urlAnalysis.type}). Prioritizing Fast Scrape.`));
+                executeDeepHunt = false;
+            } else {
+                logs.push(createLog('strategy', 'URL pattern generic. Starting with Fast Scrape (Cost-Efficient).'));
+                executeDeepHunt = false;
             }
-
-            const leadsFound = result.data?.shops?.length || 0;
-            logs.push(createLog('success', `Found ${leadsFound} unique sellers`, { leads: result.data?.shops }));
-
-            return NextResponse.json({
-                leads: result.data?.shops || [],
-                message: leadsFound > 0
-                    ? `Found and verified ${leadsFound} sellers via Deep Hunt.`
-                    : "No unique sellers found during deep hunt.",
-                logs
-            });
         }
 
-        // Fast Scrape Mode
-        logs.push(createLog('info', 'Starting Fast Scrape mode'));
-        const app = new FirecrawlApp({ apiKey });
+        // --- EXECUTION: TIER 1 (FAST SCRAPE) ---
+        // Unless we prioritized Deep Hunt immediately, we try Fast Scrape first.
+        let scrapeResult = null;
 
-        logs.push(createLog('api_call', 'Calling Firecrawl scrapeUrl API', { url }));
-        const startTime = Date.now();
+        if (!executeDeepHunt) {
+            logs.push(createLog('execution', 'Running Layer 1: Fast Scrape'));
+            const app = new FirecrawlApp({ apiKey });
 
-        const scrapeResult = await app.scrapeUrl(url, {
-            formats: ['json'],
-            onlyMainContent: false,
-            waitFor: 2000,
-            jsonOptions: {
-                prompt: "Identify and extract all the unique clothing brands, shops, and sellers from this Amazon results page. For each brand/shop, describe what they sell based on the products shown.",
-                schema: {
-                    type: "object",
-                    properties: {
-                        shops: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    name: { type: "string" },
-                                    productCategory: { type: "string" },
-                                    storeUrl: { type: "string" },
-                                    rating: { type: "string" },
-                                    briefDescription: { type: "string" }
-                                },
-                                required: ["name"]
+            const prompt = "Identify and extract all the unique clothing brands, shops, and sellers from this page. Return a list of shops with their names and descriptions.";
+
+            try {
+                const startTime = Date.now();
+                scrapeResult = await app.scrapeUrl(url, {
+                    formats: ['json'],
+                    jsonOptions: {
+                        prompt: prompt,
+                        schema: {
+                            type: "object",
+                            properties: {
+                                shops: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            name: { type: "string" },
+                                            productCategory: { type: "string" },
+                                            storeUrl: { type: "string" },
+                                            briefDescription: { type: "string" }
+                                        },
+                                        required: ["name"]
+                                    }
+                                }
                             }
                         }
                     }
+                });
+
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                logs.push(createLog('api_response', `Fast Scrape completed in ${duration}s`, { success: scrapeResult.success }));
+
+                if (scrapeResult.success) {
+                    const extracted = scrapeResult.json || scrapeResult.data?.json;
+                    const leadsCount = extracted?.shops?.length || 0;
+                    logs.push(createLog('result', `Layer 1 complete. Found ${leadsCount} leads.`));
+
+                    // --- STRATEGY: ESCALATION CHECK ---
+                    // If Fast Scrape found nothing AND we are in Smart Mode, escalate to Agent.
+                    if (leadsCount === 0 && mode === 'smart') {
+                        logs.push(createLog('escalation', 'Layer 1 yielded 0 leads. Auto-Escalating to Layer 2: Deep Hunt Agent.'));
+                        executeDeepHunt = true; // Trigger Tier 2
+                    } else {
+                        // Success or manual fast mode
+                        return NextResponse.json({
+                            leads: extracted?.shops || [],
+                            metadata: scrapeResult.metadata,
+                            method: 'fast_scrape',
+                            logs
+                        });
+                    }
+                } else {
+                    logs.push(createLog('error', 'Layer 1 failed', scrapeResult.error));
+                    if (mode === 'smart') executeDeepHunt = true; // Retry on error if smart
                 }
+            } catch (e) {
+                logs.push(createLog('error', 'Layer 1 Exception', e.message));
+                if (mode === 'smart') executeDeepHunt = true;
             }
-        });
-
-        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        logs.push(createLog('api_response', `Firecrawl scrape completed in ${duration}s`, {
-            success: scrapeResult.success,
-            creditsUsed: scrapeResult.metadata?.creditsUsed
-        }));
-
-        if (!scrapeResult.success) {
-            logs.push(createLog('error', 'Firecrawl scrape failed', { error: scrapeResult.error }));
-            throw new Error(scrapeResult.error || 'Firecrawl scrape failed');
         }
 
-        const extractedData = scrapeResult.json || scrapeResult.data?.json || (scrapeResult.data && typeof scrapeResult.data === 'object' ? scrapeResult.data : null);
+        // --- EXECUTION: TIER 2 (AGENT / DEEP HUNT) ---
+        if (executeDeepHunt) {
+            logs.push(createLog('execution', 'Running Layer 2: Firecrawl Agent Deep Hunt'));
+            const firecrawl = new Firecrawl({ apiKey });
 
-        if (!extractedData || !extractedData.shops) {
-            logs.push(createLog('warning', 'No shops found in extraction'));
-            return NextResponse.json({
-                leads: [],
-                message: 'No shops were found. Try "Deep Hunt" for a more thorough search.',
-                logs
-            });
+            // For Agent, we give it more freedom to navigate
+            const agentPrompt = urlAnalysis.isListing
+                ? "Navigate this listing page. For up to 5 listings, visit the product page, find the 'Sold By' seller profile, and extract Seller Name, Description, and if possible URL/Socials."
+                : "Explore this website to identify the business owner or key contact info. Look for 'About Us', 'Contact', or Footer links. Extract the Business Name, Description, and Contact details.";
+
+            try {
+                const startTime = Date.now();
+                const result = await firecrawl.agent({
+                    prompt: agentPrompt,
+                    schema: z.object({
+                        shops: z.array(z.object({
+                            name: z.string(),
+                            productCategory: z.string().optional(),
+                            briefDescription: z.string().optional(),
+                            email: z.string().optional(),
+                            instagram: z.string().optional()
+                        }))
+                    }),
+                    urls: [url]
+                });
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                logs.push(createLog('api_response', `Deep Hunt completed in ${duration}s`, { success: result.success }));
+
+                if (result.success) {
+                    const leadsFound = result.data?.shops?.length || 0;
+                    logs.push(createLog('success', `Found ${leadsFound} sellers via Deep Hunt`));
+
+                    return NextResponse.json({
+                        leads: result.data?.shops || [],
+                        method: 'deep_agent',
+                        logs
+                    });
+                } else {
+                    throw new Error(result.error || 'Agent execution failed');
+                }
+            } catch (e) {
+                logs.push(createLog('error', 'Layer 2 Exception', e.message));
+                // If both failed, we return error but with logs
+                return NextResponse.json({
+                    error: 'Lead discovery failed after trying fast and deep methods.',
+                    logs
+                }, { status: 500 });
+            }
         }
-
-        const leadsFound = extractedData.shops.length;
-        logs.push(createLog('success', `Extracted ${leadsFound} shop names from page`));
-
-        return NextResponse.json({
-            leads: extractedData.shops,
-            metadata: scrapeResult.metadata,
-            logs
-        });
 
     } catch (error) {
-        logs.push(createLog('error', 'Fatal error during lead sourcing', { error: error.message, stack: error.stack }));
-        console.error('Firecrawl API Error:', error);
+        logs.push(createLog('error', 'Fatal error', error.message));
         return NextResponse.json({
-            error: error.message || 'Unknown error during lead sourcing',
+            error: error.message || 'Unknown error during sourcing',
             logs
         }, { status: 500 });
     }
