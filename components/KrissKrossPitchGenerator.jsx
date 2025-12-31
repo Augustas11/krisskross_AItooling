@@ -310,20 +310,23 @@ ${template.cta}`;
 
     const handleBulkSaveToCrm = () => {
         let savedCount = 0;
+        let duplicateCount = 0;
         selectedLeads.forEach(index => {
             const lead = foundLeads[index];
-            // Check for duplicates logic is inside saveLeadToCrm but it alerts. 
-            // We should modify saveLeadToCrm to be silent for bulk or handle it here.
-            // For now, let's just modify the logic slightly to avoid 20 alerts.
-            const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
-            if (!isDuplicate) {
-                saveLeadToCrm(lead, true); // Add silent flag
+            const wasSaved = saveLeadToCrm(lead, true); // Add silent flag
+            if (wasSaved) {
                 savedCount++;
+            } else {
+                duplicateCount++;
             }
         });
+
         if (savedCount > 0) {
-            // Optional: Notification
             console.log(`Saved ${savedCount} leads to CRM`);
+            // Optional: Show a toast or notification in UI if you had one
+        }
+        if (duplicateCount > 0) {
+            console.log(`Skipped ${duplicateCount} duplicates`);
         }
     };
 
@@ -372,20 +375,35 @@ ${template.cta}`;
     };
 
     const saveLeadToCrm = (lead, silent = false) => {
-        const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
+        // Robust duplicate check:
+        // 1. If storeUrl exists on both, needs to match.
+        // 2. OR if name matches exactly.
+        // 3. OR if website (enriched) matches exactly.
+        const isDuplicate = savedLeads.some(l => {
+            // Check URL Match (if both exist)
+            if (l.storeUrl && lead.storeUrl && l.storeUrl === lead.storeUrl) return true;
+            // Check Name Match (normalized)
+            if (l.name?.toLowerCase().trim() === lead.name?.toLowerCase().trim()) return true;
+            // Check Website Match (if enriched)
+            if (l.website && lead.website && l.website === lead.website) return true;
+
+            return false;
+        });
+
         if (isDuplicate) {
             if (!silent) alert('Lead already in CRM!');
-            return;
+            return false;
         }
 
         const newLead = {
             ...lead,
-            id: `lead_${Date.now()}`,
+            id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // More unique ID
             status: 'New',
             addedAt: new Date().toLocaleDateString(),
             lastInteraction: null
         };
         setSavedLeads(prev => [newLead, ...prev]);
+        return true;
     };
 
     const updateLeadStatus = (leadId, newStatus) => {
@@ -533,20 +551,20 @@ ${template.cta}`;
                                 <div className="space-y-1 max-h-96 overflow-y-auto">
                                     {activityLog.map((log, idx) => (
                                         <div key={idx} className={`p-2 rounded border-l-2 ${log.type === 'error' ? 'bg-red-950/30 border-red-500 text-red-300' :
-                                                log.type === 'success' ? 'bg-green-950/30 border-green-500 text-green-300' :
-                                                    log.type === 'api_call' ? 'bg-blue-950/30 border-blue-500 text-blue-300' :
-                                                        log.type === 'api_response' ? 'bg-purple-950/30 border-purple-500 text-purple-300' :
-                                                            'bg-slate-800 border-slate-600 text-slate-300'
+                                            log.type === 'success' ? 'bg-green-950/30 border-green-500 text-green-300' :
+                                                log.type === 'api_call' ? 'bg-blue-950/30 border-blue-500 text-blue-300' :
+                                                    log.type === 'api_response' ? 'bg-purple-950/30 border-purple-500 text-purple-300' :
+                                                        'bg-slate-800 border-slate-600 text-slate-300'
                                             }`}>
                                             <div className="flex items-start gap-3">
                                                 <span className="text-[9px] text-slate-500 mt-0.5 min-w-[65px]">{log.timestamp}</span>
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${log.type === 'error' ? 'bg-red-500/20 text-red-400' :
-                                                                log.type === 'success' ? 'bg-green-500/20 text-green-400' :
-                                                                    log.type === 'api_call' ? 'bg-blue-500/20 text-blue-400' :
-                                                                        log.type === 'api_response' ? 'bg-purple-500/20 text-purple-400' :
-                                                                            'bg-slate-500/20 text-slate-400'
+                                                            log.type === 'success' ? 'bg-green-500/20 text-green-400' :
+                                                                log.type === 'api_call' ? 'bg-blue-500/20 text-blue-400' :
+                                                                    log.type === 'api_response' ? 'bg-purple-500/20 text-purple-400' :
+                                                                        'bg-slate-500/20 text-slate-400'
                                                             }`}>{log.type}</span>
                                                         <span className="font-medium">{log.message}</span>
                                                     </div>
@@ -606,99 +624,99 @@ ${template.cta}`;
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {foundLeads.map((lead, idx) => (
-                                    <div key={idx} className={`relative border-3 rounded-2xl p-5 transition-all flex flex-col justify-between bg-white shadow-sm hover:shadow-md ${lead.enriched ? 'border-green-400' : 'border-gray-100 hover:border-blue-300'
-                                        } ${selectedLeads.has(idx) ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}>
-                                        <div className="absolute top-4 right-4 z-10">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleLeadSelection(idx);
-                                                }}
-                                                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${selectedLeads.has(idx)
-                                                    ? 'bg-blue-600 border-blue-600'
-                                                    : 'bg-white border-gray-300 hover:border-blue-400'
-                                                    }`}
-                                            >
-                                                {selectedLeads.has(idx) && <CheckCircle className="w-4 h-4 text-white" />}
-                                            </button>
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h4 className="font-extrabold text-xl text-gray-800">{lead.name}</h4>
-                                                {lead.enriched && (
-                                                    <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">
-                                                        AI Enriched
-                                                    </span>
-                                                )}
+                                    {foundLeads.map((lead, idx) => (
+                                        <div key={idx} className={`relative border-3 rounded-2xl p-5 transition-all flex flex-col justify-between bg-white shadow-sm hover:shadow-md ${lead.enriched ? 'border-green-400' : 'border-gray-100 hover:border-blue-300'
+                                            } ${selectedLeads.has(idx) ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}>
+                                            <div className="absolute top-4 right-4 z-10">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleLeadSelection(idx);
+                                                    }}
+                                                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${selectedLeads.has(idx)
+                                                        ? 'bg-blue-600 border-blue-600'
+                                                        : 'bg-white border-gray-300 hover:border-blue-400'
+                                                        }`}
+                                                >
+                                                    {selectedLeads.has(idx) && <CheckCircle className="w-4 h-4 text-white" />}
+                                                </button>
                                             </div>
-                                            <p className="text-xs font-bold text-blue-600 mb-2 uppercase tracking-widest">{lead.productCategory}</p>
-                                            <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed">{lead.briefDescription}</p>
-
-                                            {lead.enriched && (
-                                                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
-                                                    {lead.instagram && (
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-rose-600">
-                                                            <span className="w-5 h-5 flex items-center justify-center bg-rose-50 rounded text-[10px]">IG</span>
-                                                            {lead.instagram}
-                                                        </div>
-                                                    )}
-                                                    {lead.email && (
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
-                                                            <span className="w-5 h-5 flex items-center justify-center bg-blue-50 rounded text-[10px]">EM</span>
-                                                            {lead.email}
-                                                        </div>
-                                                    )}
-                                                    {lead.businessAddress && (
-                                                        <div className="flex items-center gap-2 text-[10px] text-gray-500 italic">
-                                                            <span className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded text-[10px]">AD</span>
-                                                            {lead.businessAddress}
-                                                        </div>
+                                            <div>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h4 className="font-extrabold text-xl text-gray-800">{lead.name}</h4>
+                                                    {lead.enriched && (
+                                                        <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">
+                                                            AI Enriched
+                                                        </span>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
+                                                <p className="text-xs font-bold text-blue-600 mb-2 uppercase tracking-widest">{lead.productCategory}</p>
+                                                <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed">{lead.briefDescription}</p>
 
-                                        <div className="flex gap-2 mt-6">
-                                            <button
-                                                onClick={() => {
-                                                    selectLead(lead);
-                                                    saveLeadToCrm(lead);
-                                                }}
-                                                className="flex-1 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-md"
-                                            >
-                                                SAVE & PITCH
-                                            </button>
-                                            <button
-                                                onClick={() => handleEnrichLead(lead, idx)}
-                                                disabled={enrichingLeads[idx] || lead.enriched}
-                                                className={`flex-1 py-3 border-2 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${lead.enriched
-                                                    ? 'border-green-500 text-green-600 bg-green-50'
-                                                    : 'border-blue-500 text-blue-600 hover:bg-blue-50'
-                                                    } ${enrichingLeads[idx] ? 'opacity-50 cursor-wait' : ''}`}
-                                            >
-                                                {enrichingLeads[idx] ? (
-                                                    <>
-                                                        <RefreshCw className="w-3 h-3 animate-spin" />
-                                                        ENRICH...
-                                                    </>
-                                                ) : lead.enriched ? (
-                                                    <>
-                                                        <CheckCircle className="w-3 h-3" />
-                                                        ENRICHED
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Sparkles className="w-3 h-3" />
-                                                        ENRICH CONTACTS
-                                                    </>
+                                                {lead.enriched && (
+                                                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                                                        {lead.instagram && (
+                                                            <div className="flex items-center gap-2 text-xs font-bold text-rose-600">
+                                                                <span className="w-5 h-5 flex items-center justify-center bg-rose-50 rounded text-[10px]">IG</span>
+                                                                {lead.instagram}
+                                                            </div>
+                                                        )}
+                                                        {lead.email && (
+                                                            <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
+                                                                <span className="w-5 h-5 flex items-center justify-center bg-blue-50 rounded text-[10px]">EM</span>
+                                                                {lead.email}
+                                                            </div>
+                                                        )}
+                                                        {lead.businessAddress && (
+                                                            <div className="flex items-center gap-2 text-[10px] text-gray-500 italic">
+                                                                <span className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded text-[10px]">AD</span>
+                                                                {lead.businessAddress}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 )}
-                                            </button>
+                                            </div>
+
+                                            <div className="flex gap-2 mt-6">
+                                                <button
+                                                    onClick={() => {
+                                                        selectLead(lead);
+                                                        saveLeadToCrm(lead);
+                                                    }}
+                                                    className="flex-1 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-md"
+                                                >
+                                                    SAVE & PITCH
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEnrichLead(lead, idx)}
+                                                    disabled={enrichingLeads[idx] || lead.enriched}
+                                                    className={`flex-1 py-3 border-2 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${lead.enriched
+                                                        ? 'border-green-500 text-green-600 bg-green-50'
+                                                        : 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                                                        } ${enrichingLeads[idx] ? 'opacity-50 cursor-wait' : ''}`}
+                                                >
+                                                    {enrichingLeads[idx] ? (
+                                                        <>
+                                                            <RefreshCw className="w-3 h-3 animate-spin" />
+                                                            ENRICH...
+                                                        </>
+                                                    ) : lead.enriched ? (
+                                                        <>
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            ENRICHED
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Sparkles className="w-3 h-3" />
+                                                            ENRICH CONTACTS
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
+                                    ))}
+                                </div>
+                            </>
                         )}
 
                         {foundLeads.length === 0 && !isSourcing && (
