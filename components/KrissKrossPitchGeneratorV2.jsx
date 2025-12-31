@@ -5,7 +5,7 @@ import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
-    FileText, Settings, Plus, Edit3
+    FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye
 } from 'lucide-react';
 
 export default function KrissKrossPitchGeneratorV3() {
@@ -35,6 +35,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isCrmInitialized, setIsCrmInitialized] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
+    const [viewingLead, setViewingLead] = useState(null);
 
     // Load Leads from Server on mount
     React.useEffect(() => {
@@ -646,7 +647,12 @@ ${template.cta}`;
                                                 {filteredLeads.map((lead) => (
                                                     <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
                                                         <td className="px-6 py-4">
-                                                            <div className="font-semibold text-gray-900">{lead.name}</div>
+                                                            <div
+                                                                className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
+                                                                onClick={() => setViewingLead(lead)}
+                                                            >
+                                                                {lead.name}
+                                                            </div>
                                                             <div className="text-sm text-blue-600">{lead.productCategory || 'Sourced Lead'}</div>
                                                         </td>
                                                         <td className="px-6 py-4">
@@ -688,6 +694,13 @@ ${template.cta}`;
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <div className="flex justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => setViewingLead(lead)}
+                                                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                                    title="View Details"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
                                                                 <button
                                                                     onClick={() => selectLead(lead)}
                                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -872,6 +885,215 @@ ${template.cta}`;
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Coming Soon</h3>
                                 <p className="text-gray-600">Track response rates, conversion metrics, and more</p>
                             </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                {/* Lead Details Modal */}
+                <AnimatePresence>
+                    {viewingLead && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
+                            onClick={() => setViewingLead(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                            >
+                                {/* Modal Header */}
+                                <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm">
+                                            {viewingLead.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                                {viewingLead.name}
+                                                {viewingLead.status && (
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full border ${viewingLead.status === 'Replied' ? 'bg-green-50 border-green-200 text-green-700' :
+                                                        viewingLead.status === 'Pitched' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                                            'bg-gray-50 border-gray-200 text-gray-600'
+                                                        }`}>
+                                                        {viewingLead.status}
+                                                    </span>
+                                                )}
+                                            </h2>
+                                            <p className="text-sm text-gray-500 font-medium">{viewingLead.productCategory}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setViewingLead(null)}
+                                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                    >
+                                        <X className="w-6 h-6 text-gray-500" />
+                                    </button>
+                                </div>
+
+                                {/* Modal Body - Scrollable */}
+                                <div className="p-6 overflow-y-auto custom-scrollbar">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* Contact Section */}
+                                        <div className="space-y-6">
+                                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
+                                                <Users className="w-4 h-4" /> Contact Information
+                                            </h3>
+
+                                            <div className="space-y-4">
+                                                {/* Email */}
+                                                <div className="group flex items-start gap-4">
+                                                    <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                                                        <Mail className="w-4 h-4 text-blue-600" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Email Address</div>
+                                                        <div className="text-sm text-gray-900 break-all select-all">
+                                                            {viewingLead.email ? (
+                                                                <a href={`mailto:${viewingLead.email}`} className="hover:text-blue-600 hover:underline">
+                                                                    {viewingLead.email}
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">Not available</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Phone */}
+                                                <div className="group flex items-start gap-4">
+                                                    <div className="mt-1 w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+                                                        <Phone className="w-4 h-4 text-green-600" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</div>
+                                                        <div className="text-sm text-gray-900 select-all">
+                                                            {viewingLead.phone || <span className="text-gray-400 italic">Not available</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Instagram */}
+                                                <div className="group flex items-start gap-4">
+                                                    <div className="mt-1 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-100 transition-colors">
+                                                        <Instagram className="w-4 h-4 text-pink-600" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
+                                                        <div className="text-sm text-gray-900">
+                                                            {viewingLead.instagram ? (
+                                                                <a
+                                                                    href={`https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="hover:text-pink-600 hover:underline flex items-center gap-1"
+                                                                >
+                                                                    {viewingLead.instagram} <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">Not available</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Website */}
+                                                <div className="group flex items-start gap-4">
+                                                    <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
+                                                        <Globe className="w-4 h-4 text-indigo-600" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
+                                                        <div className="text-sm text-gray-900">
+                                                            {viewingLead.website ? (
+                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
+                                                                    {viewingLead.website} <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">Not available</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Business Section */}
+                                        <div className="space-y-6">
+                                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
+                                                <Target className="w-4 h-4" /> Business Profile
+                                            </h3>
+
+                                            <div className="space-y-4">
+                                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                    <div className="text-xs text-gray-500 font-medium mb-2 uppercase tracking-wide">About Business</div>
+                                                    <p className="text-sm text-gray-700 leading-relaxed">
+                                                        {viewingLead.briefDescription || 'No description available for this lead.'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-start gap-3">
+                                                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                                    <div>
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
+                                                        <p className="text-sm text-gray-900">
+                                                            {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-start gap-3">
+                                                    <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                                    <div>
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
+                                                        {viewingLead.storeUrl ? (
+                                                            <a href={viewingLead.storeUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
+                                                                {viewingLead.storeUrl}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-sm text-gray-400 italic">Not available</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Modal Footer */}
+                                <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center mt-auto">
+                                    <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        Added {viewingLead.addedAt}
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => {
+                                                const body = `Hey ${viewingLead.name},\n\nI was checking out your store and loved your products!`;
+                                                window.open(`mailto:${viewingLead.email}?subject=Collaboration&body=${encodeURIComponent(body)}`);
+                                            }}
+                                            disabled={!viewingLead.email}
+                                            className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <Mail className="w-4 h-4" />
+                                            Email
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                selectLead(viewingLead);
+                                                setViewingLead(null);
+                                            }}
+                                            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            Generate Pitch
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>
