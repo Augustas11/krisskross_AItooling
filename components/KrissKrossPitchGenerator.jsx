@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Sparkles, Clock, DollarSign, TrendingUp, Copy, RefreshCw, CheckCircle, MessageSquare, Trash2, X } from 'lucide-react';
+import { Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp, Copy, CheckCircle, Trash2, Target } from 'lucide-react';
 
 export default function KrissKrossPitchGenerator() {
     const [targetType, setTargetType] = useState('fashion-seller');
@@ -18,6 +18,7 @@ export default function KrissKrossPitchGenerator() {
     const [sourceUrl, setSourceUrl] = useState('');
     const [foundLeads, setFoundLeads] = useState([]);
     const [isSourcing, setIsSourcing] = useState(false);
+    const [isDeepHunt, setIsDeepHunt] = useState(false);
     const [sourceError, setSourceError] = useState(null);
 
     // Enrichment State
@@ -196,7 +197,10 @@ ${template.cta}`;
             const response = await fetch('/api/leads/source', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: sourceUrl }),
+                body: JSON.stringify({
+                    url: sourceUrl,
+                    deep: isDeepHunt
+                }),
             });
 
             console.log('[DEBUG] Response status:', response.status);
@@ -355,12 +359,41 @@ ${template.cta}`;
                                 <button
                                     onClick={handleSourceLeads}
                                     disabled={isSourcing || !sourceUrl}
-                                    className={`px-8 py-3 bg-blue-600 text-white font-bold rounded-xl transition-all flex items-center gap-2 ${isSourcing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 hover:scale-105 shadow-lg'
+                                    className={`px-8 py-3 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg ${isSourcing
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : isDeepHunt
+                                            ? 'bg-indigo-600 hover:bg-indigo-700 hover:scale-105'
+                                            : 'bg-blue-600 hover:bg-blue-700 hover:scale-105'
                                         }`}
                                 >
-                                    {isSourcing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                                    {isSourcing ? 'Sourcing...' : 'Source Leads'}
+                                    {isSourcing ? <RefreshCw className="w-5 h-5 animate-spin" /> : isDeepHunt ? <Target className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+                                    {isSourcing ? 'Hunting...' : isDeepHunt ? 'Deep Hunt' : 'Fast Scrape'}
                                 </button>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-6 mb-8 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={isDeepHunt}
+                                        onChange={() => setIsDeepHunt(!isDeepHunt)}
+                                    />
+                                    <div className={`w-14 h-7 rounded-full transition-colors ${isDeepHunt ? 'bg-indigo-600' : 'bg-gray-300'}`}></div>
+                                    <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full transition-transform ${isDeepHunt ? 'translate-x-7' : ''}`}></div>
+                                </div>
+                                <span className={`font-black text-sm uppercase tracking-wider ${isDeepHunt ? 'text-indigo-600' : 'text-gray-500'}`}>
+                                    Strategic Deep Hunt
+                                </span>
+                            </label>
+
+                            <div className="flex-1 text-xs text-gray-500 font-medium">
+                                {isDeepHunt
+                                    ? "🔥 AI Agent will navigate through individual product pages to find verified seller details. (Slower, higher quality)"
+                                    : "⚡ Fast extraction of names from the current listing page. (Seconds)"
+                                }
                             </div>
                         </div>
 
