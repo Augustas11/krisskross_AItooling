@@ -137,7 +137,7 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const { url, name, provider = 'firecrawl' } = body;
+    const { url, name, provider = 'perplexity' } = body; // Default to Perplexity (Firecrawl out of credits)
 
     const stream = new ReadableStream({
         async start(controller) {

@@ -26,7 +26,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isSourcing, setIsSourcing] = useState(false);
     const [isDeepHunt, setIsDeepHunt] = useState(false);
     const [sourceError, setSourceError] = useState(null);
-    const [provider, setProvider] = useState('firecrawl'); // 'firecrawl' | 'perplexity' | 'grok'
+    const [provider, setProvider] = useState('perplexity'); // 'perplexity' | 'grok' (Firecrawl removed - out of credits)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isBulkAction, setIsBulkAction] = useState(false);
     const [selectedLeadIndices, setSelectedLeadIndices] = useState(new Set());
@@ -989,16 +989,6 @@ ${template.cta}`;
                                                         <input
                                                             type="radio"
                                                             name="provider"
-                                                            checked={provider === 'firecrawl'}
-                                                            onChange={() => setProvider('firecrawl')}
-                                                            className="text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                        <span className="text-sm text-gray-700">Firecrawl (Scraping)</span>
-                                                    </label>
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="radio"
-                                                            name="provider"
                                                             checked={provider === 'perplexity'}
                                                             onChange={() => setProvider('perplexity')}
                                                             className="text-blue-600 focus:ring-blue-500"
@@ -1017,36 +1007,6 @@ ${template.cta}`;
                                                     </label>
                                                 </div>
                                             </div>
-
-                                            {/* Firecrawl Specific Options */}
-                                            {provider === 'firecrawl' && (
-                                                <div>
-                                                    <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Firecrawl Strategy</p>
-                                                    <div className="flex flex-col gap-2">
-                                                        <label className="flex items-center gap-2 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isDeepHunt}
-                                                                onChange={(e) => setIsDeepHunt(e.target.checked)}
-                                                                className="text-blue-600 focus:ring-blue-500 rounded"
-                                                            />
-                                                            <span className="text-sm text-gray-700">Enable Deep Hunt Agent (Slow but thorough)</span>
-                                                        </label>
-                                                        <div className="flex gap-4 ml-6">
-                                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="strategy"
-                                                                    checked={!isDeepHunt} // Visual only if checkbox maps to it
-                                                                    disabled
-                                                                    className="text-gray-400"
-                                                                />
-                                                                <span className="text-sm text-gray-400">Auto (Smart Detect) - Active when Deep Hunt is off</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </motion.div>
                                     )}
                                 </div>

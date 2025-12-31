@@ -144,7 +144,7 @@ export async function POST(req) {
         const apiKey = process.env.FIRECRAWL_API_KEY;
         const perplexityKey = process.env.PERPLEXITY_API_KEY;
 
-        const { url, mode = 'smart', provider = 'firecrawl' } = await req.json(); // Default to 'smart' mode and 'firecrawl'
+        const { url, mode = 'smart', provider = 'perplexity' } = await req.json(); // Default to Perplexity (Firecrawl out of credits)
         logs.push(createLog('info', `Analyzed URL: ${url}`, { mode, provider }));
 
         if (provider === 'perplexity') {
