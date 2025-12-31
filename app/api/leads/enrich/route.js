@@ -105,6 +105,58 @@ Output ONLY JSON.`;
     }
 }
 
+// Helper for DEDICATED Social Media Search
+async function searchForSocialMedia(url, name, apiKey) {
+    // UPDATED PROMPT: Mimic natural user behavior which yields better results
+    const prompt = `Search for "${name}" TikTok.
+Search for "${name}" Instagram.
+Search for "${name}" Facebook.
+Search for "${name}" YouTube.
+
+Find the official or closest matching profiles. 
+Example: If the business is "Timeson Boutique", the TikTok might be "@timesonclothing".
+
+Return ONLY a JSON object with the links you find:
+{
+    "tiktok": "url",
+    "instagram": "url", 
+    "facebook": "url",
+    "youtube": "url"
+}`;
+
+    try {
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'sonar-pro',
+                messages: [
+                    { role: 'system', content: 'You are a targeted social media search engine. Return ONLY valid JSON. No markdown, no text explanations. If a link is missing, use null.' },
+                    { role: 'user', content: prompt }
+                ]
+            })
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        console.log(`[SOCIAL SEARCH] Response for ${name}:`, content);
+
+        const jsonMatch = content.match(/(\{[\s\S]*\})/);
+        const jsonStr = jsonMatch ? jsonMatch[1] : content;
+        return sanitizeAiData(JSON.parse(jsonStr));
+
+    } catch (e) {
+        console.warn("[SOCIAL SEARCH] Failed:", e);
+        return null;
+    }
+}
+
+
 // Helper for Grok Enrichment
 async function executeGrokEnrich(url, name, apiKey) {
     const prompt = `Analyze "${name}" (${url}) and find all social media (TikTok, Instagram, YouTube, Facebook) and contact info.
@@ -189,13 +241,26 @@ export async function POST(req) {
                     const perplexityKey = process.env.PERPLEXITY_API_KEY;
                     if (!perplexityKey) throw new Error('Missing PERPLEXITY_API_KEY');
 
-                    send('status', 'Connecting to Perplexity Sonar-Pro Network...');
-                    send('status', 'Searching and analyzing live web data...');
+                    // --- PAS 1: DEDICATED SOCIAL SEARCH ---
+                    send('status', 'Step 1/2: Hunting for social media profiles...');
+                    const socialResults = await searchForSocialMedia(url, name, perplexityKey);
 
-                    let result = await executePerplexityEnrich(url, name, perplexityKey);
+                    // --- PASS 2: MAIN CONTACT ENRICHMENT ---
+                    send('status', 'Step 2/2: Extracting contact details...');
+                    let mainResult = await executePerplexityEnrich(url, name, perplexityKey);
 
-                    // --- RECOVERY PASS: If Perplexity misses socials, try Grok ---
-                    const cs = result.contact_information?.customer_service || {};
+                    // --- MERGE RESULTS ---
+                    const cs = mainResult.contact_information?.customer_service || {};
+
+                    // Prioritize dedicated search results for socials
+                    if (socialResults) {
+                        if (socialResults.tiktok && !cs.tiktok) cs.tiktok = socialResults.tiktok;
+                        if (socialResults.instagram && !cs.instagram) cs.instagram = socialResults.instagram;
+                        if (socialResults.facebook && !cs.facebook) cs.facebook = socialResults.facebook;
+                        if (socialResults.youtube && !cs.youtube) cs.youtube = socialResults.youtube;
+                    }
+
+                    // --- RECOVERY PASS: If socials STILL missing, trigger Grok ---
                     if (!cs.instagram || !cs.tiktok) {
                         const grokKey = process.env.GROK_API_KEY;
                         if (grokKey) {
@@ -217,7 +282,7 @@ export async function POST(req) {
                     }
 
                     send('status', 'Extracting contact entities...');
-                    send('result', { enrichedData: result });
+                    send('result', { enrichedData: mainResult });
 
                 } else if (provider === 'grok') {
                     const grokKey = process.env.GROK_API_KEY;
