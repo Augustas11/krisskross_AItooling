@@ -155,24 +155,49 @@ ${template.cta}`;
     ];
 
     const handleSourceLeads = async () => {
-        if (!sourceUrl) return;
+        if (!sourceUrl) {
+            console.warn('[DEBUG] Source URL is empty, skipping sourcing.');
+            return;
+        }
+
+        console.log('[DEBUG] Sourcing started for URL:', sourceUrl);
         setIsSourcing(true);
         setSourceError(null);
+
         try {
+            console.log('[DEBUG] Sending request to /api/leads/source...');
             const response = await fetch('/api/leads/source', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: sourceUrl }),
             });
 
+            console.log('[DEBUG] Response status:', response.status);
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Failed to source leads');
+            console.log('[DEBUG] Received data:', data);
 
-            setFoundLeads(data.leads || []);
+            if (!response.ok) {
+                const errorMsg = data.error || 'Failed to source leads';
+                console.error('[DEBUG] Sourcing API Error:', errorMsg);
+                throw new Error(errorMsg);
+            }
+
+            if (data.message) {
+                console.info('[DEBUG] Server message:', data.message);
+            }
+
+            const leads = data.leads || [];
+            console.log('[DEBUG] Found leads count:', leads.length);
+            setFoundLeads(leads);
+
+            if (leads.length === 0) {
+                setSourceError(data.message || 'No leads were found. The AI couldn\'t find any shop listings on this page.');
+            }
         } catch (error) {
-            console.error('Lead sourcing error:', error);
+            console.error('[DEBUG] Lead sourcing catch block:', error);
             setSourceError(error.message);
         } finally {
+            console.log('[DEBUG] Sourcing process finished.');
             setIsSourcing(false);
         }
     };
