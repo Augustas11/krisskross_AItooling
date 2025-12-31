@@ -7,7 +7,7 @@ const anthropic = new Anthropic({
 
 export async function POST(req) {
     try {
-        const { targetType, customName } = await req.json();
+        const { targetType, customName, context } = await req.json();
 
         const systemPrompt = `You are the KrissKross AI Brand Voice Expert. Your goal is to generate high-converting outreach pitches for SDRs.
 
@@ -21,6 +21,9 @@ Voice Guidelines:
 
 Target: ${targetType}
 Recipient Name: ${customName || 'Prospect'}
+${context ? `Additional Context: ${context}` : ''}
+
+CRITICAL: If context is provided (like a profile link, bio, or product details), weave it into the hook or value prop to make the pitch feel deeply personalized and not robotic.
 
 Keep it under 100 words. Be conversational but professional. Use line breaks for readability.`;
 
@@ -29,7 +32,7 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
             max_tokens: 300,
             system: systemPrompt,
             messages: [
-                { role: "user", content: `Generate a KrissKross pitch for a ${targetType}${customName ? ` named ${customName}` : ''}.` }
+                { role: "user", content: `Generate a KrissKross pitch for ${customName ? customName : 'a ' + targetType}.${context ? ` Use this context to personalize it: ${context}` : ''}` }
             ],
         });
 

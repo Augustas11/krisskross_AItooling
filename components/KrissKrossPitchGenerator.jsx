@@ -5,6 +5,7 @@ import { Sparkles, Clock, DollarSign, TrendingUp, Copy, RefreshCw, CheckCircle, 
 export default function KrissKrossPitchGenerator() {
     const [targetType, setTargetType] = useState('fashion-seller');
     const [customName, setCustomName] = useState('');
+    const [context, setContext] = useState('');
     const [generatedPitch, setGeneratedPitch] = useState('');
     const [copied, setCopied] = useState(false);
     const [outreaches, setOutreaches] = useState([]);
@@ -69,7 +70,7 @@ export default function KrissKrossPitchGenerator() {
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetType, customName }),
+                body: JSON.stringify({ targetType, customName, context }),
             });
 
             if (!response.ok) throw new Error('API failed');
@@ -205,7 +206,7 @@ ${template.cta}`;
                         </div>
 
                         {/* Name Input */}
-                        <div className="mb-8">
+                        <div className="mb-6">
                             <label className="block text-lg font-bold text-gray-800 mb-3">
                                 Personalize with their name (optional)
                             </label>
@@ -215,6 +216,21 @@ ${template.cta}`;
                                 onChange={(e) => setCustomName(e.target.value)}
                                 placeholder="e.g., Sarah, Mike, Jessica..."
                                 className="w-full px-6 py-4 border-3 border-gray-300 rounded-xl focus:border-rose-600 focus:outline-none text-lg"
+                            />
+                        </div>
+
+                        {/* Context Input */}
+                        <div className="mb-8">
+                            <label className="block text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <MessageSquare className="w-5 h-5 text-rose-600" />
+                                Add Context or Profile Link
+                                <span className="text-xs font-normal text-gray-400 font-sans">(Highly Recommended)</span>
+                            </label>
+                            <textarea
+                                value={context}
+                                onChange={(e) => setContext(e.target.value)}
+                                placeholder="Paste social profile link, bio, or specific product details here... Claude will use this to tailor the pitch."
+                                className="w-full px-6 py-4 border-3 border-gray-300 rounded-xl focus:border-rose-600 focus:outline-none text-lg min-h-[120px] resize-none"
                             />
                         </div>
 
