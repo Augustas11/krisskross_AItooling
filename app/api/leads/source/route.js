@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { FirecrawlAppV1 as FirecrawlApp } from '@mendable/firecrawl-js';
+import { FirecrawlAppV1 as FirecrawlApp, Firecrawl } from '@mendable/firecrawl-js';
+import { z } from 'zod';
 
 export async function POST(req) {
     try {
