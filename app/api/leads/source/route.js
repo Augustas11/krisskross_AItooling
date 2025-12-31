@@ -16,10 +16,13 @@ export async function POST(req) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        // Using Firecrawl's LLM-based extraction to get shop names and details
+        // Using Firecrawl's LLM-based extraction with optimized parameters for Amazon
         const scrapeResult = await app.scrapeUrl(url, {
             formats: ['json'],
+            onlyMainContent: false, // Don't strip content as it might remove the product grid
+            waitFor: 2000, // Give Amazon a moment to stabilize
             jsonOptions: {
+                prompt: "Identify and extract all the unique clothing brands, shops, and sellers from this Amazon results page. For each brand/shop, describe what they sell based on the products shown.",
                 schema: {
                     type: "object",
                     properties: {
