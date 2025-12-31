@@ -24,6 +24,7 @@ export default function KrissKrossPitchGenerator() {
 
     // Enrichment State
     const [enrichingLeads, setEnrichingLeads] = useState({}); // { [index]: boolean }
+    const [selectedLeads, setSelectedLeads] = useState(new Set()); // Set of indices
 
     // CRM State (Persistent via Server)
     const [savedLeads, setSavedLeads] = useState([]);
@@ -276,6 +277,56 @@ ${template.cta}`;
         }
     };
 
+    const toggleLeadSelection = (index) => {
+        setSelectedLeads(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(index)) {
+                newSet.delete(index);
+            } else {
+                newSet.add(index);
+            }
+            return newSet;
+        });
+    };
+
+    const selectAllLeads = () => {
+        if (selectedLeads.size === foundLeads.length) {
+            setSelectedLeads(new Set()); // Deselect all
+        } else {
+            setSelectedLeads(new Set(foundLeads.map((_, i) => i))); // Select all
+        }
+    };
+
+    const handleBulkEnrich = async () => {
+        const indices = Array.from(selectedLeads);
+        for (const index of indices) {
+            const lead = foundLeads[index];
+            if (!lead.enriched && !enrichingLeads[index]) {
+                // Sequential to be nice to API, or parallel? Sequential is safer for rate limits.
+                await handleEnrichLead(lead, index);
+            }
+        }
+    };
+
+    const handleBulkSaveToCrm = () => {
+        let savedCount = 0;
+        selectedLeads.forEach(index => {
+            const lead = foundLeads[index];
+            // Check for duplicates logic is inside saveLeadToCrm but it alerts. 
+            // We should modify saveLeadToCrm to be silent for bulk or handle it here.
+            // For now, let's just modify the logic slightly to avoid 20 alerts.
+            const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
+            if (!isDuplicate) {
+                saveLeadToCrm(lead, true); // Add silent flag
+                savedCount++;
+            }
+        });
+        if (savedCount > 0) {
+            // Optional: Notification
+            console.log(`Saved ${savedCount} leads to CRM`);
+        }
+    };
+
     const handleEnrichLead = async (lead, index) => {
         if (!lead.storeUrl && !sourceUrl) return;
 
@@ -320,10 +371,10 @@ ${template.cta}`;
         }
     };
 
-    const saveLeadToCrm = (lead) => {
+    const saveLeadToCrm = (lead, silent = false) => {
         const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
         if (isDuplicate) {
-            alert('Lead already in CRM!');
+            if (!silent) alert('Lead already in CRM!');
             return;
         }
 
@@ -519,10 +570,59 @@ ${template.cta}`;
                         )}
 
                         {foundLeads.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <>
+                                <div className="flex flex-wrap items-center justify-between gap-4 mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={selectAllLeads}
+                                            className="text-sm font-bold text-blue-700 hover:text-blue-900 flex items-center gap-2"
+                                        >
+                                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedLeads.size === foundLeads.length && foundLeads.length > 0 ? 'bg-blue-600 border-blue-600' : 'border-blue-400 bg-white'}`}>
+                                                {selectedLeads.size === foundLeads.length && foundLeads.length > 0 && <CheckCircle className="w-3 h-3 text-white" />}
+                                            </div>
+                                            {selectedLeads.size === foundLeads.length ? 'Deselect All' : 'Select All'}
+                                        </button>
+                                        <span className="text-sm text-blue-600 font-medium">
+                                            {selectedLeads.size} selected
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleBulkEnrich}
+                                            disabled={selectedLeads.size === 0}
+                                            className="px-4 py-2 bg-white border-2 border-blue-200 text-blue-700 font-bold rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            Enrich Selected
+                                        </button>
+                                        <button
+                                            onClick={handleBulkSaveToCrm}
+                                            disabled={selectedLeads.size === 0}
+                                            className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        >
+                                            <Clock className="w-4 h-4" />
+                                            Save to CRM
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {foundLeads.map((lead, idx) => (
-                                    <div key={idx} className={`border-3 rounded-2xl p-5 transition-all flex flex-col justify-between bg-white shadow-sm hover:shadow-md ${lead.enriched ? 'border-green-400' : 'border-gray-100 hover:border-blue-300'
-                                        }`}>
+                                    <div key={idx} className={`relative border-3 rounded-2xl p-5 transition-all flex flex-col justify-between bg-white shadow-sm hover:shadow-md ${lead.enriched ? 'border-green-400' : 'border-gray-100 hover:border-blue-300'
+                                        } ${selectedLeads.has(idx) ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}>
+                                        <div className="absolute top-4 right-4 z-10">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleLeadSelection(idx);
+                                                }}
+                                                className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${selectedLeads.has(idx)
+                                                    ? 'bg-blue-600 border-blue-600'
+                                                    : 'bg-white border-gray-300 hover:border-blue-400'
+                                                    }`}
+                                            >
+                                                {selectedLeads.has(idx) && <CheckCircle className="w-4 h-4 text-white" />}
+                                            </button>
+                                        </div>
                                         <div>
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-extrabold text-xl text-gray-800">{lead.name}</h4>
@@ -598,6 +698,7 @@ ${template.cta}`;
                                     </div>
                                 ))}
                             </div>
+                        </>
                         )}
 
                         {foundLeads.length === 0 && !isSourcing && (

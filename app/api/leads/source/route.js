@@ -35,10 +35,15 @@ function detectUrlType(url) {
 
 async function executePerplexitySearch(url, apiKey) {
     const prompt = `Analyze the content related to this URL: ${url}. 
-    Identify and extract all unique clothing brands, shops, and sellers associated with it.
-    Return a STRICT JSON object with a "shops" key containing an array of objects.
-    Each object must have: "name", "productCategory", "storeUrl" (if found), "briefDescription".
-    Do not include any markdown formatting or explanation, just the JSON string.`;
+    This is likely a product listing page, category page, or search result.
+    Your task is to identify and extract ALL unique clothing brands, shops, and sellers visible on this page.
+    IMPORTANT:
+    1. Look for lists of products or sellers.
+    2. Try to find as many distinct shops/sellers as possible (aim for 20+ if available).
+    3. If the page seems to load dynamically or scroll, simulate the context of a fully loaded page in your analysis to find more than just the top few results.
+    4. Return a STRICT JSON object with a "shops" key containing an array of objects.
+    5. Each object must have: "name", "productCategory", "storeUrl" (if found), "briefDescription".
+    6. Do not include any markdown formatting or explanation, just the JSON string.`;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -148,7 +153,7 @@ export async function POST(req) {
             logs.push(createLog('execution', 'Running Layer 1: Fast Scrape'));
             const app = new FirecrawlApp({ apiKey });
 
-            const prompt = "Identify and extract all the unique clothing brands, shops, and sellers from this page. Return a list of shops with their names and descriptions.";
+            const prompt = "Identify and extract ALL the unique clothing brands, shops, and sellers from this page. Scroll effectively if needed. Return a list of EVERY shop found with their names and descriptions.";
 
             try {
                 const startTime = Date.now();
