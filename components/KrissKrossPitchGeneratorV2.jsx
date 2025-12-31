@@ -249,7 +249,8 @@ ${template.cta}`;
                         email: enrichedInfo.contact_information?.customer_service?.email,
                         phone: enrichedInfo.contact_information?.customer_service?.phone_number,
                         instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                        website: enrichedInfo.contact_information?.customer_service?.website
+                        website: enrichedInfo.contact_information?.customer_service?.website,
+                        tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
                     };
                 }
                 return l;
@@ -302,7 +303,9 @@ ${template.cta}`;
             const hasData = enrichedInfo.contact_information?.business_address ||
                 enrichedInfo.contact_information?.customer_service?.email ||
                 enrichedInfo.contact_information?.customer_service?.phone_number ||
-                enrichedInfo.contact_information?.customer_service?.instagram;
+                enrichedInfo.contact_information?.customer_service?.instagram ||
+                enrichedInfo.contact_information?.customer_service?.tiktok ||
+                enrichedInfo.contact_information?.customer_service?.website;
 
             const newFields = {
                 enriched: !!hasData, // Only mark enriched if we successfully found data
@@ -310,7 +313,8 @@ ${template.cta}`;
                 email: enrichedInfo.contact_information?.customer_service?.email,
                 phone: enrichedInfo.contact_information?.customer_service?.phone_number,
                 instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                website: enrichedInfo.contact_information?.customer_service?.website
+                website: enrichedInfo.contact_information?.customer_service?.website,
+                tiktok: enrichedInfo.contact_information?.customer_service?.tiktok
             };
 
             setViewingLead(prev => ({ ...prev, ...newFields }));
@@ -1141,7 +1145,7 @@ ${template.cta}`;
                                                     </div>
                                                 </div>
 
-                                                {/* TikTok Shop (Previously Website) */}
+                                                {/* TikTok Shop */}
                                                 <div className="group flex items-start gap-4">
                                                     <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
                                                         <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
@@ -1149,8 +1153,27 @@ ${template.cta}`;
                                                     <div className="flex-1">
                                                         <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok Shop</div>
                                                         <div className="text-sm text-gray-900">
+                                                            {viewingLead.tiktok ? (
+                                                                <a href={viewingLead.tiktok} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
+                                                                    {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">Not available</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Official Website */}
+                                                <div className="group flex items-start gap-4">
+                                                    <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
+                                                        <Globe className="w-4 h-4 text-indigo-600" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
+                                                        <div className="text-sm text-gray-900">
                                                             {viewingLead.website ? (
-                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
+                                                                <a href={viewingLead.website} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
                                                                     {viewingLead.website} <ExternalLink className="w-3 h-3" />
                                                                 </a>
                                                             ) : (
@@ -1213,21 +1236,27 @@ ${template.cta}`;
                                     <div className="flex gap-3">
                                         <button
                                             onClick={enrichViewingLead}
-                                            disabled={isEnrichingViewingLead || viewingLead.enriched}
-                                            className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched
+                                            disabled={isEnrichingViewingLead || (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website)}
+                                            className={`px-4 py-2 border font-semibold rounded-lg flex items-center gap-2 transition-all ${viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website
                                                 ? 'border-green-200 bg-green-50 text-green-700'
-                                                : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                                                } ${isEnrichingViewingLead ? 'opacity-70 cursor-wait' : ''}`}
+                                                : isEnrichingViewingLead ? 'border-gray-200 bg-gray-50 text-gray-400'
+                                                    : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                                                } ${isEnrichingViewingLead ? 'cursor-wait' : ''}`}
                                         >
                                             {isEnrichingViewingLead ? (
                                                 <>
                                                     <RefreshCw className="w-4 h-4 animate-spin" />
                                                     Enriching...
                                                 </>
-                                            ) : viewingLead.enriched ? (
+                                            ) : (viewingLead.enriched && viewingLead.email && viewingLead.instagram && viewingLead.tiktok && viewingLead.website) ? (
                                                 <>
                                                     <CheckCircle className="w-4 h-4" />
-                                                    Enriched
+                                                    Fully Enriched
+                                                </>
+                                            ) : viewingLead.enriched ? (
+                                                <>
+                                                    <RefreshCw className="w-4 h-4" />
+                                                    Enrich Again
                                                 </>
                                             ) : (
                                                 <>

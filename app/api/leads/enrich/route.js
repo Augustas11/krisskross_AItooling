@@ -5,7 +5,7 @@ import { z } from 'zod';
 // Helper for Perplexity Enrichment
 async function executePerplexityEnrich(url, name, apiKey) {
     const prompt = `Research and extract contact information for the seller "${name}" associated with this URL: ${url}.
-    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, Instagram Handle.
+    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, and Official Website URL.
     Return a STRICT JSON object matching this schema:
     {
         "seller_name": "string",
@@ -15,6 +15,7 @@ async function executePerplexityEnrich(url, name, apiKey) {
                 "phone_number": "string or null",
                 "email": "string or null",
                 "website": "string or null",
+                "tiktok": "string or null",
                 "instagram": "string or null"
             }
         }
@@ -57,7 +58,7 @@ async function executePerplexityEnrich(url, name, apiKey) {
 // Helper for Grok Enrichment
 async function executeGrokEnrich(url, name, apiKey) {
     const prompt = `Research and extract contact information for the seller "${name}" associated with this URL: ${url}.
-    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, Instagram Handle.
+    Find: Business Address, Customer Service Email, Phone Number, Official TikTok Profile URL, and Official Website URL.
     Return a STRICT JSON object matching this schema:
     {
         "seller_name": "string",
@@ -67,6 +68,7 @@ async function executeGrokEnrich(url, name, apiKey) {
                 "phone_number": "string or null",
                 "email": "string or null",
                 "website": "string or null",
+                "tiktok": "string or null",
                 "instagram": "string or null"
             }
         }
@@ -160,7 +162,7 @@ export async function POST(req) {
         console.log(`[DEBUG] Agent enrichment started for: ${name} at ${url}`);
 
         const result = await firecrawl.agent({
-            prompt: `Extract the seller name and all available contact information, including business address, customer service phone, email, and their official TikTok profile URL (or general website if TikTok is not found) for the seller "${name}" at the provided URL. Also find their official Instagram handle if possible.`,
+            prompt: `Extract the seller name and all available contact information, including business address, customer service phone, email, their official TikTok profile URL, and their official website URL for the seller "${name}" at the provided URL. Also find their official Instagram handle if possible.`,
             schema: z.object({
                 seller_name: z.string().describe("The name of the seller"),
                 contact_information: z.object({
@@ -168,7 +170,8 @@ export async function POST(req) {
                     customer_service: z.object({
                         phone_number: z.string().describe("Customer service phone number").optional(),
                         email: z.string().describe("Customer service email address").optional(),
-                        website: z.string().describe("TikTok profile URL or official website").optional(),
+                        website: z.string().describe("Official website URL").optional(),
+                        tiktok: z.string().describe("Official TikTok profile URL").optional(),
                         instagram: z.string().describe("Instagram handle or URL").optional()
                     }).describe("Customer service contact details").optional()
                 }).describe("Contact details for the seller").optional()
