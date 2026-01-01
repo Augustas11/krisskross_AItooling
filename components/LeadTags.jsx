@@ -272,7 +272,10 @@ export function TagsSection({ lead, onUpdateTags }) {
                 title="Other Tags"
                 icon="🏷️"
                 tags={lead?.tags?.map(normalizeTag).filter(tag =>
-                  tag && ![
+                  tag &&
+                  tag.full_tag &&
+                  !tag.full_tag.includes('}') && // Filter out obviously malformed json artifacts
+                  ![
                     'priority', 'business', 'geo', 'platform',
                     'followers', 'engagement', 'pain', 'content',
                     'posting', 'icp', 'outreach', 'products'

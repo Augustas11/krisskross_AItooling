@@ -50,6 +50,8 @@ export async function POST(req) {
             const enrichedLead = await enrichAndTagLead(lead);
 
             // 3. Map back to DB snake_case structure
+            console.log('[DEBUG] tags before response:', JSON.stringify(enrichedLead.tags));
+
             const dbUpdate = {
                 instagram: enrichedLead.instagram,
                 instagram_followers: enrichedLead.instagramFollowers,
@@ -58,7 +60,7 @@ export async function POST(req) {
                 enriched: true,
                 score: enrichedLead.score,
                 tier: enrichedLead.tier,
-                tags: enrichedLead.tags,
+                tags: Array.isArray(enrichedLead.tags) ? enrichedLead.tags : [], // Safety check
                 score_breakdown: enrichedLead.scoreBreakdown,
                 last_scored_at: enrichedLead.lastScoredAt,
                 last_tagged_at: new Date().toISOString()
