@@ -114,10 +114,118 @@ export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
                 </div>
             </div>
 
-            {/* 2. MAIN CONTENT GRID (Horizontal Layout) */}
+            {/* 2. AI TAGS SECTION - MOVED UP, ALWAYS VISIBLE */}
+            <div className="bg-white border-b p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <SectionTitle icon={<Brain className="w-4 h-4" />} title="AI Analysis Tags" />
+                    <span className="text-xs text-gray-500 font-medium">
+                        {lead.tags?.length || 0} {lead.tags?.length === 1 ? 'tag' : 'tags'}
+                    </span>
+                </div>
+                {Object.keys(tagGroups).length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {/* Render all tag categories dynamically */}
+                        {tagGroups.pain && tagGroups.pain.length > 0 && (
+                            <TagGroup
+                                title="Pain Points"
+                                tags={tagGroups.pain}
+                                icon={<AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
+                                color="red"
+                            />
+                        )}
+                        {tagGroups.business && tagGroups.business.length > 0 && (
+                            <TagGroup
+                                title="Business"
+                                tags={tagGroups.business}
+                                icon={<Globe className="w-3.5 h-3.5 text-blue-500" />}
+                                color="blue"
+                            />
+                        )}
+                        {tagGroups.content && tagGroups.content.length > 0 && (
+                            <TagGroup
+                                title="Content"
+                                tags={tagGroups.content}
+                                icon={<Video className="w-3.5 h-3.5 text-purple-500" />}
+                                color="purple"
+                            />
+                        )}
+                        {tagGroups.geo && tagGroups.geo.length > 0 && (
+                            <TagGroup
+                                title="Geography"
+                                tags={tagGroups.geo}
+                                icon={<MapPin className="w-3.5 h-3.5 text-green-500" />}
+                                color="green"
+                            />
+                        )}
+                        {tagGroups.platform && tagGroups.platform.length > 0 && (
+                            <TagGroup
+                                title="Platform"
+                                tags={tagGroups.platform}
+                                icon={<Instagram className="w-3.5 h-3.5 text-pink-500" />}
+                                color="pink"
+                            />
+                        )}
+                        {tagGroups.icp && tagGroups.icp.length > 0 && (
+                            <TagGroup
+                                title="ICP Match"
+                                tags={tagGroups.icp}
+                                icon={<CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />}
+                                color="indigo"
+                            />
+                        )}
+                        {tagGroups.priority && tagGroups.priority.length > 0 && (
+                            <TagGroup
+                                title="Priority"
+                                tags={tagGroups.priority}
+                                icon={<TrendingUp className="w-3.5 h-3.5 text-orange-500" />}
+                                color="orange"
+                            />
+                        )}
+                        {tagGroups.followers && tagGroups.followers.length > 0 && (
+                            <TagGroup
+                                title="Followers"
+                                tags={tagGroups.followers}
+                                icon={<Instagram className="w-3.5 h-3.5 text-purple-500" />}
+                                color="purple"
+                            />
+                        )}
+                        {tagGroups.engagement && tagGroups.engagement.length > 0 && (
+                            <TagGroup
+                                title="Engagement"
+                                tags={tagGroups.engagement}
+                                icon={<TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+                                color="green"
+                            />
+                        )}
+                        {/* Render any other categories not explicitly handled */}
+                        {Object.keys(tagGroups).filter(cat =>
+                            !['pain', 'business', 'content', 'geo', 'platform', 'icp', 'priority', 'followers', 'engagement'].includes(cat)
+                        ).map(category => {
+                            if (tagGroups[category] && tagGroups[category].length > 0) {
+                                return (
+                                    <TagGroup
+                                        key={category}
+                                        title={category.charAt(0).toUpperCase() + category.slice(1)}
+                                        tags={tagGroups[category]}
+                                        icon={<Brain className="w-3.5 h-3.5 text-gray-500" />}
+                                        color="gray"
+                                    />
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
+                ) : (
+                    <div className="text-center py-4 text-gray-400 text-sm italic border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                        No AI tags available. Run Deep Research to analyze this lead.
+                    </div>
+                )}
+            </div>
+
+            {/* 3. MAIN CONTENT GRID (Horizontal Layout) */}
             <div className="p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-                {/* LEFT COLUMN: Vitals + Tags (35% width) */}
+                {/* LEFT COLUMN: Vitals + Contact (35% width) */}
                 <div className="lg:col-span-4 space-y-4">
 
                     {/* SOCIAL VITAL SIGNS */}
@@ -174,109 +282,6 @@ export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
                             <ContactRow icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={lead.phone} copyable />
                             <ContactRow icon={<MapPin className="w-3.5 h-3.5" />} label="Location" value={lead.businessAddress || 'Unknown'} />
                         </div>
-                    </div>
-
-                    {/* AI TAGS ANALYSIS - DYNAMIC */}
-                    <div>
-                        <SectionTitle icon={<Brain className="w-4 h-4" />} title="AI Analysis" />
-                        {Object.keys(tagGroups).length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {/* Render all tag categories dynamically */}
-                                {tagGroups.pain && tagGroups.pain.length > 0 && (
-                                    <TagGroup
-                                        title="Pain Points"
-                                        tags={tagGroups.pain}
-                                        icon={<AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
-                                        color="red"
-                                    />
-                                )}
-                                {tagGroups.business && tagGroups.business.length > 0 && (
-                                    <TagGroup
-                                        title="Business"
-                                        tags={tagGroups.business}
-                                        icon={<Globe className="w-3.5 h-3.5 text-blue-500" />}
-                                        color="blue"
-                                    />
-                                )}
-                                {tagGroups.content && tagGroups.content.length > 0 && (
-                                    <TagGroup
-                                        title="Content"
-                                        tags={tagGroups.content}
-                                        icon={<Video className="w-3.5 h-3.5 text-purple-500" />}
-                                        color="purple"
-                                    />
-                                )}
-                                {tagGroups.geo && tagGroups.geo.length > 0 && (
-                                    <TagGroup
-                                        title="Geography"
-                                        tags={tagGroups.geo}
-                                        icon={<MapPin className="w-3.5 h-3.5 text-green-500" />}
-                                        color="green"
-                                    />
-                                )}
-                                {tagGroups.platform && tagGroups.platform.length > 0 && (
-                                    <TagGroup
-                                        title="Platform"
-                                        tags={tagGroups.platform}
-                                        icon={<Instagram className="w-3.5 h-3.5 text-pink-500" />}
-                                        color="pink"
-                                    />
-                                )}
-                                {tagGroups.icp && tagGroups.icp.length > 0 && (
-                                    <TagGroup
-                                        title="ICP Match"
-                                        tags={tagGroups.icp}
-                                        icon={<CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />}
-                                        color="indigo"
-                                    />
-                                )}
-                                {tagGroups.priority && tagGroups.priority.length > 0 && (
-                                    <TagGroup
-                                        title="Priority"
-                                        tags={tagGroups.priority}
-                                        icon={<TrendingUp className="w-3.5 h-3.5 text-orange-500" />}
-                                        color="orange"
-                                    />
-                                )}
-                                {tagGroups.followers && tagGroups.followers.length > 0 && (
-                                    <TagGroup
-                                        title="Followers"
-                                        tags={tagGroups.followers}
-                                        icon={<Instagram className="w-3.5 h-3.5 text-purple-500" />}
-                                        color="purple"
-                                    />
-                                )}
-                                {tagGroups.engagement && tagGroups.engagement.length > 0 && (
-                                    <TagGroup
-                                        title="Engagement"
-                                        tags={tagGroups.engagement}
-                                        icon={<TrendingUp className="w-3.5 h-3.5 text-green-500" />}
-                                        color="green"
-                                    />
-                                )}
-                                {/* Render any other categories not explicitly handled */}
-                                {Object.keys(tagGroups).filter(cat =>
-                                    !['pain', 'business', 'content', 'geo', 'platform', 'icp', 'priority', 'followers', 'engagement'].includes(cat)
-                                ).map(category => {
-                                    if (tagGroups[category] && tagGroups[category].length > 0) {
-                                        return (
-                                            <TagGroup
-                                                key={category}
-                                                title={category.charAt(0).toUpperCase() + category.slice(1)}
-                                                tags={tagGroups[category]}
-                                                icon={<Brain className="w-3.5 h-3.5 text-gray-500" />}
-                                                color="gray"
-                                            />
-                                        );
-                                    }
-                                    return null;
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-6 text-gray-400 text-sm italic border-2 border-dashed border-gray-200 rounded-xl">
-                                No AI tags available. Run Deep Research to analyze this lead.
-                            </div>
-                        )}
                     </div>
                 </div>
 
