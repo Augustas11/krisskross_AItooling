@@ -82,7 +82,8 @@ export async function POST(req) {
                 success: true,
                 enrichedData: {
                     ...enrichedLead,
-                    ...dbUpdate // Ensure returned data matches what UI expects
+                    ...dbUpdate, // Ensure returned data matches what UI expects
+                    aiResearchSummary: enrichedLead.ai_research_summary || null // Add camelCase version for UI
                 }
             });
 
