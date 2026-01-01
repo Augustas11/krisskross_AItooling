@@ -11,7 +11,7 @@ import {
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
 
 export default function KrissKrossPitchGeneratorV3() {
-    const [activeTab, setActiveTab] = useState('discover');
+    const [activeTab, setActiveTab] = useState('crm');
     const [targetType, setTargetType] = useState('fashion-seller');
     const [customName, setCustomName] = useState('');
     const [recipientEmail, setRecipientEmail] = useState('');
@@ -32,6 +32,8 @@ export default function KrissKrossPitchGeneratorV3() {
     const [provider, setProvider] = useState('perplexity'); // 'perplexity' | 'grok' (Firecrawl removed - out of credits)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [selectedLeadIndices, setSelectedLeadIndices] = useState(new Set());
+    const [searchHistory, setSearchHistory] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
 
     // CRM State
     const [viewingLead, setViewingLead] = useState(null);
@@ -296,6 +298,21 @@ ${template.cta}`;
 
             if (leads.length === 0) {
                 setSourceError(data.message || 'No leads found on this page.');
+            } else {
+                // Auto-save to history
+                try {
+                    fetch('/api/history', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            searchUrl: sourceUrl,
+                            provider: provider,
+                            leads: leads
+                        })
+                    }).then(() => loadSearchHistory()); // Refresh history in background
+                } catch (err) {
+                    console.error('Failed to save history', err);
+                }
             }
         } catch (error) {
             setSourceError(error.message);
@@ -303,6 +320,20 @@ ${template.cta}`;
             setIsSourcing(false);
         }
     };
+
+    const loadSearchHistory = async () => {
+        try {
+            const res = await fetch('/api/history');
+            const data = await res.json();
+            if (data.history) setSearchHistory(data.history);
+        } catch (e) {
+            console.error('Failed to load history', e);
+        }
+    };
+
+    React.useEffect(() => {
+        loadSearchHistory();
+    }, []);
 
     // Helper to check if lead should be marked as enriched
     const checkShouldBeEnriched = (leadData) => {
@@ -606,10 +637,15 @@ ${template.cta}`;
     // Bulk Actions
     const handleSaveAllToCrm = () => {
         let addedCount = 0;
+        let skippedCount = 0;
         const newLeads = [];
 
         foundLeads.forEach(lead => {
-            const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
+            const isDuplicate = savedLeads.some(l =>
+                (l.storeUrl && lead.storeUrl && l.storeUrl === lead.storeUrl) ||
+                (l.name.toLowerCase() === lead.name.toLowerCase())
+            );
+
             if (!isDuplicate) {
                 newLeads.push({
                     ...lead,
@@ -619,15 +655,17 @@ ${template.cta}`;
                     lastInteraction: null
                 });
                 addedCount++;
+            } else {
+                skippedCount++;
             }
         });
 
         if (addedCount > 0) {
             setSavedLeads(prev => [...newLeads, ...prev]);
-            alert(`Saved ${addedCount} new leads to CRM!`);
+            alert(`Saved ${addedCount} new leads to CRM! (${skippedCount} duplicates skipped)`);
             setActiveTab('crm');
         } else {
-            alert('All leads are already in the CRM!');
+            alert(`No new leads added. All ${skippedCount} leads were already in the CRM.`);
         }
     };
 
@@ -804,6 +842,56 @@ ${template.cta}`;
                                 <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Lead Discovery</h2>
                                 <p className="text-gray-600">Extract leads from Amazon, eBay, or any shop listing page</p>
                             </div>
+                            <div className="flex justify-end mb-2">
+                                <button
+                                    onClick={() => setShowHistory(!showHistory)}
+                                    className="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                                >
+                                    <Clock className="w-4 h-4" />
+                                    Recent Searches ({searchHistory.length})
+                                </button>
+                            </div>
+
+                            {showHistory && searchHistory.length > 0 && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    className="mb-6 bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm"
+                                >
+                                    <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Search History</h3>
+                                        <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {searchHistory.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setSourceUrl(item.search_url);
+                                                    if (item.leads_data) {
+                                                        setFoundLeads(item.leads_data);
+                                                    }
+                                                    setShowHistory(false);
+                                                }}
+                                                className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-50 last:border-0 flex justify-between items-center group transition-colors"
+                                            >
+                                                <div className="truncate pr-4 flex-1">
+                                                    <div className="font-medium text-gray-900 truncate">{item.search_url}</div>
+                                                    <div className="text-xs text-gray-500 flex gap-2">
+                                                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                        <span>•</span>
+                                                        <span className="capitalize">{item.provider}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-gray-400 group-hover:text-blue-600">
+                                                    <span className="text-xs font-semibold bg-gray-100 px-2 py-0.5 rounded-full group-hover:bg-blue-100 group-hover:text-blue-700">{item.leads_count} leads</span>
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
 
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                                 <div className="flex gap-3 mb-4">
@@ -887,42 +975,55 @@ ${template.cta}`;
 
                             {foundLeads.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {foundLeads.map((lead, idx) => (
-                                        <motion.div
-                                            key={idx}
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: idx * 0.05 }}
-                                            className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                                        >
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="flex items-start gap-3">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedLeadIndices.has(idx)}
-                                                        onChange={() => toggleLeadSelection(idx)}
-                                                        className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                                                    />
-                                                    <div>
-                                                        <h4 className="font-semibold text-gray-900">{lead.name}</h4>
+                                    {foundLeads.map((lead, idx) => {
+                                        const isAlreadyInCrm = savedLeads.some(l =>
+                                            (l.storeUrl && lead.storeUrl && l.storeUrl === lead.storeUrl) ||
+                                            (l.name.toLowerCase() === lead.name.toLowerCase())
+                                        );
+
+                                        return (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className={`rounded-lg shadow-sm border p-5 transition-shadow ${isAlreadyInCrm ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:shadow-md'}`}
+                                            >
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex items-start gap-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedLeadIndices.has(idx)}
+                                                            onChange={() => toggleLeadSelection(idx)}
+                                                            disabled={isAlreadyInCrm}
+                                                            className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                                                        />
+                                                        <div>
+                                                            <h4 className={`font-semibold ${isAlreadyInCrm ? 'text-gray-500' : 'text-gray-900'}`}>{lead.name}</h4>
+                                                        </div>
                                                     </div>
+                                                    {isAlreadyInCrm && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">In CRM ✓</span>}
                                                 </div>
-                                            </div>
-                                            <p className="text-xs font-medium text-blue-600 mb-2">{lead.productCategory}</p>
-                                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lead.briefDescription}</p>
+                                                <p className="text-xs font-medium text-blue-600 mb-2">{lead.productCategory}</p>
+                                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lead.briefDescription}</p>
 
 
 
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => saveLeadToCrm(lead)}
-                                                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
-                                                >
-                                                    Save to CRM
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => saveLeadToCrm(lead)}
+                                                        disabled={isAlreadyInCrm}
+                                                        className={`w-full py-2 text-sm font-semibold rounded-lg transition-colors ${isAlreadyInCrm
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                            }`}
+                                                    >
+                                                        {isAlreadyInCrm ? 'Already in CRM' : 'Save to CRM'}
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
