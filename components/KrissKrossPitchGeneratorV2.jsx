@@ -200,6 +200,7 @@ export default function KrissKrossPitchGeneratorV3() {
 
             setGeneratedPitch(data.pitch);
             setWasAiGenerated(true);
+            loadActivityHistory();
         } catch (error) {
             console.error('AI Generation failed:', error);
             setGenError(error.message);
@@ -272,6 +273,7 @@ ${template.cta}`;
             }
 
             setEmailSent(true);
+            loadActivityHistory();
 
             // Update CRM status
             if (pitchLead && pitchLead.id) {

@@ -47,7 +47,7 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
         try {
             const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
             if (isSupabaseConfigured()) {
-                supabase
+                const { error: historyError } = await supabase
                     .from('pitch_history')
                     .insert([{
                         lead_name: customName || 'Unknown',
@@ -55,10 +55,9 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
                         context: context,
                         generated_pitch: pitchText,
                         was_ai_generated: true
-                    }])
-                    .then(res => {
-                        if (res.error) console.error('Error saving pitch history:', res.error);
-                    });
+                    }]);
+
+                if (historyError) console.error('Error saving pitch history:', historyError);
             }
         } catch (e) { console.error('History save failed', e); }
 
