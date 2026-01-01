@@ -231,7 +231,7 @@ export function LeadIntelligenceCard({ lead }) {
                             <HistoryItem
                                 date={lead.addedAt}
                                 action="Lead Captured"
-                                details={`Imported via ${lead.briefDescription ? 'Scraper' : 'System'}`}
+                                details={`Imported via ${lead.source === 'manual' ? 'CSV Import' : (lead.source === 'discovery' ? 'Lead Discovery' : (lead.briefDescription ? 'Scraper' : 'System'))}`}
                             />
                         </>
                     )}
