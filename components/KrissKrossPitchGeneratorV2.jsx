@@ -2219,7 +2219,38 @@ ${template.cta}`;
                                             </div>
                                         </div>
                                     ) : (
-                                        <LeadIntelligenceCard lead={viewingLead} isEnriching={isEnrichingLead} />
+                                        <LeadIntelligenceCard
+                                            lead={viewingLead}
+                                            isEnriching={isEnrichingLead}
+                                            onRunDeepResearch={async () => {
+                                                setIsEnrichingLead(true);
+                                                try {
+                                                    const response = await fetch('/api/enrich', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ leadId: viewingLead.id, leadData: viewingLead })
+                                                    });
+
+                                                    const data = await response.json();
+
+                                                    if (data.success) {
+                                                        const enrichedData = data.enrichedData;
+                                                        console.log('🔄 [UI] Updating lead with enriched data:', enrichedData);
+                                                        setViewingLead(prev => ({ ...prev, ...enrichedData }));
+                                                        setSavedLeads(prev => prev.map(l =>
+                                                            l.id === viewingLead.id ? { ...l, ...enrichedData } : l
+                                                        ));
+                                                    } else {
+                                                        alert('❌ Deep Research failed: ' + (data.error || 'Unknown error'));
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Deep Research error:', error);
+                                                    alert('❌ Deep Research failed: ' + error.message);
+                                                } finally {
+                                                    setIsEnrichingLead(false);
+                                                }
+                                            }}
+                                        />
                                     )}
 
                                     {/* Tags Section with Enrich Button */}

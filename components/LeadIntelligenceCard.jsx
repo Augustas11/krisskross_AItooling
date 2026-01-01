@@ -4,7 +4,7 @@ import {
     Instagram, Globe, Mail, Phone, MapPin,
     TrendingUp, Eye, Video, Brain,
     History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X, Sparkles
+    CheckCircle2, AlertTriangle, X, Sparkles, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  * LeadIntelligenceCard - The ultimate SDR view
  * Displays comprehensive lead data from Apify, Perplexity, and Claude
  */
-export function LeadIntelligenceCard({ lead, isEnriching }) {
+export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, raw
     const [isResearchExpanded, setResearchExpanded] = useState(true);
 
@@ -24,20 +24,40 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
         // Toast logic could go here
     };
 
-    // Helper: Categorize tags
+    // Helper: Categorize tags - NOW DYNAMIC!
     const organizeTags = (tags) => {
-        const groups = {
-            business: [],
-            pain: [],
-            content: [],
-            other: []
-        };
+        const groups = {};
 
         (tags || []).forEach(tag => {
-            const cat = tag.category;
-            if (groups[cat]) groups[cat].push(tag);
-            else groups.other.push(tag);
+            // Handle both string tags ("followers:10k-100k") and object tags
+            let category, name, fullTag, evidence;
+
+            if (typeof tag === 'string') {
+                const parts = tag.split(':');
+                category = parts[0] || 'other';
+                name = parts[1] || tag;
+                fullTag = tag;
+            } else if (tag && tag.category) {
+                category = tag.category;
+                name = tag.name || tag.full_tag;
+                fullTag = tag.full_tag || `${tag.category}:${tag.name}`;
+                evidence = tag.evidence;
+            } else {
+                return; // Skip invalid tags
+            }
+
+            if (!groups[category]) {
+                groups[category] = [];
+            }
+
+            groups[category].push({
+                name,
+                full_tag: fullTag,
+                evidence,
+                category
+            });
         });
+
         return groups;
     };
 
@@ -95,39 +115,54 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
             </div>
 
             {/* 2. MAIN CONTENT GRID (Horizontal Layout) */}
-            <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-                {/* LEFT COLUMN: Vitals + Tags (40% width) */}
-                <div className="lg:col-span-5 space-y-6">
+                {/* LEFT COLUMN: Vitals + Tags (35% width) */}
+                <div className="lg:col-span-4 space-y-4">
 
                     {/* SOCIAL VITAL SIGNS */}
                     <div>
                         <SectionTitle icon={<TrendingUp className="w-4 h-4" />} title="Social Vital Signs" />
                         <div className="grid grid-cols-2 gap-4">
-                            <MetricCard
-                                label="Followers"
-                                value={lead.instagramFollowers ? lead.instagramFollowers.toLocaleString() : '-'}
-                                subValue={lead.instagramFollowers ? (lead.instagramFollowers > 10000 ? '🔥 Great Reach' : '🌱 Growing') : null}
-                                icon={<Instagram className="w-4 h-4 text-pink-500" />}
-                            />
-                            <MetricCard
-                                label="Engagement"
-                                value={lead.engagementRate ? `${lead.engagementRate}%` : '-'}
-                                subValue={lead.engagementRate ? (lead.engagementRate > 2 ? '✅ Healthy' : '⚠️ Needs Help') : null}
-                                icon={<TrendingUp className="w-4 h-4 text-green-500" />}
-                            />
-                            <MetricCard
-                                label="Avg Video Views"
-                                value={lead.avgVideoViews ? lead.avgVideoViews.toLocaleString() : '-'}
-                                icon={<Eye className="w-4 h-4 text-blue-500" />}
-                            />
-                            <MetricCard
-                                label="Content Type"
-                                value={lead.hasReels === true ? 'Reels Active' : (lead.hasReels === false ? 'Static Only' : '-')}
-                                subValue={lead.hasReels === true ? '📹 Video Focused' : (lead.hasReels === false ? '📸 Photo Focused' : null)}
-                                isWarning={lead.hasReels === false}
-                                icon={<Video className="w-4 h-4 text-purple-500" />}
-                            />
+                            {/* Only show metrics if data exists */}
+                            {lead.instagramFollowers && (
+                                <MetricCard
+                                    label="Followers"
+                                    value={lead.instagramFollowers.toLocaleString()}
+                                    subValue={lead.instagramFollowers > 10000 ? '🔥 Great Reach' : '🌱 Growing'}
+                                    icon={<Instagram className="w-4 h-4 text-pink-500" />}
+                                />
+                            )}
+                            {lead.engagementRate && (
+                                <MetricCard
+                                    label="Engagement"
+                                    value={`${lead.engagementRate}%`}
+                                    subValue={lead.engagementRate > 2 ? '✅ Healthy' : '⚠️ Needs Help'}
+                                    icon={<TrendingUp className="w-4 h-4 text-green-500" />}
+                                />
+                            )}
+                            {lead.avgVideoViews && (
+                                <MetricCard
+                                    label="Avg Video Views"
+                                    value={lead.avgVideoViews.toLocaleString()}
+                                    icon={<Eye className="w-4 h-4 text-blue-500" />}
+                                />
+                            )}
+                            {lead.hasReels !== undefined && lead.hasReels !== null && (
+                                <MetricCard
+                                    label="Content Type"
+                                    value={lead.hasReels ? 'Reels Active' : 'Static Only'}
+                                    subValue={lead.hasReels ? '📹 Video Focused' : '📸 Photo Focused'}
+                                    isWarning={!lead.hasReels}
+                                    icon={<Video className="w-4 h-4 text-purple-500" />}
+                                />
+                            )}
+                            {/* Show placeholder if no metrics available */}
+                            {!lead.instagramFollowers && !lead.engagementRate && !lead.avgVideoViews && !lead.hasReels && (
+                                <div className="col-span-2 text-center py-8 text-gray-400 text-sm italic border-2 border-dashed border-gray-200 rounded-xl">
+                                    No social metrics available yet. Run Deep Research to populate.
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -141,45 +176,154 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                         </div>
                     </div>
 
-                    {/* AI TAGS ANALYSIS (Moved here from 3rd column) */}
+                    {/* AI TAGS ANALYSIS - DYNAMIC */}
                     <div>
                         <SectionTitle icon={<Brain className="w-4 h-4" />} title="AI Analysis" />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <TagGroup
-                                title="Detected Pain Points"
-                                tags={tagGroups.pain}
-                                icon={<AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
-                                color="red"
-                            />
-                            <TagGroup
-                                title="Business DNA"
-                                tags={tagGroups.business}
-                                icon={<Globe className="w-3.5 h-3.5 text-blue-500" />}
-                                color="blue"
-                            />
-                            <TagGroup
-                                title="Content Strategy"
-                                tags={tagGroups.content}
-                                icon={<Video className="w-3.5 h-3.5 text-purple-500" />}
-                                color="purple"
-                            />
-                        </div>
+                        {Object.keys(tagGroups).length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {/* Render all tag categories dynamically */}
+                                {tagGroups.pain && tagGroups.pain.length > 0 && (
+                                    <TagGroup
+                                        title="Pain Points"
+                                        tags={tagGroups.pain}
+                                        icon={<AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
+                                        color="red"
+                                    />
+                                )}
+                                {tagGroups.business && tagGroups.business.length > 0 && (
+                                    <TagGroup
+                                        title="Business"
+                                        tags={tagGroups.business}
+                                        icon={<Globe className="w-3.5 h-3.5 text-blue-500" />}
+                                        color="blue"
+                                    />
+                                )}
+                                {tagGroups.content && tagGroups.content.length > 0 && (
+                                    <TagGroup
+                                        title="Content"
+                                        tags={tagGroups.content}
+                                        icon={<Video className="w-3.5 h-3.5 text-purple-500" />}
+                                        color="purple"
+                                    />
+                                )}
+                                {tagGroups.geo && tagGroups.geo.length > 0 && (
+                                    <TagGroup
+                                        title="Geography"
+                                        tags={tagGroups.geo}
+                                        icon={<MapPin className="w-3.5 h-3.5 text-green-500" />}
+                                        color="green"
+                                    />
+                                )}
+                                {tagGroups.platform && tagGroups.platform.length > 0 && (
+                                    <TagGroup
+                                        title="Platform"
+                                        tags={tagGroups.platform}
+                                        icon={<Instagram className="w-3.5 h-3.5 text-pink-500" />}
+                                        color="pink"
+                                    />
+                                )}
+                                {tagGroups.icp && tagGroups.icp.length > 0 && (
+                                    <TagGroup
+                                        title="ICP Match"
+                                        tags={tagGroups.icp}
+                                        icon={<CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />}
+                                        color="indigo"
+                                    />
+                                )}
+                                {tagGroups.priority && tagGroups.priority.length > 0 && (
+                                    <TagGroup
+                                        title="Priority"
+                                        tags={tagGroups.priority}
+                                        icon={<TrendingUp className="w-3.5 h-3.5 text-orange-500" />}
+                                        color="orange"
+                                    />
+                                )}
+                                {tagGroups.followers && tagGroups.followers.length > 0 && (
+                                    <TagGroup
+                                        title="Followers"
+                                        tags={tagGroups.followers}
+                                        icon={<Instagram className="w-3.5 h-3.5 text-purple-500" />}
+                                        color="purple"
+                                    />
+                                )}
+                                {tagGroups.engagement && tagGroups.engagement.length > 0 && (
+                                    <TagGroup
+                                        title="Engagement"
+                                        tags={tagGroups.engagement}
+                                        icon={<TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+                                        color="green"
+                                    />
+                                )}
+                                {/* Render any other categories not explicitly handled */}
+                                {Object.keys(tagGroups).filter(cat =>
+                                    !['pain', 'business', 'content', 'geo', 'platform', 'icp', 'priority', 'followers', 'engagement'].includes(cat)
+                                ).map(category => {
+                                    if (tagGroups[category] && tagGroups[category].length > 0) {
+                                        return (
+                                            <TagGroup
+                                                key={category}
+                                                title={category.charAt(0).toUpperCase() + category.slice(1)}
+                                                tags={tagGroups[category]}
+                                                icon={<Brain className="w-3.5 h-3.5 text-gray-500" />}
+                                                color="gray"
+                                            />
+                                        );
+                                    }
+                                    return null;
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 text-gray-400 text-sm italic border-2 border-dashed border-gray-200 rounded-xl">
+                                No AI tags available. Run Deep Research to analyze this lead.
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: Deep Research (60% width) */}
-                <div className="lg:col-span-7 space-y-6">
+                {/* RIGHT COLUMN: Deep Research (65% width) */}
+                <div className="lg:col-span-8 space-y-4">
                     {/* DEEP RESEARCH INSIGHTS */}
-                    <div className="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden h-full flex flex-col">
-                        <div
-                            className="bg-indigo-50/50 p-4 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors border-b border-indigo-100"
-                            onClick={() => setResearchExpanded(!isResearchExpanded)}
-                        >
-                            <div className="flex items-center gap-2">
+                    <div className="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden flex flex-col">
+                        <div className="bg-indigo-50/50 p-4 flex justify-between items-center border-b border-indigo-100">
+                            <div
+                                className="flex items-center gap-2 cursor-pointer flex-1"
+                                onClick={() => setResearchExpanded(!isResearchExpanded)}
+                            >
                                 <Brain className="w-5 h-5 text-indigo-600" />
-                                <h3 className="font-bold text-indigo-900">Deep Research Insights</h3>
+                                <h3 className="font-bold text-indigo-900">Deep Research Insights (Triple Threat)</h3>
                             </div>
-                            {isResearchExpanded ? <ChevronUp className="w-5 h-5 text-indigo-400" /> : <ChevronDown className="w-5 h-5 text-indigo-400" />}
+                            <div className="flex items-center gap-2">
+                                {/* Run Deep Research Button */}
+                                {onRunDeepResearch && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onRunDeepResearch();
+                                        }}
+                                        disabled={isEnriching}
+                                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                                        title="Run Deep Research (Triple Threat)"
+                                    >
+                                        {isEnriching ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                Running...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="w-4 h-4" />
+                                                Run Deep Research
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setResearchExpanded(!isResearchExpanded)}
+                                    className="p-1 hover:bg-indigo-100 rounded transition-colors"
+                                >
+                                    {isResearchExpanded ? <ChevronUp className="w-5 h-5 text-indigo-400" /> : <ChevronDown className="w-5 h-5 text-indigo-400" />}
+                                </button>
+                            </div>
                         </div>
 
                         <AnimatePresence>
@@ -188,7 +332,7 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="p-6 text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-[600px] custom-scrollbar"
+                                    className="p-6 text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-[450px] custom-scrollbar"
                                 >
                                     {lead.ai_research_summary ? (
                                         <div className="prose prose-sm max-w-none text-gray-700">
@@ -199,16 +343,17 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-gray-400 italic text-center py-10 flex flex-col items-center justify-center h-full">
+                                        <div className="text-gray-400 italic text-center py-10 flex flex-col items-center justify-center gap-4">
                                             {isEnriching ? (
                                                 <span className="flex items-center justify-center gap-2 animate-pulse text-indigo-500">
                                                     <Sparkles className="w-5 h-5" />
-                                                    Running Deep Research...
+                                                    Running Deep Research (Triple Threat)...
                                                 </span>
                                             ) : (
                                                 <>
+                                                    <Sparkles className="w-12 h-12 text-gray-300" />
                                                     <div className="mb-2">No deep research available yet.</div>
-                                                    <div className="text-xs text-gray-500">Click the refresh button below to start analysis.</div>
+                                                    <div className="text-xs text-gray-500">Click "Run Deep Research" button above to start Triple Threat analysis.</div>
                                                 </>
                                             )}
                                         </div>
@@ -313,6 +458,10 @@ function TagGroup({ title, tags, icon, color }) {
         blue: 'bg-blue-50 border-blue-100 text-blue-700',
         purple: 'bg-purple-50 border-purple-100 text-purple-700',
         orange: 'bg-orange-50 border-orange-100 text-orange-700',
+        green: 'bg-green-50 border-green-100 text-green-700',
+        pink: 'bg-pink-50 border-pink-100 text-pink-700',
+        indigo: 'bg-indigo-50 border-indigo-100 text-indigo-700',
+        gray: 'bg-gray-50 border-gray-200 text-gray-700',
     };
 
     if (!tags || tags.length === 0) return null;
