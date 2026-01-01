@@ -171,6 +171,18 @@ export function TagsSection({ lead, onUpdateTags }) {
     }
   };
 
+  // Auto-enrich effect
+  React.useEffect(() => {
+    // Check if we should auto-trigger enrichment
+    // 1. Lead has NO tags (not even basic ones, implying no previous enrichment)
+    // 2. We haven't tried refreshing yet in this session
+    // 3. We are not currently refreshing
+    if (tagCount === 0 && !refreshing && !lead.enrichmentHistory?.length) {
+      console.log('🤖 Auto-triggering enrichment for empty lead:', lead.name);
+      handleRefresh();
+    }
+  }, [tagCount, lead.id]); // Dependency on ID ensures it runs when lead changes
+
   return (
     <div className="border-t border-gray-200 mt-4 pt-4">
       <button
@@ -207,7 +219,11 @@ export function TagsSection({ lead, onUpdateTags }) {
         <div className="mt-4 p-4 bg-white border border-gray-200 rounded-lg">
           {tagCount === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">
-              No tags yet. Click refresh to fetch Instagram data and auto-tag.
+              {refreshing ? (
+                <span className="animate-pulse">🔮 Analyzing lead with Deep Research...</span>
+              ) : (
+                "No Deep Research tags yet. Click refresh to analyze."
+              )}
             </p>
           ) : (
             <div className="space-y-4">
