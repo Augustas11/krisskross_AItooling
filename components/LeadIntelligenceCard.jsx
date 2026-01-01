@@ -13,7 +13,7 @@ import { getTierForScore } from '../lib/scoring-constants';
  * LeadIntelligenceCard - The ultimate SDR view
  * Displays comprehensive lead data from Apify, Perplexity, and Claude
  */
-export function LeadIntelligenceCard({ lead, isEnriching }) {
+export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment }) {
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, raw
     const [isResearchExpanded, setResearchExpanded] = useState(true);
 
@@ -238,13 +238,22 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                                     )}
                                 </>
                             ) : (
-                                <div className="text-gray-400 italic text-sm py-4 text-center">
+                                <div className="text-center py-6">
                                     {isEnriching ? (
                                         <span className="flex items-center justify-center gap-2 animate-pulse text-indigo-500">
                                             Running Deep Research...
                                         </span>
                                     ) : (
-                                        'No research available yet'
+                                        <div className="space-y-3">
+                                            <p className="text-sm text-gray-500">No research available yet</p>
+                                            <button
+                                                onClick={() => onTriggerEnrichment?.()}
+                                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto"
+                                            >
+                                                <Brain className="w-4 h-4" />
+                                                Run Deep Research
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}

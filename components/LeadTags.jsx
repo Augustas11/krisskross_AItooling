@@ -140,7 +140,7 @@ export function TagCategory({ title, icon, tags, onRemoveTag }) {
 /**
  * TagsSection Component
  */
-export function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
+export const TagsSection = React.forwardRef(({ lead, onUpdateTags, onLoadingStateChange }, ref) => {
   const [showTags, setShowTags] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -185,6 +185,9 @@ export function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
       if (onLoadingStateChange) onLoadingStateChange(false);
     }
   };
+
+  // Expose handleRefresh to parent via ref
+  React.useImperativeHandle(ref, () => handleRefresh);
 
   // Auto-enrich effect
   React.useEffect(() => {
@@ -319,4 +322,7 @@ export function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
       )}
     </div>
   );
-}
+});
+
+TagsSection.displayName = 'TagsSection';
+

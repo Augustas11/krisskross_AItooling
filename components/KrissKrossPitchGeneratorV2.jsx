@@ -62,6 +62,7 @@ export default function KrissKrossPitchGeneratorV2() {
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
     const [isEnrichingLead, setIsEnrichingLead] = useState(false);
+    const enrichTriggerRef = React.useRef(null);
 
     const [emailError, setEmailError] = useState(null);
 
@@ -2201,7 +2202,11 @@ ${template.cta}`;
                                             </div>
                                         </div>
                                     ) : (
-                                        <LeadIntelligenceCard lead={viewingLead} isEnriching={isEnrichingLead} />
+                                        <LeadIntelligenceCard
+                                            lead={viewingLead}
+                                            isEnriching={isEnrichingLead}
+                                            onTriggerEnrichment={() => enrichTriggerRef.current?.()}
+                                        />
                                     )}
 
                                     {/* Tags Section with Enrich Button */}
@@ -2217,6 +2222,7 @@ ${template.cta}`;
                                                         l.id === viewingLead.id ? { ...l, ...enrichedData } : l
                                                     ));
                                                 }}
+                                                ref={enrichTriggerRef}
                                             />
                                         </div>
                                     )}

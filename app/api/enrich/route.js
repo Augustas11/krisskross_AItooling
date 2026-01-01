@@ -63,7 +63,8 @@ export async function POST(req) {
                 tags: Array.isArray(enrichedLead.tags) ? enrichedLead.tags : [], // Safety check
                 score_breakdown: enrichedLead.scoreBreakdown,
                 last_scored_at: enrichedLead.lastScoredAt,
-                last_tagged_at: new Date().toISOString()
+                last_tagged_at: new Date().toISOString(),
+                ai_research_summary: enrichedLead.ai_research_summary || null // Persist research
             };
 
             // 4. Save to DB
