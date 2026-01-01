@@ -19,9 +19,9 @@ async function testApify() {
     console.log('🔄 Testing Instagram Scraper (handling: "instagram")...');
 
     try {
-        console.log('Testing handle: autometofficial');
+        console.log('Testing handle: lillusoryofficial');
         const run = await client.actor('apify/instagram-profile-scraper').call({
-            usernames: ['autometofficial'],
+            usernames: ['lillusoryofficial'],
             proxy: { useApifyProxy: true }
         });
 
