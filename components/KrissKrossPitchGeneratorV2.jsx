@@ -2403,36 +2403,7 @@ ${template.cta}`;
                                                     )}
                                                 </div>
 
-                                                {/* Scoring Profile */}
-                                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Scoring Profile</div>
-                                                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${TIERS[viewingLead.tier]?.color} ${TIERS[viewingLead.tier]?.border}`}>
-                                                            {viewingLead.tier || 'GRAY'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-end gap-2 mb-3">
-                                                        <span className="text-3xl font-bold text-gray-900">{viewingLead.score || 0}</span>
-                                                        <span className="text-sm text-gray-500 mb-1">/100 Impact Score</span>
-                                                    </div>
-
-                                                    {viewingLead.tags && viewingLead.tags.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {viewingLead.tags.map((tag, idx) => {
-                                                                const tagLabel = typeof tag === 'object' ? (tag.name || tag.full_tag) : tag;
-                                                                return (
-                                                                    <span key={idx} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600">
-                                                                        #{tagLabel.replace(/.*:/, '')}
-                                                                    </span>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    )}
-
-                                                    {(!viewingLead.tags || viewingLead.tags.length === 0) && (
-                                                        <p className="text-xs text-gray-400 italic">No automated tags generated yet.</p>
-                                                    )}
-                                                </div>
+                                                {/* Scoring Profile Removed - Use Tags Below */}
 
                                                 <div className="flex items-start gap-3">
                                                     <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
