@@ -128,127 +128,138 @@ export async function GET() {
 }
 
 export async function POST(req) {
-    console.log('💾 [API] POST /api/crm/leads');
+    console.log('💾 [API] POST /api/crm/leads (Create)');
 
     try {
-        const { leads } = await req.json();
-        console.log(`📦 [API] Received ${leads.length} leads to sync`);
+        const body = await req.json();
+        // Support both single lead and bulk leads
+        const leadsToInsert = body.lead ? [body.lead] : (body.leads || []);
+
+        if (leadsToInsert.length === 0) {
+            return NextResponse.json({ message: 'No leads provided' }, { status: 400 });
+        }
+
+        console.log(`📦 [API] Received ${leadsToInsert.length} leads to insert`);
 
         // Check if Supabase is configured
         if (!isSupabaseConfigured()) {
             console.log('⚠️ [API] Supabase not configured, using file-based storage');
-            const success = writeDb({ leads });
+            const currentData = readDb();
+            const newLeads = [...leadsToInsert, ...currentData.leads];
+            const success = writeDb({ leads: newLeads });
             if (success) {
-                return NextResponse.json({ message: 'Leads synced to file storage' });
+                return NextResponse.json({ message: 'Leads added to file storage', count: leadsToInsert.length });
             } else {
                 throw new Error('Failed to write to file system');
             }
         }
 
         // Use Supabase
-        console.log('🔄 [SUPABASE] Syncing leads to database...');
-
-        // --- SAFETY CHECK ---
-        // Get current count to prevent accidental wipeouts
-        const { count: currentCount } = await supabase
+        console.log('🔄 [SUPABASE] Inserting leads...');
+        const dbLeads = leadsToInsert.map(transformToDb);
+        const { error: insertError } = await supabase
             .from('leads')
-            .select('*', { count: 'exact', head: true });
+            .insert(dbLeads);
 
-        if (currentCount > 10 && leads.length === 0) {
-            console.error(`🚨 [SAFETY] Aborting sync. Attempting to wipe ${currentCount} leads with an empty list.`);
-            return NextResponse.json({
-                error: 'Safety Block: Attempting to sync 0 leads while DB has data. If you really want to clear the CRM, please delete leads individually.',
-                currentCount
-            }, { status: 403 });
-        }
-
-        // Delete all existing leads and insert new ones (full sync approach)
-        const { error: deleteError } = await supabase
-            .from('leads')
-            .delete()
-            .neq('id', 'placeholder_non_existent'); // Delete all rows
-
-        if (deleteError) {
-            console.error('❌ [SUPABASE] Error deleting old leads:', deleteError);
-            throw deleteError;
-        }
-
-        // Insert all leads
-        if (leads.length > 0) {
-            const dbLeads = leads.map(transformToDb);
-            const { error: insertError } = await supabase
-                .from('leads')
-                .insert(dbLeads);
-
-            if (insertError) {
-                console.error('❌ [SUPABASE] Error inserting leads:', insertError);
-                throw insertError;
-            }
-
-            // --- DATA TIME MACHINE: INTERNAL BACKUP ---
-            // Save a full snapshot of the current state to the backups table
-            try {
-                const { error: backupError } = await supabase
-                    .from('leads_backups')
-                    .insert([{
-                        snapshot_data: leads,
-                        lead_count: leads.length,
-                        source: 'auto_sync'
-                    }]);
-
-                if (backupError) {
-                    console.warn('⚠️ [BACKUP] Internal snapshot failed (Table might not exist yet):', backupError.message);
-                } else {
-                    console.log('📦 [BACKUP] Internal snapshot created successfully.');
-
-                    // Cleanup: Keep only last 20 snapshots
-                    const { data: oldBackups } = await supabase
-                        .from('leads_backups')
-                        .select('id')
-                        .order('created_at', { ascending: false })
-                        .range(20, 100);
-
-                    if (oldBackups && oldBackups.length > 0) {
-                        const idsToDelete = oldBackups.map(b => b.id);
-                        await supabase.from('leads_backups').delete().in('id', idsToDelete);
-                    }
-                }
-            } catch (backupErr) {
-                console.warn('⚠️ [BACKUP] Critical backup logic failed:', backupErr.message);
-            }
-        }
-
-        console.log(`✅ [SUPABASE] Successfully synced ${leads.length} leads (Previous count: ${currentCount})`);
-
-        // Also save to file as local mirror/backup
-        try {
-            writeDb({ leads, last_sync: new Date().toISOString() });
-        } catch (fsError) {
-            console.warn('⚠️ [API] Local backup failed:', fsError.message);
+        if (insertError) {
+            console.error('❌ [SUPABASE] Error inserting leads:', insertError);
+            throw insertError;
         }
 
         return NextResponse.json({
-            message: 'Leads synced + Internal Snapshot Saved',
-            count: leads.length,
-            previousCount: currentCount
+            message: 'Leads inserted successfully',
+            count: leadsToInsert.length
         });
     } catch (error) {
-        console.error('❌ [API] Error syncing leads:', error);
+        console.error('❌ [API] Error adding leads:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
 
-        // Try fallback to file storage
-        try {
-            const { leads } = await req.json();
-            const success = writeDb({ leads });
-            if (success) {
-                return NextResponse.json({
-                    message: 'Leads synced to file storage (Supabase failed)',
-                    warning: error.message
-                });
-            }
-        } catch (fallbackError) {
-            console.error('❌ [API] Fallback also failed:', fallbackError);
+export async function PUT(req) {
+    console.log('📝 [API] PUT /api/crm/leads (Update)');
+
+    try {
+        const body = await req.json();
+        const leadToUpdate = body.lead;
+
+        if (!leadToUpdate || !leadToUpdate.id) {
+            return NextResponse.json({ message: 'No lead ID provided' }, { status: 400 });
         }
 
+        // Check if Supabase is configured
+        if (!isSupabaseConfigured()) {
+            const currentData = readDb();
+            const updatedLeads = currentData.leads.map(l => l.id === leadToUpdate.id ? { ...l, ...leadToUpdate } : l);
+            writeDb({ leads: updatedLeads });
+            return NextResponse.json({ message: 'Lead updated in file storage' });
+        }
+
+        // Use Supabase
+        const dbLead = transformToDb(leadToUpdate);
+        // Remove ID from update payload if it's the primary key, strictly speaking, but supabase handles it. 
+        // Ideally we update based on ID in valid SQL.
+
+        const { error } = await supabase
+            .from('leads')
+            .update(dbLead)
+            .eq('id', leadToUpdate.id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ message: 'Lead updated successfully' });
+
+    } catch (error) {
+        console.error('❌ [API] Error updating lead:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req) {
+    console.log('🗑️ [API] DELETE /api/crm/leads');
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    // Support bulk delete via body if needed, but simple ID param is easiest for now
+    // Or we can parse body for multiple IDs. Let's stick to ID param for single delete 
+    // and body for bulk if explicitly requested, but keep it simple first.
+
+    try {
+        let idsToDelete = [];
+        if (id) {
+            idsToDelete = [id];
+        } else {
+            // check body for { ids: [...] }
+            try {
+                const body = await req.json();
+                if (body.ids) idsToDelete = body.ids;
+            } catch (e) {
+                // Body parsing failed or empty, ignore
+            }
+        }
+
+        if (idsToDelete.length === 0) {
+            return NextResponse.json({ message: 'No ID provided' }, { status: 400 });
+        }
+
+        if (!isSupabaseConfigured()) {
+            const currentData = readDb();
+            const filteredLeads = currentData.leads.filter(l => !idsToDelete.includes(l.id));
+            writeDb({ leads: filteredLeads });
+            return NextResponse.json({ message: 'Lead(s) deleted from file storage' });
+        }
+
+        const { error } = await supabase
+            .from('leads')
+            .delete()
+            .in('id', idsToDelete);
+
+        if (error) throw error;
+
+        return NextResponse.json({ message: 'Lead(s) deleted successfully' });
+
+    } catch (error) {
+        console.error('❌ [API] Error deleting lead:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

@@ -19,8 +19,9 @@ async function testApify() {
     console.log('🔄 Testing Instagram Scraper (handling: "instagram")...');
 
     try {
+        console.log('Testing handle: autometofficial');
         const run = await client.actor('apify/instagram-profile-scraper').call({
-            usernames: ['instagram'],
+            usernames: ['autometofficial'],
             proxy: { useApifyProxy: true }
         });
 
@@ -29,7 +30,7 @@ async function testApify() {
 
         if (items.length > 0) {
             console.log('✅ Scrape Success!');
-            console.log('Followers:', items[0].followersCount);
+            console.log('Full Item:', JSON.stringify(items[0], null, 2));
         } else {
             console.error('❌ Scrape completed but returned 0 items.');
         }

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
@@ -9,6 +9,7 @@ import {
     Youtube, Facebook, Send, Pencil, Check
 } from 'lucide-react';
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
+import { supabase } from '../lib/supabase';
 
 export default function KrissKrossPitchGeneratorV3() {
     const [activeTab, setActiveTab] = useState('crm');
@@ -105,6 +106,93 @@ export default function KrissKrossPitchGeneratorV3() {
         setEditFormData({});
     };
 
+    // CRM Lead Editing State
+    const [editingCrmLeadId, setEditingCrmLeadId] = useState(null);
+
+    const initiateCrmEdit = (lead) => {
+        setEditingCrmLeadId(lead.id);
+        setEditFormData({ ...lead });
+    };
+
+    const cancelCrmEdit = () => {
+        setEditingCrmLeadId(null);
+        setEditFormData({});
+    };
+
+    const saveCrmEdit = async (leadId) => {
+        setSavedLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...editFormData } : l));
+        setEditingCrmLeadId(null);
+        setEditFormData({});
+
+        // Send update to server
+        try {
+            // Find full lead data to merge (or just send partial if API supported it, but our transform needs full obj usually)
+            // API PUT implementation expects 'lead' object. Ideally we send just fields to update, but currently transformToDb expects full lead.
+            // Let's find the lead from state to be safe
+            const leadToUpdate = savedLeads.find(l => l.id === leadId);
+            if (leadToUpdate) {
+                await fetch('/api/crm/leads', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead: { ...leadToUpdate, ...editFormData } })
+                });
+            }
+        } catch (e) {
+            console.error('Failed to update lead', e);
+        }
+    };
+
+    // Modal Edit State & Handlers
+    const [isEditingModal, setIsEditingModal] = useState(false);
+
+    const initiateModalEdit = () => {
+        setIsEditingModal(true);
+        setEditFormData({ ...viewingLead });
+    };
+
+    const cancelModalEdit = () => {
+        setIsEditingModal(false);
+        // Dont clear formData here immediately or it might flicker, but safe to do so.
+    };
+
+    const saveModalEdit = async () => {
+        if (!viewingLead) return;
+
+        // Update the main list locally
+        setSavedLeads(prev => prev.map(l => l.id === viewingLead.id ? { ...l, ...editFormData } : l));
+
+        // Update viewing lead locally
+        setViewingLead(prev => ({ ...prev, ...editFormData }));
+
+        setIsEditingModal(false);
+
+        // Send update to server
+        try {
+            await fetch('/api/crm/leads', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead: { ...viewingLead, ...editFormData } })
+            });
+        } catch (e) {
+            console.error('Failed to update lead', e);
+            alert('Failed to save changes to cloud.');
+        }
+
+        // Update the main list
+        setSavedLeads(prev => prev.map(l => l.id === viewingLead.id ? { ...l, ...editFormData } : l));
+
+        // Update the currently viewed lead so the modal shows new data
+        setViewingLead(prev => ({ ...prev, ...editFormData }));
+
+        setIsEditingModal(false);
+        // setEditFormData({}); // Keep it populated or clear it? Clearing is safer.
+    };
+
+    // Reset modal edit state when modal closes
+    useEffect(() => {
+        if (!viewingLead) setIsEditingModal(false);
+    }, [viewingLead]);
+
     // Load Leads from Server (Supabase ONLY - NO localStorage)
     // Load Leads from Server (Supabase ONLY - NO localStorage)
     const fetchLeads = async () => {
@@ -140,45 +228,25 @@ export default function KrissKrossPitchGeneratorV3() {
         fetchLeads();
     }, []);
 
-    // Sync Leads to Supabase (ONLY when data is modified by user)
+    // Realtime Subscription for Concurrent Users
     React.useEffect(() => {
-        // Prevent sync until we have fully loaded the initial data
-        if (!isDataLoaded || !isCrmInitialized) {
-            return;
-        }
+        if (!isCrmInitialized) return;
 
-        const syncLeads = async () => {
-            console.log(`💾 [CRM] Syncing ${savedLeads.length} leads to server...`);
-            setIsSyncing(true);
-            try {
-                const response = await fetch('/api/crm/leads', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leads: savedLeads }),
-                });
+        console.log('📡 [Realtime] Subscribing to CRM changes...');
+        const channel = supabase
+            .channel('public:leads')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload) => {
+                console.log('🔔 [Realtime] Change received:', payload);
+                // Simple strategy: Re-fetch leads to ensure full consistency
+                // This handles all cases (INSERT, UPDATE, DELETE) and field mappings automatically
+                fetchLeads();
+            })
+            .subscribe();
 
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('✅ [CRM] Server sync successful:', result.message);
-            } catch (e) {
-                console.error('❌ [CRM] Sync failed:', e);
-                // alert('Warning: Failed to sync leads to server. Data saved locally only.'); // Suppressed per user request
-            } finally {
-                setIsSyncing(false);
-            }
+        return () => {
+            supabase.removeChannel(channel);
         };
-
-        // Debounce sync slightly to avoid rapid updates
-        const timeoutId = setTimeout(() => {
-            syncLeads();
-        }, 1000);
-
-        return () => clearTimeout(timeoutId);
-
-    }, [savedLeads, isCrmInitialized, isDataLoaded]);
+    }, [isCrmInitialized]);
 
     const pitchTemplates = {
         'fashion-seller': [
@@ -406,7 +474,7 @@ ${template.cta}`;
         return `https://${url}`;
     };
 
-    const saveLeadToCrm = (lead) => {
+    const saveLeadToCrm = async (lead) => {
         const isDuplicate = savedLeads.some(l => l.name === lead.name && l.storeUrl === lead.storeUrl);
         if (isDuplicate) {
             alert('Lead already in CRM!');
@@ -427,14 +495,42 @@ ${template.cta}`;
         }
 
         console.log('➕ [CRM] Adding new lead:', newLead.name);
+
+        // Optimistic UI Update
         setSavedLeads(prev => [newLead, ...prev]);
-        setActiveTab('crm'); // Auto-switch to CRM tab
+        setActiveTab('crm');
+
+        try {
+            await fetch('/api/crm/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead: newLead })
+            });
+        } catch (e) {
+            console.error('Failed to save to cloud', e);
+            alert('Failed to save lead to database. Please try again.');
+        }
     };
 
-    const updateLeadStatus = (leadId, newStatus) => {
+    const updateLeadStatus = async (leadId, newStatus) => {
+        const updatedDate = new Date().toLocaleDateString();
         setSavedLeads(prev => prev.map(l =>
-            l.id === leadId ? { ...l, status: newStatus, lastInteraction: new Date().toLocaleDateString() } : l
+            l.id === leadId ? { ...l, status: newStatus, lastInteraction: updatedDate } : l
         ));
+
+        // Save status change to server
+        try {
+            const lead = savedLeads.find(l => l.id === leadId);
+            if (lead) {
+                await fetch('/api/crm/leads', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead: { ...lead, status: newStatus, lastInteraction: updatedDate } })
+                });
+            }
+        } catch (e) {
+            console.error('Failed to update status', e);
+        }
     };
 
     const handleEnrichLead = async (lead) => {
@@ -465,6 +561,13 @@ ${template.cta}`;
                 setViewingLead(enrichedLead);
             }
 
+            // Persistence: Save enriched data to server
+            await fetch('/api/crm/leads', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead: enrichedLead })
+            });
+
             alert(`Enrichment Complete! Status: ${enrichedLead.tier} (${enrichedLead.score}/100)`);
 
         } catch (error) {
@@ -475,14 +578,22 @@ ${template.cta}`;
         }
     };
 
-    const deleteFromCrm = (leadId) => {
+    const deleteFromCrm = async (leadId) => {
         if (window.confirm('Remove this lead from CRM?')) {
+            // Optimistic Update
             setSavedLeads(prev => prev.filter(l => l.id !== leadId));
             setSelectedCrmLeadIds(prev => {
                 const next = new Set(prev);
                 next.delete(leadId);
                 return next;
             });
+
+            // API Call
+            try {
+                await fetch(`/api/crm/leads?id=${leadId}`, { method: 'DELETE' });
+            } catch (e) {
+                console.error('Failed to delete lead', e);
+            }
         }
     };
 
@@ -506,12 +617,28 @@ ${template.cta}`;
         }
     };
 
-    const deleteSelectedCrmLeads = () => {
+    const deleteSelectedCrmLeads = async () => {
         if (selectedCrmLeadIds.size === 0) return;
 
         if (window.confirm(`Are you sure you want to delete ${selectedCrmLeadIds.size} selected leads? This cannot be undone.`)) {
+            // Optimistic
             setSavedLeads(prev => prev.filter(l => !selectedCrmLeadIds.has(l.id)));
+            const idsToDelete = Array.from(selectedCrmLeadIds);
             setSelectedCrmLeadIds(new Set());
+
+            // API Call - Loop for now as we didn't implement bulk DELETE fully yet in API (simple ID param only)
+            // Or we can add bulk support to API. The API changes I made:
+            // "or we can parse body for multiple IDs. Let's stick to ID param for single delete and body for bulk if explicitly requested"
+            // I actually implemented: check body for { ids: [...] }. So I can use that!
+            try {
+                await fetch('/api/crm/leads', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: idsToDelete })
+                });
+            } catch (e) {
+                console.error('Failed to delete leads', e);
+            }
         }
     };
 
@@ -682,7 +809,7 @@ ${template.cta}`;
     };
 
     // Bulk Actions
-    const handleSaveAllToCrm = () => {
+    const handleSaveAllToCrm = async () => {
         let addedCount = 0;
         let skippedCount = 0;
         const newLeads = [];
@@ -708,9 +835,23 @@ ${template.cta}`;
         });
 
         if (addedCount > 0) {
+            // Optimistic
             setSavedLeads(prev => [...newLeads, ...prev]);
-            alert(`Saved ${addedCount} new leads to CRM! (${skippedCount} duplicates skipped)`);
+            alert(`Saving ${addedCount} new leads to CRM... (${skippedCount} duplicates skipped)`);
             setActiveTab('crm');
+
+            // API Call
+            try {
+                await fetch('/api/crm/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leads: newLeads })
+                });
+            } catch (e) {
+                console.error('Failed to bulk save', e);
+                alert('Error saving batch to cloud.');
+            }
+
         } else {
             alert(`No new leads added. All ${skippedCount} leads were already in the CRM.`);
         }
@@ -730,7 +871,7 @@ ${template.cta}`;
     };
 
     // Handle saving selected leads to CRM (or all if none selected)
-    const handleSaveSelectedToCrm = () => {
+    const handleSaveSelectedToCrm = async () => {
         let addedCount = 0;
         const newLeads = [];
 
@@ -754,16 +895,28 @@ ${template.cta}`;
         });
 
         if (addedCount > 0) {
+            // Optimistic
             setSavedLeads(prev => [...newLeads, ...prev]);
-            alert(`Saved ${addedCount} new lead${addedCount > 1 ? 's' : ''} to CRM!`);
+            alert(`Saving ${addedCount} selected leads to CRM...`);
             setActiveTab('crm');
-            setSelectedLeadIndices(new Set()); // Clear selection after saving
+
+            // API Call
+            try {
+                await fetch('/api/crm/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leads: newLeads })
+                });
+            } catch (e) {
+                console.error('Failed to bulk save', e);
+                alert('Error saving batch to cloud.');
+            }
         } else {
-            alert(selectedLeadIndices.size > 0
-                ? 'All selected leads are already in the CRM!'
-                : 'All leads are already in the CRM!');
+            alert('No new unique leads to add.');
         }
     };
+
+
 
     const selectLead = (lead) => {
         setPitchLead(lead); // Store complete lead for emailing
@@ -1378,100 +1531,196 @@ ${template.cta}`;
                                                 <tbody className="divide-y divide-gray-200">
                                                     {filteredLeads.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((lead) => (
                                                         <tr key={lead.id} className={`hover:bg-gray-50 transition-colors ${selectedCrmLeadIds.has(lead.id) ? 'bg-blue-50/50' : ''}`}>
-                                                            <td className="px-6 py-4">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={selectedCrmLeadIds.has(lead.id)}
-                                                                    onChange={() => toggleCrmLeadSelection(lead.id)}
-                                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                                                                />
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div
-                                                                    className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
-                                                                    onClick={() => setViewingLead(lead)}
-                                                                >
-                                                                    {lead.name}
-                                                                </div>
-                                                                <div className="text-sm text-blue-600">{lead.productCategory || 'Sourced Lead'}</div>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                {lead.score > 0 ? (
-                                                                    <div className="flex flex-col gap-1">
-                                                                        <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${TIERS[lead.tier]?.color || 'bg-gray-100 text-gray-800'} ${TIERS[lead.tier]?.border}`}>
-                                                                            {lead.score}
-                                                                        </span>
-                                                                        {lead.tags && lead.tags.length > 0 && (
-                                                                            <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
-                                                                                {lead.tags.length} tags
-                                                                            </span>
+                                                            {editingCrmLeadId === lead.id ? (
+                                                                // EDIT MODE ROW
+                                                                <>
+                                                                    <td className="px-6 py-4">
+                                                                        <input type="checkbox" disabled className="w-4 h-4 text-gray-400 rounded border-gray-300" />
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="space-y-2">
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full text-sm font-semibold border-b border-blue-300 focus:border-blue-500 outline-none"
+                                                                                value={editFormData.name || ''}
+                                                                                onChange={(e) => handleEditFormChange('name', e.target.value)}
+                                                                                placeholder="Name"
+                                                                            />
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full text-xs text-gray-500 border-b border-gray-200 focus:border-blue-500 outline-none"
+                                                                                value={editFormData.productCategory || ''}
+                                                                                onChange={(e) => handleEditFormChange('productCategory', e.target.value)}
+                                                                                placeholder="Category"
+                                                                            />
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full text-xs text-blue-500 border-b border-gray-200 focus:border-blue-500 outline-none"
+                                                                                value={editFormData.storeUrl || ''}
+                                                                                onChange={(e) => handleEditFormChange('storeUrl', e.target.value)}
+                                                                                placeholder="Store URL"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 opacity-50">
+                                                                        -
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="space-y-2">
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full text-xs border-b border-gray-200 focus:border-blue-500 outline-none"
+                                                                                value={editFormData.email || ''}
+                                                                                onChange={(e) => handleEditFormChange('email', e.target.value)}
+                                                                                placeholder="Email"
+                                                                            />
+                                                                            <input
+                                                                                type="text"
+                                                                                className="w-full text-xs border-b border-gray-200 focus:border-blue-500 outline-none"
+                                                                                value={editFormData.instagram || ''}
+                                                                                onChange={(e) => handleEditFormChange('instagram', e.target.value)}
+                                                                                placeholder="Instagram"
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <select
+                                                                            value={editFormData.status || 'New'}
+                                                                            onChange={(e) => handleEditFormChange('status', e.target.value)}
+                                                                            className="text-xs border border-gray-300 rounded px-2 py-1 outline-none"
+                                                                        >
+                                                                            <option value="New">New</option>
+                                                                            <option value="Pitched">Pitched</option>
+                                                                            <option value="Replied">Replied</option>
+                                                                            <option value="Dead">Dead</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 text-xs text-gray-500">{lead.addedAt}</td>
+                                                                    <td className="px-6 py-4 text-right">
+                                                                        <div className="flex justify-end gap-2">
+                                                                            <button
+                                                                                onClick={() => saveCrmEdit(lead.id)}
+                                                                                className="p-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                                                                                title="Save"
+                                                                            >
+                                                                                <Check className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={cancelCrmEdit}
+                                                                                className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors"
+                                                                                title="Cancel"
+                                                                            >
+                                                                                <X className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </>
+                                                            ) : (
+                                                                // VIEW MODE ROW
+                                                                <>
+                                                                    <td className="px-6 py-4">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={selectedCrmLeadIds.has(lead.id)}
+                                                                            onChange={() => toggleCrmLeadSelection(lead.id)}
+                                                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div
+                                                                            className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
+                                                                            onClick={() => setViewingLead(lead)}
+                                                                        >
+                                                                            {lead.name}
+                                                                        </div>
+                                                                        <div className="text-sm text-blue-600">{lead.productCategory || 'Sourced Lead'}</div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        {lead.score > 0 ? (
+                                                                            <div className="flex flex-col gap-1">
+                                                                                <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${TIERS[lead.tier]?.color || 'bg-gray-100 text-gray-800'} ${TIERS[lead.tier]?.border}`}>
+                                                                                    {lead.score}
+                                                                                </span>
+                                                                                {lead.tags && lead.tags.length > 0 && (
+                                                                                    <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
+                                                                                        {lead.tags.length} tags
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-gray-400 text-xs">-</span>
                                                                         )}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-gray-400 text-xs">-</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="space-y-1 text-sm">
-                                                                    {lead.instagram ? (
-                                                                        <div className="flex items-center gap-1 text-pink-600">
-                                                                            <Instagram className="w-3 h-3" />
-                                                                            {lead.instagram}
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="space-y-1 text-sm">
+                                                                            {lead.instagram ? (
+                                                                                <div className="flex items-center gap-1 text-pink-600">
+                                                                                    <Instagram className="w-3 h-3" />
+                                                                                    {lead.instagram}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="text-gray-400 italic">No contact</div>
+                                                                            )}
+                                                                            {lead.email && (
+                                                                                <div className="flex items-center gap-1 text-blue-600">
+                                                                                    <Mail className="w-3 h-3" />
+                                                                                    {lead.email}
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                    ) : (
-                                                                        <div className="text-gray-400 italic">No contact</div>
-                                                                    )}
-                                                                    {lead.email && (
-                                                                        <div className="flex items-center gap-1 text-blue-600">
-                                                                            <Mail className="w-3 h-3" />
-                                                                            {lead.email}
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <select
+                                                                            value={lead.status}
+                                                                            onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                                                                            className={`text-sm font-semibold px-3 py-1.5 rounded-lg border-2 ${lead.status === 'Replied' ? 'bg-green-50 border-green-500 text-green-700' :
+                                                                                lead.status === 'Pitched' ? 'bg-blue-50 border-blue-500 text-blue-700' :
+                                                                                    'bg-gray-50 border-gray-300 text-gray-700'
+                                                                                }`}
+                                                                        >
+                                                                            <option value="New">New</option>
+                                                                            <option value="Pitched">Pitched</option>
+                                                                            <option value="Replied">Replied</option>
+                                                                            <option value="Dead">Dead</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                                                        {lead.addedAt}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 text-right">
+                                                                        <div className="flex justify-end gap-2">
+                                                                            <button
+                                                                                onClick={() => setViewingLead(lead)}
+                                                                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                                                title="View Details"
+                                                                            >
+                                                                                <Eye className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => selectLead(lead)}
+                                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                                title="Create pitch"
+                                                                            >
+                                                                                <Sparkles className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => initiateCrmEdit(lead)}
+                                                                                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                                                                title="Edit"
+                                                                            >
+                                                                                <Pencil className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => deleteLead(lead.id)}
+                                                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                                title="Delete"
+                                                                            >
+                                                                                <Trash2 className="w-4 h-4" />
+                                                                            </button>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <select
-                                                                    value={lead.status}
-                                                                    onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
-                                                                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg border-2 ${lead.status === 'Replied' ? 'bg-green-50 border-green-500 text-green-700' :
-                                                                        lead.status === 'Pitched' ? 'bg-blue-50 border-blue-500 text-blue-700' :
-                                                                            'bg-gray-50 border-gray-300 text-gray-700'
-                                                                        }`}
-                                                                >
-                                                                    <option value="New">New</option>
-                                                                    <option value="Pitched">Pitched</option>
-                                                                    <option value="Replied">Replied</option>
-                                                                    <option value="Dead">Dead</option>
-                                                                </select>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-sm text-gray-600">
-                                                                {lead.addedAt}
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <div className="flex justify-end gap-2">
-                                                                    <button
-                                                                        onClick={() => setViewingLead(lead)}
-                                                                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                                                        title="View Details"
-                                                                    >
-                                                                        <Eye className="w-4 h-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => selectLead(lead)}
-                                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                        title="Create pitch"
-                                                                    >
-                                                                        <Sparkles className="w-4 h-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => deleteFromCrm(lead.id)}
-                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                        title="Delete"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            </td>
+                                                                    </td>
+                                                                </>
+                                                            )}
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -1805,31 +2054,75 @@ ${template.cta}`;
                             >
                                 {/* Modal Header */}
                                 <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm">
+                                    <div className="flex items-center gap-4 w-full">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm flex-shrink-0">
                                             {viewingLead.name.charAt(0)}
                                         </div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                                {viewingLead.name}
-                                                {viewingLead.status && (
-                                                    <span className={`text-xs px-2 py-0.5 rounded-full border ${viewingLead.status === 'Replied' ? 'bg-green-50 border-green-200 text-green-700' :
-                                                        viewingLead.status === 'Pitched' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                                            'bg-gray-50 border-gray-200 text-gray-600'
-                                                        }`}>
-                                                        {viewingLead.status}
-                                                    </span>
-                                                )}
-                                            </h2>
-                                            <p className="text-sm text-gray-500 font-medium">{viewingLead.productCategory}</p>
+                                        <div className="flex-1 mr-4">
+                                            {isEditingModal ? (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={editFormData.name || ''}
+                                                            onChange={(e) => handleEditFormChange('name', e.target.value)}
+                                                            className="text-xl font-bold text-gray-900 border-b border-blue-500 focus:outline-none bg-transparent w-full"
+                                                            placeholder="Lead Name"
+                                                        />
+                                                        <select
+                                                            value={editFormData.status || 'New'}
+                                                            onChange={(e) => handleEditFormChange('status', e.target.value)}
+                                                            className="text-xs border border-gray-300 rounded px-2 py-1 outline-none"
+                                                        >
+                                                            <option value="New">New</option>
+                                                            <option value="Pitched">Pitched</option>
+                                                            <option value="Replied">Replied</option>
+                                                            <option value="Dead">Dead</option>
+                                                        </select>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={editFormData.productCategory || ''}
+                                                        onChange={(e) => handleEditFormChange('productCategory', e.target.value)}
+                                                        className="text-sm text-gray-600 border-b border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent w-full"
+                                                        placeholder="Category"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                                        {viewingLead.name}
+                                                        {viewingLead.status && (
+                                                            <span className={`text-xs px-2 py-0.5 rounded-full border ${viewingLead.status === 'Replied' ? 'bg-green-50 border-green-200 text-green-700' :
+                                                                viewingLead.status === 'Pitched' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                                                                    'bg-gray-50 border-gray-200 text-gray-600'
+                                                                }`}>
+                                                                {viewingLead.status}
+                                                            </span>
+                                                        )}
+                                                    </h2>
+                                                    <p className="text-sm text-gray-500 font-medium">{viewingLead.productCategory}</p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => setViewingLead(null)}
-                                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                                    >
-                                        <X className="w-6 h-6 text-gray-500" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {!isEditingModal && (
+                                            <button
+                                                onClick={initiateModalEdit}
+                                                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-blue-600"
+                                                title="Edit Details"
+                                            >
+                                                <Pencil className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setViewingLead(null)}
+                                            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                        >
+                                            <X className="w-6 h-6 text-gray-500" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Modal Body - Scrollable */}
@@ -1843,133 +2136,224 @@ ${template.cta}`;
                                             </h3>
 
                                             <div className="space-y-4">
-                                                {/* Email */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                                                        <Mail className="w-4 h-4 text-blue-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Email Address</div>
-                                                        <div className="text-sm text-gray-900 break-all select-all">
-                                                            {viewingLead.email ? (
-                                                                <a href={`mailto:${viewingLead.email}`} className="hover:text-blue-600 hover:underline">
-                                                                    {viewingLead.email}
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Phone */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
-                                                        <Phone className="w-4 h-4 text-green-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</div>
-                                                        <div className="text-sm text-gray-900 select-all">
-                                                            {viewingLead.phone || <span className="text-gray-400 italic">Not available</span>}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Instagram */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-100 transition-colors">
-                                                        <Instagram className="w-4 h-4 text-pink-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
-                                                        <div className="text-sm text-gray-900 break-all">
-                                                            {viewingLead.instagram ? (
-                                                                <a
-                                                                    href={viewingLead.instagram.startsWith('http') ? viewingLead.instagram : `https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                    className="hover:text-pink-600 hover:underline flex items-center gap-1"
-                                                                >
-                                                                    {viewingLead.instagram} <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* YouTube */}
-                                                {viewingLead.youtube && (
-                                                    <div className="group flex items-start gap-4">
-                                                        <div className="mt-1 w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 transition-colors">
-                                                            <Youtube className="w-4 h-4 text-red-600" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="text-xs text-gray-500 font-medium mb-0.5">YouTube</div>
-                                                            <div className="text-sm text-gray-900 break-all">
-                                                                <a href={ensureAbsoluteUrl(viewingLead.youtube)} target="_blank" rel="noreferrer" className="hover:text-red-600 hover:underline flex items-center gap-1">
-                                                                    {viewingLead.youtube} <ExternalLink className="w-3 h-3" />
-                                                                </a>
+                                                {isEditingModal ? (
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Email Address</label>
+                                                            <div className="relative">
+                                                                <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.email || ''}
+                                                                    onChange={(e) => handleEditFormChange('email', e.target.value)}
+                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    placeholder="email@example.com"
+                                                                />
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Facebook */}
-                                                {viewingLead.facebook && (
-                                                    <div className="group flex items-start gap-4">
-                                                        <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                                                            <Facebook className="w-4 h-4 text-blue-600" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="text-xs text-gray-500 font-medium mb-0.5">Facebook</div>
-                                                            <div className="text-sm text-gray-900 break-all">
-                                                                <a href={ensureAbsoluteUrl(viewingLead.facebook)} target="_blank" rel="noreferrer" className="hover:text-blue-600 hover:underline flex items-center gap-1">
-                                                                    {viewingLead.facebook} <ExternalLink className="w-3 h-3" />
-                                                                </a>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Phone Number</label>
+                                                            <div className="relative">
+                                                                <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.phone || ''}
+                                                                    onChange={(e) => handleEditFormChange('phone', e.target.value)}
+                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    placeholder="+1 234 567 890"
+                                                                />
                                                             </div>
                                                         </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Instagram Handle</label>
+                                                            <div className="relative">
+                                                                <Instagram className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.instagram || ''}
+                                                                    onChange={(e) => handleEditFormChange('instagram', e.target.value)}
+                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    placeholder="@username"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Website URL</label>
+                                                            <div className="relative">
+                                                                <Globe className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.website || ''}
+                                                                    onChange={(e) => handleEditFormChange('website', e.target.value)}
+                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    placeholder="https://example.com"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label className="text-xs text-gray-500 font-medium mb-1 block">YouTube</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.youtube || ''}
+                                                                    onChange={(e) => handleEditFormChange('youtube', e.target.value)}
+                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    placeholder="Channel URL"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs text-gray-500 font-medium mb-1 block">TikTok</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.tiktok || ''}
+                                                                    onChange={(e) => handleEditFormChange('tiktok', e.target.value)}
+                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    placeholder="TikTok URL"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Facebook</label>
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData.facebook || ''}
+                                                                onChange={(e) => handleEditFormChange('facebook', e.target.value)}
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                placeholder="Facebook URL"
+                                                            />
+                                                        </div>
                                                     </div>
+                                                ) : (
+                                                    <>
+                                                        {/* Email */}
+                                                        <div className="group flex items-start gap-4">
+                                                            <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                                                                <Mail className="w-4 h-4 text-blue-600" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Email Address</div>
+                                                                <div className="text-sm text-gray-900 break-all select-all">
+                                                                    {viewingLead.email ? (
+                                                                        <a href={`mailto:${viewingLead.email}`} className="hover:text-blue-600 hover:underline">
+                                                                            {viewingLead.email}
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="text-gray-400 italic">Not available</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Phone */}
+                                                        <div className="group flex items-start gap-4">
+                                                            <div className="mt-1 w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+                                                                <Phone className="w-4 h-4 text-green-600" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</div>
+                                                                <div className="text-sm text-gray-900 select-all">
+                                                                    {viewingLead.phone || <span className="text-gray-400 italic">Not available</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Instagram */}
+                                                        <div className="group flex items-start gap-4">
+                                                            <div className="mt-1 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-100 transition-colors">
+                                                                <Instagram className="w-4 h-4 text-pink-600" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
+                                                                <div className="text-sm text-gray-900 break-all">
+                                                                    {viewingLead.instagram ? (
+                                                                        <a
+                                                                            href={viewingLead.instagram.startsWith('http') ? viewingLead.instagram : `https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="hover:text-pink-600 hover:underline flex items-center gap-1"
+                                                                        >
+                                                                            {viewingLead.instagram} <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="text-gray-400 italic">Not available</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* YouTube */}
+                                                        {viewingLead.youtube && (
+                                                            <div className="group flex items-start gap-4">
+                                                                <div className="mt-1 w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 transition-colors">
+                                                                    <Youtube className="w-4 h-4 text-red-600" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">YouTube</div>
+                                                                    <div className="text-sm text-gray-900 break-all">
+                                                                        <a href={ensureAbsoluteUrl(viewingLead.youtube)} target="_blank" rel="noreferrer" className="hover:text-red-600 hover:underline flex items-center gap-1">
+                                                                            {viewingLead.youtube} <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Facebook */}
+                                                        {viewingLead.facebook && (
+                                                            <div className="group flex items-start gap-4">
+                                                                <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                                                                    <Facebook className="w-4 h-4 text-blue-600" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Facebook</div>
+                                                                    <div className="text-sm text-gray-900 break-all">
+                                                                        <a href={ensureAbsoluteUrl(viewingLead.facebook)} target="_blank" rel="noreferrer" className="hover:text-blue-600 hover:underline flex items-center gap-1">
+                                                                            {viewingLead.facebook} <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* TikTok Shop */}
+                                                        <div className="group flex items-start gap-4">
+                                                            <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
+                                                                <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok</div>
+                                                                <div className="text-sm text-gray-900">
+                                                                    {viewingLead.tiktok ? (
+                                                                        <a href={ensureAbsoluteUrl(viewingLead.tiktok)} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
+                                                                            {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="text-gray-400 italic">Not available</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Official Website */}
+                                                        <div className="group flex items-start gap-4">
+                                                            <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
+                                                                <Globe className="w-4 h-4 text-indigo-600" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
+                                                                <div className="text-sm text-gray-900">
+                                                                    {viewingLead.website ? (
+                                                                        <a href={ensureAbsoluteUrl(viewingLead.website)} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
+                                                                            {viewingLead.website} <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="text-gray-400 italic">Not available</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </>
                                                 )}
-
-                                                {/* TikTok Shop */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
-                                                        <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok</div>
-                                                        <div className="text-sm text-gray-900">
-                                                            {viewingLead.tiktok ? (
-                                                                <a href={ensureAbsoluteUrl(viewingLead.tiktok)} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
-                                                                    {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Official Website */}
-                                                <div className="group flex items-start gap-4">
-                                                    <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
-                                                        <Globe className="w-4 h-4 text-indigo-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
-                                                        <div className="text-sm text-gray-900">
-                                                            {viewingLead.website ? (
-                                                                <a href={ensureAbsoluteUrl(viewingLead.website)} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
-                                                                    {viewingLead.website} <ExternalLink className="w-3 h-3" />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic">Not available</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
 
@@ -1982,9 +2366,18 @@ ${template.cta}`;
                                             <div className="space-y-4">
                                                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                                                     <div className="text-xs text-gray-500 font-medium mb-2 uppercase tracking-wide">About Business</div>
-                                                    <p className="text-sm text-gray-700 leading-relaxed">
-                                                        {viewingLead.briefDescription || 'No description available for this lead.'}
-                                                    </p>
+                                                    {isEditingModal ? (
+                                                        <textarea
+                                                            value={editFormData.briefDescription || ''}
+                                                            onChange={(e) => handleEditFormChange('briefDescription', e.target.value)}
+                                                            className="w-full h-32 text-sm text-gray-700 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-blue-500 custom-scrollbar resize-none"
+                                                            placeholder="Enter business description..."
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm text-gray-700 leading-relaxed">
+                                                            {viewingLead.briefDescription || 'No description available for this lead.'}
+                                                        </p>
+                                                    )}
                                                 </div>
 
                                                 {/* Scoring Profile */}
@@ -2014,30 +2407,50 @@ ${template.cta}`;
                                                         <p className="text-xs text-gray-400 italic">No automated tags generated yet.</p>
                                                     )}
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="flex items-start gap-3">
-                                            <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
-                                                <p className="text-sm text-gray-900">
-                                                    {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
-                                                </p>
-                                            </div>
-                                        </div>
+                                                <div className="flex items-start gap-3">
+                                                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                                    <div className="w-full">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
+                                                        {isEditingModal ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData.businessAddress || ''}
+                                                                onChange={(e) => handleEditFormChange('businessAddress', e.target.value)}
+                                                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                                                placeholder="Enter address"
+                                                            />
+                                                        ) : (
+                                                            <p className="text-sm text-gray-900">
+                                                                {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
 
-                                        <div className="flex items-start gap-3">
-                                            <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
-                                                {viewingLead.storeUrl ? (
-                                                    <a href={ensureAbsoluteUrl(viewingLead.storeUrl)} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
-                                                        {viewingLead.storeUrl}
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-sm text-gray-400 italic">Not available</span>
-                                                )}
+                                                <div className="flex items-start gap-3">
+                                                    <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                                    <div className="w-full">
+                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
+                                                        {isEditingModal ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData.storeUrl || ''}
+                                                                onChange={(e) => handleEditFormChange('storeUrl', e.target.value)}
+                                                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                                                placeholder="https://store.com"
+                                                            />
+                                                        ) : (
+                                                            viewingLead.storeUrl ? (
+                                                                <a href={ensureAbsoluteUrl(viewingLead.storeUrl)} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
+                                                                    {viewingLead.storeUrl}
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-sm text-gray-400 italic">Not available</span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2051,36 +2464,57 @@ ${template.cta}`;
                                         Added {viewingLead.addedAt}
                                     </div>
                                     <div className="flex gap-3">
-                                        <button
-                                            onClick={() => handleEnrichLead(viewingLead)}
-                                            disabled={isLoading}
-                                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
-                                        >
-                                            <Zap className="w-4 h-4" />
-                                            {isLoading ? 'Enriching...' : 'Enrich Data'}
-                                        </button>
+                                        {isEditingModal ? (
+                                            <>
+                                                <button
+                                                    onClick={saveModalEdit}
+                                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all"
+                                                >
+                                                    <Check className="w-4 h-4" />
+                                                    Save Changes
+                                                </button>
+                                                <button
+                                                    onClick={cancelModalEdit}
+                                                    className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                    Cancel
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={() => handleEnrichLead(viewingLead)}
+                                                    disabled={isLoading}
+                                                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
+                                                >
+                                                    <Zap className="w-4 h-4" />
+                                                    {isLoading ? 'Enriching...' : 'Enrich Data'}
+                                                </button>
 
-                                        <button
-                                            onClick={() => {
-                                                selectLead(viewingLead);
-                                                setViewingLead(null);
-                                            }}
-                                            disabled={!viewingLead.email}
-                                            className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <Mail className="w-4 h-4" />
-                                            Email
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                selectLead(viewingLead);
-                                                setViewingLead(null);
-                                            }}
-                                            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
-                                        >
-                                            <Sparkles className="w-4 h-4" />
-                                            Generate Pitch
-                                        </button>
+                                                <button
+                                                    onClick={() => {
+                                                        selectLead(viewingLead);
+                                                        setViewingLead(null);
+                                                    }}
+                                                    disabled={!viewingLead.email}
+                                                    className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <Mail className="w-4 h-4" />
+                                                    Email
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        selectLead(viewingLead);
+                                                        setViewingLead(null);
+                                                    }}
+                                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                    Generate Pitch
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>

@@ -58,7 +58,9 @@ export async function POST(req) {
 
         if (!metrics) {
             console.error(`❌ [Enrich] Failed to fetch metrics for handle: ${handle}`);
-            return NextResponse.json({ error: `Failed to fetch metrics for handle: ${handle}` }, { status: 502 });
+            return NextResponse.json({
+                error: `Failed to fetch metrics for handle: ${handle}. Verify Apify token and handle validity.`
+            }, { status: 502 });
         }
 
         // 4. Merge Data
