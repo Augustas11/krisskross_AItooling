@@ -2498,14 +2498,9 @@ ${template.cta}`;
                                             </>
                                         ) : (
                                             <>
-                                                <button
-                                                    onClick={() => handleEnrichLead(viewingLead)}
-                                                    disabled={isLoading}
-                                                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
-                                                >
-                                                    <Zap className="w-4 h-4" />
-                                                    {isLoading ? 'Enriching...' : 'Enrich Data'}
-                                                </button>
+                                                {isLoading ? (
+                                                    <span className="text-gray-500 text-sm animate-pulse">Enriching...</span>
+                                                ) : null}
 
                                                 <button
                                                     onClick={() => {
