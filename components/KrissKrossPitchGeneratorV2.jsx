@@ -1555,14 +1555,23 @@ ${template.cta}`;
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-200">
                                                     {filteredLeads.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((lead) => (
-                                                        <tr key={lead.id} className={`hover:bg-gray-50 transition-colors ${selectedCrmLeadIds.has(lead.id) ? 'bg-blue-50/50' : ''}`}>
+                                                        <tr
+                                                            key={lead.id}
+                                                            onClick={(e) => {
+                                                                // Only open if we are NOT in edit mode
+                                                                if (editingCrmLeadId !== lead.id) {
+                                                                    setViewingLead(lead);
+                                                                }
+                                                            }}
+                                                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedCrmLeadIds.has(lead.id) ? 'bg-blue-50/50' : ''}`}
+                                                        >
                                                             {editingCrmLeadId === lead.id ? (
                                                                 // EDIT MODE ROW
                                                                 <>
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                                                                         <input type="checkbox" disabled className="w-4 h-4 text-gray-400 rounded border-gray-300" />
                                                                     </td>
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                                                                         <div className="space-y-2">
                                                                             <input
                                                                                 type="text"
@@ -1587,10 +1596,10 @@ ${template.cta}`;
                                                                             />
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-6 py-4 opacity-50">
+                                                                    <td className="px-6 py-4 opacity-50" onClick={e => e.stopPropagation()}>
                                                                         -
                                                                     </td>
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                                                                         <div className="space-y-2">
                                                                             <input
                                                                                 type="text"
@@ -1608,7 +1617,7 @@ ${template.cta}`;
                                                                             />
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                                                                         <select
                                                                             value={editFormData.status || 'New'}
                                                                             onChange={(e) => handleEditFormChange('status', e.target.value)}
@@ -1620,8 +1629,8 @@ ${template.cta}`;
                                                                             <option value="Dead">Dead</option>
                                                                         </select>
                                                                     </td>
-                                                                    <td className="px-6 py-4 text-xs text-gray-500">{lead.addedAt}</td>
-                                                                    <td className="px-6 py-4 text-right">
+                                                                    <td className="px-6 py-4 text-xs text-gray-500" onClick={e => e.stopPropagation()}>{lead.addedAt}</td>
+                                                                    <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                                                         <div className="flex justify-end gap-2">
                                                                             <button
                                                                                 onClick={() => saveCrmEdit(lead.id)}
@@ -1643,7 +1652,7 @@ ${template.cta}`;
                                                             ) : (
                                                                 // VIEW MODE ROW
                                                                 <>
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                                                         <input
                                                                             type="checkbox"
                                                                             checked={selectedCrmLeadIds.has(lead.id)}
@@ -1651,56 +1660,42 @@ ${template.cta}`;
                                                                             className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                                                                         />
                                                                     </td>
-                                                                    <td className="px-6 py-4">
-                                                                        <div
-                                                                            className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
-                                                                            onClick={() => setViewingLead(lead)}
-                                                                        >
+                                                                    <td className="px-6 py-4 flex-1">
+                                                                        <div className="font-semibold text-gray-900 leading-tight">
                                                                             {lead.name}
                                                                         </div>
-                                                                        <div className="text-sm text-blue-600">{lead.productCategory || 'Sourced Lead'}</div>
+                                                                        <div className="text-sm text-gray-500">{lead.productCategory || 'Sourced Lead'}</div>
                                                                     </td>
                                                                     <td className="px-6 py-4">
-                                                                        {lead.score > 0 ? (
-                                                                            <div className="flex flex-col gap-1">
-                                                                                <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${TIERS[lead.tier]?.color || 'bg-gray-100 text-gray-800'} ${TIERS[lead.tier]?.border}`}>
-                                                                                    {lead.score}
-                                                                                </span>
-                                                                                {lead.tags && lead.tags.length > 0 && (
-                                                                                    <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
-                                                                                        {lead.tags.length} tags
-                                                                                    </span>
+                                                                        {lead.tags && lead.tags.length > 0 ? (
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                {lead.tags.slice(0, 3).map((tag, idx) => {
+                                                                                    const [cat, name] = typeof tag === 'string' ? tag.split(':') : [tag.category, tag.name];
+                                                                                    return (
+                                                                                        <span key={idx} className="px-1.5 py-0.5 rounded text-[10px] uppercase font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                                                                            {name || cat}
+                                                                                        </span>
+                                                                                    );
+                                                                                })}
+                                                                                {lead.tags.length > 3 && (
+                                                                                    <span className="px-1.5 py-0.5 text-[10px] text-gray-400">+{lead.tags.length - 3}</span>
                                                                                 )}
                                                                             </div>
                                                                         ) : (
-                                                                            <span className="text-gray-400 text-xs">-</span>
+                                                                            <span className="text-xs text-gray-400 italic">No tags</span>
                                                                         )}
-                                                                    </td>
-                                                                    <td className="px-6 py-4">
-                                                                        <div className="space-y-1 text-sm">
-                                                                            {lead.instagram ? (
-                                                                                <div className="flex items-center gap-1 text-pink-600">
-                                                                                    <Instagram className="w-3 h-3" />
-                                                                                    {lead.instagram}
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="text-gray-400 italic">No contact</div>
-                                                                            )}
-                                                                            {lead.email && (
-                                                                                <div className="flex items-center gap-1 text-blue-600">
-                                                                                    <Mail className="w-3 h-3" />
-                                                                                    {lead.email}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
                                                                     </td>
                                                                     <td className="px-6 py-4">
                                                                         <select
                                                                             value={lead.status}
-                                                                            onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
-                                                                            className={`text-sm font-semibold px-3 py-1.5 rounded-lg border-2 ${lead.status === 'Replied' ? 'bg-green-50 border-green-500 text-green-700' :
-                                                                                lead.status === 'Pitched' ? 'bg-blue-50 border-blue-500 text-blue-700' :
-                                                                                    'bg-gray-50 border-gray-300 text-gray-700'
+                                                                            onChange={(e) => {
+                                                                                e.stopPropagation();
+                                                                                updateLeadStatus(lead.id, e.target.value);
+                                                                            }}
+                                                                            className={`text-xs border rounded px-2 py-1 outline-none font-medium ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                                lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                                                                    lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                                        'bg-red-50 text-red-700 border-red-200'
                                                                                 }`}
                                                                         >
                                                                             <option value="New">New</option>
@@ -1709,36 +1704,27 @@ ${template.cta}`;
                                                                             <option value="Dead">Dead</option>
                                                                         </select>
                                                                     </td>
-                                                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                                                        {lead.addedAt}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-right">
+                                                                    <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{lead.addedAt}</td>
+                                                                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                                         <div className="flex justify-end gap-2">
                                                                             <button
                                                                                 onClick={() => setViewingLead(lead)}
-                                                                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                                                                title="View Details"
+                                                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                title="View Intelligence Card"
                                                                             >
                                                                                 <Eye className="w-4 h-4" />
                                                                             </button>
                                                                             <button
-                                                                                onClick={() => selectLead(lead)}
-                                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                                title="Create pitch"
-                                                                            >
-                                                                                <Sparkles className="w-4 h-4" />
-                                                                            </button>
-                                                                            <button
                                                                                 onClick={() => initiateCrmEdit(lead)}
-                                                                                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                                                                                title="Edit"
+                                                                                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                                                title="Edit Lead"
                                                                             >
                                                                                 <Pencil className="w-4 h-4" />
                                                                             </button>
                                                                             <button
-                                                                                onClick={() => deleteLead(lead.id)}
-                                                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                                                title="Delete"
+                                                                                onClick={() => deleteFromCrm(lead.id)}
+                                                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                title="Delete Lead"
                                                                             >
                                                                                 <Trash2 className="w-4 h-4" />
                                                                             </button>
