@@ -359,6 +359,44 @@ ${template.cta}`;
         ));
     };
 
+    const handleEnrichLead = async (lead) => {
+        if (!lead || !lead.id) return;
+
+        setIsLoading(true); // Re-using general loading state or create a specific one
+        try {
+            console.log(`✨ [Enrich] enriching lead: ${lead.name}`);
+            const response = await fetch('/api/enrich', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadId: lead.id, leadData: lead })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Enrichment failed');
+
+            console.log('✅ [Enrich] Success:', result);
+
+            // Update local state with enriched data
+            const enrichedLead = { ...lead, ...result.enrichedData };
+
+            // Update in CRM list
+            setSavedLeads(prev => prev.map(l => l.id === lead.id ? enrichedLead : l));
+
+            // Update if currently viewing
+            if (viewingLead && viewingLead.id === lead.id) {
+                setViewingLead(enrichedLead);
+            }
+
+            alert(`Enrichment Complete! Status: ${enrichedLead.tier} (${enrichedLead.score}/100)`);
+
+        } catch (error) {
+            console.error('Enrichment error:', error);
+            alert(`Enrichment failed: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const deleteFromCrm = (leadId) => {
         if (window.confirm('Remove this lead from CRM?')) {
             setSavedLeads(prev => prev.filter(l => l.id !== leadId));
@@ -836,7 +874,6 @@ ${template.cta}`;
                                     <div className="flex gap-2">
                                         <button
                                             onClick={handleSaveSelectedToCrm}
-                                            disabled={isBulkAction}
                                             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Users className="w-4 h-4" />
@@ -1704,6 +1741,14 @@ ${template.cta}`;
                                         Added {viewingLead.addedAt}
                                     </div>
                                     <div className="flex gap-3">
+                                        <button
+                                            onClick={() => handleEnrichLead(viewingLead)}
+                                            disabled={isLoading}
+                                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
+                                        >
+                                            <Zap className="w-4 h-4" />
+                                            {isLoading ? 'Enriching...' : 'Enrich Data'}
+                                        </button>
 
                                         <button
                                             onClick={() => {
