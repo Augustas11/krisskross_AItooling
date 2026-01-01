@@ -41,7 +41,28 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
             ],
         });
 
-        return NextResponse.json({ pitch: response.content[0].text });
+        const pitchText = response.content[0].text;
+
+        // Auto-save to history (Fire & Forget for speed)
+        try {
+            const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
+            if (isSupabaseConfigured()) {
+                supabase
+                    .from('pitch_history')
+                    .insert([{
+                        lead_name: customName || 'Unknown',
+                        target_type: targetType,
+                        context: context,
+                        generated_pitch: pitchText,
+                        was_ai_generated: true
+                    }])
+                    .then(res => {
+                        if (res.error) console.error('Error saving pitch history:', res.error);
+                    });
+            }
+        } catch (e) { console.error('History save failed', e); }
+
+        return NextResponse.json({ pitch: pitchText });
     } catch (error) {
         console.error('Claude API Error Details:', error);
         return NextResponse.json({

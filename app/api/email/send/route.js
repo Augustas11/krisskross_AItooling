@@ -30,6 +30,23 @@ export async function POST(req) {
             );
         }
 
+
+        // Log to history
+        try {
+            const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
+            if (isSupabaseConfigured()) {
+                await supabase.from('email_history').insert([{
+                    recipient_email: leadEmail,
+                    subject: emailSubject,
+                    body: emailBody,
+                    lead_id: leadId !== 'manual' ? leadId : null,
+                    status: 'sent'
+                }]);
+            }
+        } catch (e) {
+            console.error('Email history save failed:', e);
+        }
+
         return NextResponse.json(result);
     } catch (error) {
         console.error('Email API Error:', error);

@@ -58,7 +58,26 @@ export default function KrissKrossPitchGeneratorV3() {
     const [pitchLead, setPitchLead] = useState(null);
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+
     const [emailError, setEmailError] = useState(null);
+
+    // History State
+    const [activityHistory, setActivityHistory] = useState({ pushes: [], emails: [] });
+    const [showActivityHistory, setShowActivityHistory] = useState(false);
+
+    const loadActivityHistory = async () => {
+        try {
+            const res = await fetch('/api/history/activity');
+            const data = await res.json();
+            if (data) setActivityHistory({ pushes: data.pushes || [], emails: data.emails || [] });
+        } catch (e) {
+            console.error('Failed to load activity history', e);
+        }
+    };
+
+    React.useEffect(() => {
+        if (activeTab === 'pitch') loadActivityHistory();
+    }, [activeTab]);
 
     // Load Leads from Server (Supabase ONLY - NO localStorage)
     // Load Leads from Server (Supabase ONLY - NO localStorage)
@@ -1406,152 +1425,229 @@ ${template.cta}`;
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Pitch Generator</h2>
-                                <p className="text-gray-600">Create personalized outreach messages powered by Claude AI</p>
+                            <div className="mb-6 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Pitch Generator</h2>
+                                    <p className="text-gray-600">Create personalized outreach messages powered by Claude AI</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowActivityHistory(!showActivityHistory)}
+                                    className="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                                >
+                                    <Clock className="w-4 h-4" />
+                                    History
+                                </button>
                             </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                                <div className="space-y-6">
-                                    {/* Target Type */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Main Generator Column */}
+                                <div className={`${showActivityHistory ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all`}>
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                                        <div className="space-y-6">
+                                            {/* Target Type */}
 
 
-                                    {/* Email Input */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                            Recipient Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={recipientEmail}
-                                            onChange={(e) => setRecipientEmail(e.target.value)}
-                                            placeholder="lead@example.com"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* Name Input */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                            Prospect Name (optional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={customName}
-                                            onChange={(e) => setCustomName(e.target.value)}
-                                            placeholder="e.g., Sarah, Mike, Jessica..."
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* Context Input */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                            Context or Profile Link
-                                            <span className="ml-2 text-xs font-normal text-gray-500">(Highly Recommended)</span>
-                                        </label>
-                                        <textarea
-                                            value={context}
-                                            onChange={(e) => setContext(e.target.value)}
-                                            placeholder="Paste social profile link, bio, or product details... Claude will use this to tailor the pitch."
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[120px] resize-none text-gray-900 placeholder-gray-400"
-                                        />
-                                    </div>
-
-                                    {/* Generate Button */}
-                                    <button
-                                        onClick={generatePitch}
-                                        disabled={isLoading}
-                                        className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'
-                                            }`}
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <RefreshCw className="w-5 h-5 animate-spin" />
-                                                Generating with Claude AI...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Sparkles className="w-5 h-5" />
-                                                Generate AI Pitch
-                                                <ChevronRight className="w-5 h-5" />
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {/* Generated Pitch */}
-                                    {generatedPitch && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
-                                        >
-                                            <div className="flex justify-between items-start mb-4">
-                                                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                                    <Sparkles className="w-5 h-5 text-blue-600" />
-                                                    Your Pitch
-                                                    {wasAiGenerated ? (
-                                                        <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">
-                                                            AI OPTIMIZED
-                                                        </span>
-                                                    ) : (
-                                                        <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded">
-                                                            TEMPLATE
-                                                        </span>
-                                                    )}
-                                                </h3>
-                                                <button
-                                                    onClick={handleSendEmail}
-                                                    disabled={isSendingEmail || emailSent || !pitchLead}
-                                                    className={`flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors ${emailSent ? 'bg-green-600 hover:bg-green-700' :
-                                                        !pitchLead ? 'bg-gray-400 cursor-not-allowed' :
-                                                            'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                                                        }`}
-                                                >
-                                                    {isSendingEmail ? (
-                                                        <>
-                                                            <RefreshCw className="w-4 h-4 animate-spin" />
-                                                            Sending...
-                                                        </>
-                                                    ) : emailSent ? (
-                                                        <>
-                                                            <CheckCircle className="w-4 h-4" />
-                                                            Sent!
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Send className="w-4 h-4" />
-                                                            Send Email
-                                                        </>
-                                                    )}
-                                                </button>
-                                                <button
-                                                    onClick={copyToClipboard}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                                                >
-                                                    {copied ? (
-                                                        <>
-                                                            <CheckCircle className="w-4 h-4" />
-                                                            Copied!
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Copy className="w-4 h-4" />
-                                                            Copy
-                                                        </>
-                                                    )}
-                                                </button>
+                                            {/* Email Input */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                                    Recipient Email
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    value={recipientEmail}
+                                                    onChange={(e) => setRecipientEmail(e.target.value)}
+                                                    placeholder="lead@example.com"
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
+                                                />
                                             </div>
-                                            <textarea
-                                                value={generatedPitch}
-                                                onChange={(e) => setGeneratedPitch(e.target.value)}
-                                                className="w-full h-64 bg-white rounded-lg p-4 text-gray-800 font-mono text-sm border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
-                                                placeholder="Pitch content will appear here..."
-                                            />
+
+                                            {/* Name Input */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                                    Prospect Name (optional)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={customName}
+                                                    onChange={(e) => setCustomName(e.target.value)}
+                                                    placeholder="e.g., Sarah, Mike, Jessica..."
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
+                                                />
+                                            </div>
+
+                                            {/* Context Input */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                                    Context or Profile Link
+                                                    <span className="ml-2 text-xs font-normal text-gray-500">(Highly Recommended)</span>
+                                                </label>
+                                                <textarea
+                                                    value={context}
+                                                    onChange={(e) => setContext(e.target.value)}
+                                                    placeholder="Paste social profile link, bio, or product details... Claude will use this to tailor the pitch."
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[120px] resize-none text-gray-900 placeholder-gray-400"
+                                                />
+                                            </div>
+
+                                            {/* Generate Button */}
+                                            <button
+                                                onClick={generatePitch}
+                                                disabled={isLoading}
+                                                className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'
+                                                    }`}
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <RefreshCw className="w-5 h-5 animate-spin" />
+                                                        Generating with Claude AI...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Sparkles className="w-5 h-5" />
+                                                        Generate AI Pitch
+                                                        <ChevronRight className="w-5 h-5" />
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            {/* Generated Pitch */}
+                                            {generatedPitch && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
+                                                >
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                                            <Sparkles className="w-5 h-5 text-blue-600" />
+                                                            Your Pitch
+                                                            {wasAiGenerated ? (
+                                                                <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">
+                                                                    AI OPTIMIZED
+                                                                </span>
+                                                            ) : (
+                                                                <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded">
+                                                                    TEMPLATE
+                                                                </span>
+                                                            )}
+                                                        </h3>
+                                                        <button
+                                                            onClick={handleSendEmail}
+                                                            disabled={isSendingEmail || emailSent || !pitchLead}
+                                                            className={`flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors ${emailSent ? 'bg-green-600 hover:bg-green-700' :
+                                                                !pitchLead ? 'bg-gray-400 cursor-not-allowed' :
+                                                                    'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                                                                }`}
+                                                        >
+                                                            {isSendingEmail ? (
+                                                                <>
+                                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                                    Sending...
+                                                                </>
+                                                            ) : emailSent ? (
+                                                                <>
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                    Sent!
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Send className="w-4 h-4" />
+                                                                    Send Email
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={copyToClipboard}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                                                        >
+                                                            {copied ? (
+                                                                <>
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                    Copied!
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Copy className="w-4 h-4" />
+                                                                    Copy
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                    <textarea
+                                                        value={generatedPitch}
+
+                                                        onChange={(e) => setGeneratedPitch(e.target.value)}
+                                                        className="w-full h-64 bg-white rounded-lg p-4 text-gray-800 font-mono text-sm border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
+                                                        placeholder="Pitch content will appear here..."
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* History Sidebar */}
+                                    {showActivityHistory && (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="lg:col-span-1 space-y-4"
+                                        >
+                                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 h-full max-h-[800px] overflow-y-auto">
+                                                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                    <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
+                                                        <Clock className="w-4 h-4" />
+                                                    </div>
+                                                    Recent Activity
+                                                </h3>
+
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Generated Pitches</h4>
+                                                        <div className="space-y-3">
+                                                            {activityHistory.pushes?.length > 0 ? activityHistory.pushes.map(push => (
+                                                                <div
+                                                                    key={push.id}
+                                                                    onClick={() => {
+                                                                        setCustomName(push.lead_name);
+                                                                        setContext(push.context);
+                                                                        setGeneratedPitch(push.generated_pitch);
+                                                                        setWasAiGenerated(true);
+                                                                    }}
+                                                                    className="p-3 bg-gray-50 hover:bg-blue-50 border border-gray-100 rounded-lg cursor-pointer transition-colors group"
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-1">
+                                                                        <span className="font-medium text-sm text-gray-900">{push.lead_name}</span>
+                                                                        <span className="text-[10px] text-gray-400">{new Date(push.created_at).toLocaleDateString()}</span>
+                                                                    </div>
+                                                                    <p className="text-xs text-gray-500 line-clamp-2">{push.generated_pitch}</p>
+                                                                </div>
+                                                            )) : <p className="text-xs text-gray-400 italic">No pitch history yet.</p>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sent Emails</h4>
+                                                        <div className="space-y-3">
+                                                            {activityHistory.emails?.length > 0 ? activityHistory.emails.map(email => (
+                                                                <div key={email.id} className="p-3 bg-white border border-gray-100 rounded-lg">
+                                                                    <div className="flex justify-between items-start mb-1">
+                                                                        <span className="font-medium text-sm text-gray-900 truncate max-w-[150px]">{email.recipient_email}</span>
+                                                                        <span className="text-[10px] text-gray-400">{new Date(email.sent_at).toLocaleDateString()}</span>
+                                                                    </div>
+                                                                    <p className="text-xs text-blue-600 mb-1">{email.subject}</p>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                                        <span className="text-[10px] text-gray-500 uppercase">Sent</span>
+                                                                    </div>
+                                                                </div>
+                                                            )) : <p className="text-xs text-gray-400 italic">No email history yet.</p>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </div>
-                            </div>
                         </motion.div>
                     )}
 
