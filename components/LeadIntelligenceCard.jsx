@@ -89,63 +89,92 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                 </div>
             </div>
 
-            <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 2. MAIN CONTENT GRID (Horizontal Layout) */}
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                {/* COLUMN 1: METRICS & VITAL SIGNS (Apify) */}
-                <div className="space-y-6">
-                    <SectionTitle icon={<TrendingUp className="w-4 h-4" />} title="Social Vital Signs" />
+                {/* LEFT COLUMN: Vitals + Tags (40% width) */}
+                <div className="lg:col-span-5 space-y-6">
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <MetricCard
-                            label="Followers"
-                            value={lead.instagramFollowers ? lead.instagramFollowers.toLocaleString() : '-'}
-                            subValue={lead.instagramFollowers ? (lead.instagramFollowers > 10000 ? '🔥 Great Reach' : '🌱 Growing') : null}
-                            icon={<Instagram className="w-4 h-4 text-pink-500" />}
-                        />
-                        <MetricCard
-                            label="Engagement"
-                            value={lead.engagementRate ? `${lead.engagementRate}%` : '-'}
-                            subValue={lead.engagementRate ? (lead.engagementRate > 2 ? '✅ Healthy' : '⚠️ Needs Help') : null}
-                            icon={<TrendingUp className="w-4 h-4 text-green-500" />}
-                        />
-                        <MetricCard
-                            label="Avg Video Views"
-                            value={lead.avgVideoViews ? lead.avgVideoViews.toLocaleString() : '-'}
-                            icon={<Eye className="w-4 h-4 text-blue-500" />}
-                        />
-                        <MetricCard
-                            label="Content Type"
-                            value={lead.hasReels === true ? 'Reels Active' : (lead.hasReels === false ? 'Static Only' : '-')}
-                            subValue={lead.hasReels === true ? '📹 Video Focused' : (lead.hasReels === false ? '📸 Photo Focused' : null)}
-                            isWarning={lead.hasReels === false}
-                            icon={<Video className="w-4 h-4 text-purple-500" />}
-                        />
+                    {/* SOCIAL VITAL SIGNS */}
+                    <div>
+                        <SectionTitle icon={<TrendingUp className="w-4 h-4" />} title="Social Vital Signs" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <MetricCard
+                                label="Followers"
+                                value={lead.instagramFollowers ? lead.instagramFollowers.toLocaleString() : '-'}
+                                subValue={lead.instagramFollowers ? (lead.instagramFollowers > 10000 ? '🔥 Great Reach' : '🌱 Growing') : null}
+                                icon={<Instagram className="w-4 h-4 text-pink-500" />}
+                            />
+                            <MetricCard
+                                label="Engagement"
+                                value={lead.engagementRate ? `${lead.engagementRate}%` : '-'}
+                                subValue={lead.engagementRate ? (lead.engagementRate > 2 ? '✅ Healthy' : '⚠️ Needs Help') : null}
+                                icon={<TrendingUp className="w-4 h-4 text-green-500" />}
+                            />
+                            <MetricCard
+                                label="Avg Video Views"
+                                value={lead.avgVideoViews ? lead.avgVideoViews.toLocaleString() : '-'}
+                                icon={<Eye className="w-4 h-4 text-blue-500" />}
+                            />
+                            <MetricCard
+                                label="Content Type"
+                                value={lead.hasReels === true ? 'Reels Active' : (lead.hasReels === false ? 'Static Only' : '-')}
+                                subValue={lead.hasReels === true ? '📹 Video Focused' : (lead.hasReels === false ? '📸 Photo Focused' : null)}
+                                isWarning={lead.hasReels === false}
+                                icon={<Video className="w-4 h-4 text-purple-500" />}
+                            />
+                        </div>
                     </div>
 
+                    {/* CONTACT INFO (Compact) */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                        <div className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Contact Info</div>
-                        <div className="space-y-3">
-                            <ContactRow icon={<Mail className="w-4 h-4" />} label="Email" value={lead.email} copyable />
-                            <ContactRow icon={<Phone className="w-4 h-4" />} label="Phone" value={lead.phone} copyable />
-                            <ContactRow icon={<MapPin className="w-4 h-4" />} label="Location" value={lead.businessAddress || 'Unknown'} />
+                        <div className="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Contact Details</div>
+                        <div className="space-y-2">
+                            <ContactRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={lead.email} copyable />
+                            <ContactRow icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={lead.phone} copyable />
+                            <ContactRow icon={<MapPin className="w-3.5 h-3.5" />} label="Location" value={lead.businessAddress || 'Unknown'} />
+                        </div>
+                    </div>
+
+                    {/* AI TAGS ANALYSIS (Moved here from 3rd column) */}
+                    <div>
+                        <SectionTitle icon={<Brain className="w-4 h-4" />} title="AI Analysis" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <TagGroup
+                                title="Detected Pain Points"
+                                tags={tagGroups.pain}
+                                icon={<AlertTriangle className="w-3.5 h-3.5 text-red-500" />}
+                                color="red"
+                            />
+                            <TagGroup
+                                title="Business DNA"
+                                tags={tagGroups.business}
+                                icon={<Globe className="w-3.5 h-3.5 text-blue-500" />}
+                                color="blue"
+                            />
+                            <TagGroup
+                                title="Content Strategy"
+                                tags={tagGroups.content}
+                                icon={<Video className="w-3.5 h-3.5 text-purple-500" />}
+                                color="purple"
+                            />
                         </div>
                     </div>
                 </div>
 
-                {/* COLUMN 2: INTELLIGENCE & RESEARCH (Perplexity + Claude) */}
-                <div className="lg:col-span-2 space-y-6">
-
-                    {/* Perplexity Deep Dive */}
-                    <div className="bg-white rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+                {/* RIGHT COLUMN: Deep Research (60% width) */}
+                <div className="lg:col-span-7 space-y-6">
+                    {/* DEEP RESEARCH INSIGHTS */}
+                    <div className="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden h-full flex flex-col">
                         <div
-                            className="bg-indigo-50/50 p-4 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors"
+                            className="bg-indigo-50/50 p-4 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors border-b border-indigo-100"
                             onClick={() => setResearchExpanded(!isResearchExpanded)}
                         >
-                            <div className="flex items-center gap-2 text-indigo-900 font-semibold">
+                            <div className="flex items-center gap-2">
                                 <Brain className="w-5 h-5 text-indigo-600" />
-                                Deep Research Insights
+                                <h3 className="font-bold text-indigo-900">Deep Research Insights</h3>
                             </div>
-                            {isResearchExpanded ? <ChevronUp className="w-4 h-4 text-indigo-400" /> : <ChevronDown className="w-4 h-4 text-indigo-400" />}
+                            {isResearchExpanded ? <ChevronUp className="w-5 h-5 text-indigo-400" /> : <ChevronDown className="w-5 h-5 text-indigo-400" />}
                         </div>
 
                         <AnimatePresence>
@@ -154,60 +183,34 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="p-5 text-sm text-gray-700 leading-relaxed border-t border-indigo-100"
+                                    className="p-6 text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-[600px] custom-scrollbar"
                                 >
                                     {lead.ai_research_summary ? (
                                         <div className="prose prose-sm max-w-none text-gray-700">
-                                            {/* Simple formatting for text blocks */}
                                             {lead.ai_research_summary.split('\n').map((para, i) => (
-                                                <p key={i} className={`mb-2 ${para.startsWith('**') ? 'font-semibold text-indigo-900' : ''}`}>
-                                                    {para.replace(/\*\*/g, '').replace(/\[\d+\]/g, '')}
+                                                <p key={i} className={`mb-3 ${para.startsWith('**') || para.startsWith('###') ? 'font-bold text-indigo-900 text-base mt-4' : ''}`}>
+                                                    {para.replace(/\*\*/g, '').replace(/\[\d+\]/g, '').replace(/###/g, '')}
                                                 </p>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-gray-400 italic text-center py-4">
+                                        <div className="text-gray-400 italic text-center py-10 flex flex-col items-center justify-center h-full">
                                             {isEnriching ? (
                                                 <span className="flex items-center justify-center gap-2 animate-pulse text-indigo-500">
-                                                    <Sparkles className="w-4 h-4" />
+                                                    <Sparkles className="w-5 h-5" />
                                                     Running Deep Research...
                                                 </span>
                                             ) : (
-                                                "No deep research available. Run enrichment to generate insights."
+                                                <>
+                                                    <div className="mb-2">No deep research available yet.</div>
+                                                    <div className="text-xs text-gray-500">Click the refresh button below to start analysis.</div>
+                                                </>
                                             )}
                                         </div>
                                     )}
                                 </motion.div>
                             )}
                         </AnimatePresence>
-                    </div>
-
-                    {/* Claude Tags Analysis */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <TagGroup
-                            title="Detected Pain Points"
-                            tags={tagGroups.pain}
-                            icon={<AlertTriangle className="w-4 h-4 text-red-500" />}
-                            color="red"
-                        />
-                        <TagGroup
-                            title="Business DNA"
-                            tags={tagGroups.business}
-                            icon={<Globe className="w-4 h-4 text-blue-500" />}
-                            color="blue"
-                        />
-                        <TagGroup
-                            title="Content Strategy"
-                            tags={tagGroups.content}
-                            icon={<Video className="w-4 h-4 text-purple-500" />}
-                            color="purple"
-                        />
-                        <TagGroup
-                            title="Posting Habits"
-                            tags={tagGroups.posting}
-                            icon={<History className="w-4 h-4 text-orange-500" />}
-                            color="orange"
-                        />
                     </div>
                 </div>
             </div>
