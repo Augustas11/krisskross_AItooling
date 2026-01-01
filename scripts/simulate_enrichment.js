@@ -1,56 +1,80 @@
 
+import { researchLead } from '../lib/perplexity.js';
+import { SocialAnalyzer } from '../lib/social-analyzer.js';
+import { analyzeLeadForTags } from '../lib/tags/ai-analyzer.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { analyzeLeadForTags } from '../lib/tags/ai-analyzer.js';
 
 // Setup environment
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-async function runSimulation() {
-    console.log('--- STARTING ENRICHMENT SIMULATION ---');
-    console.log('Target Lead: Arach&Cloz');
+async function runTest() {
+    console.log('--- STARTING TRIPLE-THREAT TEST (REAL APIFY + PERPLEXITY + CLAUDE) ---');
+    console.log('Target Lead: Arach&Cloz (@arachcloz)');
 
-    const leadContext = {
+    const lead = {
+        id: 'test-123',
         name: 'Arach&Cloz',
         website: 'arach-cloz.com',
-        productCategory: 'Fashion', // Inferred from "cloz"
+        instagram: 'arachcloz', // Input provided
         briefDescription: 'Imported via CSV',
-        biography: 'Fashion brand for the modern woman. Worldwide shipping.', // MOCKED BIO based on "Fashion"
-        instagram: 'arachcloz'
     };
 
-    // MOCK Instagram Posts (simulating what Apify would return roughly)
-    // If we assume the site is fashion, posts likely contain these keywords
-    const mockPosts = [
-        { caption: "New summer collection drops tomorrow! ☀️ #summerfashion #ootd", ownerUsername: "arachcloz" },
-        { caption: "Behind the scenes of our latest photoshoot. It takes a village! 📸", ownerUsername: "arachcloz" },
-        { caption: "Shop the look at the link in bio. Limited stock available.", ownerUsername: "arachcloz" },
-        { caption: "We love seeing you in our clothes! Tag us to be featured.", ownerUsername: "arachcloz" }
-    ];
+    // 1. REAL Apify Call
+    console.log('\n[1] Fetching Apify Instagram Data...');
+    let apifyMetrics = null;
+    try {
+        // We call the static method directly
+        apifyMetrics = await SocialAnalyzer.fetchInstagramMetrics('arachcloz');
+        console.log('\n[APIFY RESULT (raw metrics)]:');
+        // Log purely the object returned by SocialAnalyzer
+        console.log(JSON.stringify(apifyMetrics, null, 2));
+    } catch (e) {
+        console.error('Apify Failed:', e.message);
+    }
 
-    console.log('\nINPUT CONTEXT:');
-    console.log(JSON.stringify(leadContext, null, 2));
-    console.log(`\nINPUT POSTS (${mockPosts.length}):`);
-    mockPosts.forEach(p => console.log(`- "${p.caption}"`));
+    // 2. REAL Perplexity Call
+    console.log('\n[2] Fetching Perplexity Research...');
+    let researchNotes = null;
+    try {
+        researchNotes = await researchLead(lead);
+        console.log('\n[PERPLEXITY RESULT]:');
+        console.log(researchNotes ? researchNotes.substring(0, 500) + '...' : 'No result');
+    } catch (e) {
+        console.error('Perplexity Failed:', e.message);
+    }
 
-    console.log('\n--- CALLING CLAUDE API ---');
+    // 3. REAL Claude Analysis
+    console.log('\n[3] Sending Combined Data to Claude...');
+
+    // Construct rich context manually to simulate enrichment.js
+    const context = {
+        ...lead,
+        biography: apifyMetrics?.biography || lead.biography,
+        instagramBusinessCategory: apifyMetrics?.businessCategory,
+        hasReels: apifyMetrics?.hasReels,
+        avgVideoViews: apifyMetrics?.avgVideoViews,
+        researchNotes: researchNotes
+    };
+
+    // Use Apify posts if available, otherwise empty
+    const latestPosts = apifyMetrics?.latestPosts || [];
 
     try {
-        const tags = await analyzeLeadForTags(mockPosts, leadContext);
+        const tags = await analyzeLeadForTags(latestPosts, context);
 
-        console.log('\n--- CLAUDE RESPONSE (PARSED TAGS) ---');
+        console.log('\n--- REAL CLAUDE RESPONSE ---');
         console.log(JSON.stringify(tags, null, 2));
 
         console.log('\n-------------------------------------');
         console.log(`Total Tags Generated: ${tags.length}`);
-        console.log('Simulation Complete.');
 
     } catch (error) {
-        console.error('Simulation Failed:', error);
+        console.error('Claude Analysis Failed:', error);
     }
 }
 
-runSimulation();
+runTest();
