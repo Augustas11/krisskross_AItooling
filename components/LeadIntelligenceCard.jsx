@@ -4,7 +4,7 @@ import {
     Instagram, Globe, Mail, Phone, MapPin,
     TrendingUp, Eye, Video, Brain,
     History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X
+    CheckCircle2, AlertTriangle, X, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
