@@ -55,7 +55,18 @@ function transformFromDb(row) {
         // Scoring & Profiling
         score: row.score || 0,
         tier: row.tier || 'GRAY',
-        tags: row.tags || [],
+        tags: (row.tags || []).map(tag => {
+            // Handle tags stored as JSON strings in database
+            if (typeof tag === 'string') {
+                try {
+                    return JSON.parse(tag);
+                } catch (e) {
+                    console.warn('Failed to parse tag:', tag);
+                    return tag;
+                }
+            }
+            return tag;
+        }),
         instagramFollowers: row.instagram_followers,
         engagementRate: row.engagement_rate,
         postingFrequency: row.posting_frequency,
