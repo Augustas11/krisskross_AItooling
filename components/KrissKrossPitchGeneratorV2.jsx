@@ -2077,13 +2077,14 @@ ${template.cta}`;
                                 className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
                             >
                                 {/* Modal Header */}
-                                <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
-                                    <div className="flex items-center gap-4 w-full">
-                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm flex-shrink-0">
-                                            {viewingLead.name.charAt(0)}
-                                        </div>
-                                        <div className="flex-1 mr-4">
-                                            {isEditingModal ? (
+                                {/* Modal Header - Simplified for Lead Card View */}
+                                <div className={`flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50 ${!isEditingModal ? 'absolute top-0 right-0 z-20 bg-transparent border-none w-auto p-4' : ''}`}>
+                                    {isEditingModal ? (
+                                        <div className="flex items-center gap-4 w-full">
+                                            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-2xl shadow-sm flex-shrink-0">
+                                                {viewingLead.name.charAt(0)}
+                                            </div>
+                                            <div className="flex-1 mr-4">
                                                 <div className="space-y-2">
                                                     <div className="flex items-center gap-2">
                                                         <input
@@ -2112,39 +2113,28 @@ ${template.cta}`;
                                                         placeholder="Category"
                                                     />
                                                 </div>
-                                            ) : (
-                                                <>
-                                                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                                        {viewingLead.name}
-                                                        {viewingLead.status && (
-                                                            <span className={`text-xs px-2 py-0.5 rounded-full border ${viewingLead.status === 'Replied' ? 'bg-green-50 border-green-200 text-green-700' :
-                                                                viewingLead.status === 'Pitched' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                                                    'bg-gray-50 border-gray-200 text-gray-600'
-                                                                }`}>
-                                                                {viewingLead.status}
-                                                            </span>
-                                                        )}
-                                                    </h2>
-                                                    <p className="text-sm text-gray-500 font-medium">{viewingLead.productCategory}</p>
-                                                </>
-                                            )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        // Hidden header content when viewing card, just spacer or nothing
+                                        null
+                                    )}
+
                                     <div className="flex items-center gap-2">
                                         {!isEditingModal && (
                                             <button
                                                 onClick={initiateModalEdit}
-                                                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-blue-600"
+                                                className="p-2 bg-white/80 hover:bg-white shadow-sm border border-gray-200 rounded-full transition-all text-gray-500 hover:text-blue-600 backdrop-blur-sm"
                                                 title="Edit Details"
                                             >
-                                                <Pencil className="w-5 h-5" />
+                                                <Pencil className="w-4 h-4" />
                                             </button>
                                         )}
                                         <button
                                             onClick={() => setViewingLead(null)}
-                                            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                            className={`p-2 rounded-full transition-colors ${!isEditingModal ? 'bg-white/80 hover:bg-white shadow-sm border border-gray-200 text-gray-500 backdrop-blur-sm' : 'hover:bg-gray-200 text-gray-500'}`}
                                         >
-                                            <X className="w-6 h-6 text-gray-500" />
+                                            <X className="w-5 h-5" />
                                         </button>
                                     </div>
                                 </div>
