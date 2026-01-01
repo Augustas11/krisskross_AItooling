@@ -18,14 +18,50 @@
       "website": "https://gracekarinonline.com/",
       "enriched": true,
       "score": 70,
-      "tier": "GREEN",
+      "tier": "YELLOW",
       "tags": [
-        "followers:10k-100k"
+        "followers:10k-100k",
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.536Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.546Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.546Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.034Z"
+        },
+        {
+          "category": "priority",
+          "name": "🟡YELLOW",
+          "full_tag": "priority:🟡YELLOW",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
       ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_u5bra1vpo",
@@ -45,12 +81,49 @@
       "website": "https://guvivistore.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.548Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.548Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.548Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_z52lvf479",
@@ -70,12 +143,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.548Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.548Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.548Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_h1uiqvj0x",
@@ -95,12 +205,42 @@
       "website": "https://jomedesign.store/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_ajzz7qo20",
@@ -120,12 +260,49 @@
       "website": "https://mangopop.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_on61x6r34",
@@ -145,12 +322,49 @@
       "website": "https://marvmys.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_jdazctmf2",
@@ -170,12 +384,49 @@
       "website": "https://themilumia.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_ody4gc21g",
@@ -195,12 +446,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.035Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.035Z"
     },
     {
       "id": "lead_imp_1767174372453_oyvm2ojs3",
@@ -220,12 +508,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.549Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_xo0c7vnnl",
@@ -245,12 +570,49 @@
       "website": "https://arctix.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_i18jdrqlw",
@@ -270,12 +632,49 @@
       "website": "https://bloomingjelly.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_p8v2olzlq",
@@ -295,12 +694,42 @@
       "website": "https://bomkinta.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_wknf9g6h9",
@@ -320,12 +749,49 @@
       "website": "https://btfbm.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_1767173676113",
@@ -345,12 +811,56 @@
       "website": "https://wihollclothing.com",
       "enriched": true,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "US",
+          "full_tag": "geo:US",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "fashion",
+          "full_tag": "business:fashion",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "tiktok_shop",
+          "full_tag": "platform:tiktok_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372438_rgr5zgu6l",
@@ -370,12 +880,49 @@
       "website": "pinspark.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372452_1gihaggxt",
@@ -395,12 +942,49 @@
       "website": "shopanrabess.com",
       "enriched": true,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.550Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_1003dxkqp",
@@ -420,12 +1004,49 @@
       "website": "thetrendyqueen.com",
       "enriched": true,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_kvjxhj3q0",
@@ -445,12 +1066,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_sqkoxwhyw",
@@ -470,12 +1128,49 @@
       "website": "automet.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_w3eh1410i",
@@ -495,12 +1190,42 @@
       "website": "myxieerduo.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_z45jtax85",
@@ -520,12 +1245,49 @@
       "website": "shopsaodimallsu.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.036Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.036Z"
     },
     {
       "id": "lead_imp_1767174372453_wmnat1wsl",
@@ -545,12 +1307,49 @@
       "website": "avidlove.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_xw6x5y4ij",
@@ -570,12 +1369,49 @@
       "website": "rumia.com.au",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_5k2h3f4t9",
@@ -595,12 +1431,49 @@
       "website": "prettygarden.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_0rq0w03qa",
@@ -620,12 +1493,49 @@
       "website": "aywa.london",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_75vqz2bjp",
@@ -645,12 +1555,49 @@
       "website": "zeagoo.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_ercosbjw5",
@@ -670,12 +1617,49 @@
       "website": "chicme.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_j5o72sju8",
@@ -695,12 +1679,49 @@
       "website": "thelillusory.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_hixzla5em",
@@ -720,12 +1741,49 @@
       "website": "dokotoofashion.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_732r0a6fq",
@@ -745,12 +1803,49 @@
       "website": "mykirundo.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.552Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_ry1oh1s48",
@@ -770,12 +1865,49 @@
       "website": "tankaneo.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_ra5yav6pa",
@@ -795,12 +1927,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_3qgg5vd4i",
@@ -820,12 +1989,49 @@
       "website": "sampeel.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_ewasv37s1",
@@ -845,12 +2051,49 @@
       "website": "arach-cloz.com",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_n03f7ogue",
@@ -870,12 +2113,49 @@
       "website": "https://theofeefan.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_zsbf0dgr7",
@@ -895,12 +2175,49 @@
       "website": "https://zesica.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_0s56lvvnn",
@@ -920,12 +2237,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_xrqnw3v78",
@@ -945,12 +2299,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_486cmhksq",
@@ -970,12 +2361,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_9cgfxy6sz",
@@ -995,12 +2423,42 @@
       "website": "https://mixshe.store/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_trsll1rpw",
@@ -1020,12 +2478,49 @@
       "website": "https://ekouaer.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_ubphu3b2q",
@@ -1045,12 +2540,49 @@
       "website": "https://www.shewin.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_pto6peayu",
@@ -1070,12 +2602,42 @@
       "website": "https://danysu.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_86kpo73bf",
@@ -1095,12 +2657,49 @@
       "website": "https://ewedoos.org/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_qv443ix1h",
@@ -1120,12 +2719,49 @@
       "website": "N/A",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_l50k4wgnl",
@@ -1145,12 +2781,49 @@
       "website": "https://oqq.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_ovyn6uq46",
@@ -1170,12 +2843,49 @@
       "website": "https://reoria.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_x8bgg8bwr",
@@ -1195,12 +2905,49 @@
       "website": "https://shaperx.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_e58rf3htq",
@@ -1220,12 +2967,49 @@
       "website": "https://solyhux.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.037Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.037Z"
     },
     {
       "id": "lead_imp_1767174372453_p7dol8o7j",
@@ -1245,12 +3029,49 @@
       "website": "https://suuksess.com/",
       "enriched": false,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.038Z"
     },
     {
       "id": "lead_imp_1767174372453_k37s7rcwi",
@@ -1270,12 +3091,49 @@
       "website": "https://timesonboutique.com/",
       "enriched": true,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "US",
+          "full_tag": "geo:US",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.038Z"
     },
     {
       "id": "lead_imp_1767174372453_njav8uyd",
@@ -1295,12 +3153,56 @@
       "website": "https://zeagoo.com/",
       "enriched": true,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "geo",
+          "name": "other",
+          "full_tag": "geo:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "tiktok_shop",
+          "full_tag": "platform:tiktok_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "platform",
+          "name": "instagram_shop",
+          "full_tag": "platform:instagram_shop",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.038Z"
     },
     {
       "id": "dummy_chris_cross_1767184611919",
@@ -1320,13 +3222,35 @@
       "website": "https://krisskross.ai",
       "enriched": true,
       "score": 0,
-      "tier": "GRAY",
-      "tags": [],
+      "tier": "RED",
+      "tags": [
+        {
+          "category": "business",
+          "name": "other",
+          "full_tag": "business:other",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:18:52.553Z"
+        },
+        {
+          "category": "icp",
+          "name": "neutral",
+          "full_tag": "icp:neutral",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        },
+        {
+          "category": "priority",
+          "name": "🔴RED",
+          "full_tag": "priority:🔴RED",
+          "applied_by": "auto",
+          "applied_at": "2026-01-01T04:19:05.038Z"
+        }
+      ],
       "instagramFollowers": null,
       "engagementRate": null,
       "scoreBreakdown": {},
-      "lastScoredAt": null
+      "lastScoredAt": null,
+      "last_tagged_at": "2026-01-01T04:19:05.038Z"
     }
-  ],
-  "last_sync": "2026-01-01T01:10:36.819Z"
+  ]
 }

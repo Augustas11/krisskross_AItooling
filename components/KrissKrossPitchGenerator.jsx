@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp, Copy, CheckCircle, Trash2, Target } from 'lucide-react';
+import { TagsSection } from './LeadTags';
 
 export default function KrissKrossPitchGenerator() {
     const [targetType, setTargetType] = useState('fashion-seller');
@@ -336,12 +337,11 @@ ${template.cta}`;
         setEnrichingLeads(prev => ({ ...prev, [index]: true }));
         try {
             console.log(`[DEBUG] Enriching lead: ${lead.name}`);
-            const response = await fetch('/api/leads/enrich', {
+            const response = await fetch('/api/enrich', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    url: lead.storeUrl || sourceUrl,
-                    name: lead.name
+                    leadData: lead
                 }),
             });
 
@@ -356,12 +356,14 @@ ${template.cta}`;
                 if (i === index) {
                     return {
                         ...l,
+                        ...enrichedInfo, // Merge all enriched data including tags
                         enriched: true,
-                        businessAddress: enrichedInfo.contact_information?.business_address,
-                        email: enrichedInfo.contact_information?.customer_service?.email,
-                        phone: enrichedInfo.contact_information?.customer_service?.phone_number,
-                        instagram: enrichedInfo.contact_information?.customer_service?.instagram,
-                        website: enrichedInfo.contact_information?.customer_service?.website
+                        // Ensure key fields are mapped if names differ (though api/enrich returns normalized data)
+                        businessAddress: enrichedInfo.contact_information?.business_address || enrichedInfo.businessAddress,
+                        email: enrichedInfo.contact_information?.customer_service?.email || enrichedInfo.email,
+                        phone: enrichedInfo.contact_information?.customer_service?.phone_number || enrichedInfo.phone,
+                        instagram: enrichedInfo.contact_information?.customer_service?.instagram || enrichedInfo.instagram,
+                        website: enrichedInfo.contact_information?.customer_service?.website || enrichedInfo.website
                     };
                 }
                 return l;
@@ -677,40 +679,28 @@ ${template.cta}`;
                                                 )}
                                             </div>
 
-                                            <div className="flex gap-2 mt-6">
+                                            <div className="mt-4">
+                                                <TagsSection
+                                                    lead={lead}
+                                                    onUpdateTags={(enrichedData) => {
+                                                        // Callback to update parent state when TagsSection refreshes
+                                                        setFoundLeads(prev => prev.map((l, i) =>
+                                                            i === idx ? { ...l, ...enrichedData } : l
+                                                        ));
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="flex gap-2 mt-4">
                                                 <button
                                                     onClick={() => {
                                                         selectLead(lead);
                                                         saveLeadToCrm(lead);
                                                     }}
-                                                    className="flex-1 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-md"
+                                                    className="w-full py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-md flex items-center justify-center gap-2"
                                                 >
+                                                    <Clock className="w-4 h-4" />
                                                     SAVE & PITCH
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEnrichLead(lead, idx)}
-                                                    disabled={enrichingLeads[idx] || lead.enriched}
-                                                    className={`flex-1 py-3 border-2 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 ${lead.enriched
-                                                        ? 'border-green-500 text-green-600 bg-green-50'
-                                                        : 'border-blue-500 text-blue-600 hover:bg-blue-50'
-                                                        } ${enrichingLeads[idx] ? 'opacity-50 cursor-wait' : ''}`}
-                                                >
-                                                    {enrichingLeads[idx] ? (
-                                                        <>
-                                                            <RefreshCw className="w-3 h-3 animate-spin" />
-                                                            ENRICH...
-                                                        </>
-                                                    ) : lead.enriched ? (
-                                                        <>
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            ENRICHED
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Sparkles className="w-3 h-3" />
-                                                            ENRICH CONTACTS
-                                                        </>
-                                                    )}
                                                 </button>
                                             </div>
                                         </div>

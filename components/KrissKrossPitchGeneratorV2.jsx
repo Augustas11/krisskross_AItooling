@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TagsSection } from './LeadTags';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
@@ -11,7 +12,7 @@ import {
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
 import { supabase } from '../lib/supabase';
 
-export default function KrissKrossPitchGeneratorV3() {
+export default function KrissKrossPitchGeneratorV2() {
     const [activeTab, setActiveTab] = useState('crm');
     const [targetType, setTargetType] = useState('fashion-seller');
     const [customName, setCustomName] = useState('');
@@ -552,6 +553,16 @@ ${template.cta}`;
 
             // Update local state with enriched data
             const enrichedLead = { ...lead, ...result.enrichedData };
+
+            // Auto-tagging based on score
+            const score = enrichedLead.score || 0;
+            if (score >= 70) {
+                enrichedLead.tier = 'GREEN';
+            } else if (score >= 40) {
+                enrichedLead.tier = 'YELLOW';
+            } else {
+                enrichedLead.tier = 'RED';
+            }
 
             // Update in CRM list
             setSavedLeads(prev => prev.map(l => l.id === lead.id ? enrichedLead : l));
@@ -2407,11 +2418,14 @@ ${template.cta}`;
 
                                                     {viewingLead.tags && viewingLead.tags.length > 0 && (
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {viewingLead.tags.map((tag, idx) => (
-                                                                <span key={idx} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600">
-                                                                    #{tag}
-                                                                </span>
-                                                            ))}
+                                                            {viewingLead.tags.map((tag, idx) => {
+                                                                const tagLabel = typeof tag === 'object' ? (tag.name || tag.full_tag) : tag;
+                                                                return (
+                                                                    <span key={idx} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600">
+                                                                        #{tagLabel.replace(/.*:/, '')}
+                                                                    </span>
+                                                                );
+                                                            })}
                                                         </div>
                                                     )}
 
@@ -2466,6 +2480,24 @@ ${template.cta}`;
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Tags Section */}
+                                    {!isEditingModal && (
+                                        <div className="px-6 pb-6 border-t border-gray-100">
+                                            <TagsSection
+                                                lead={viewingLead}
+                                                onUpdateTags={(enrichedData) => {
+                                                    // Update the viewing lead with new tags/data
+                                                    setViewingLead(prev => ({ ...prev, ...enrichedData }));
+
+                                                    // Also update in savedLeads array
+                                                    setSavedLeads(prev => prev.map(l =>
+                                                        l.id === viewingLead.id ? { ...l, ...enrichedData } : l
+                                                    ));
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
 
@@ -2533,7 +2565,7 @@ ${template.cta}`;
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }

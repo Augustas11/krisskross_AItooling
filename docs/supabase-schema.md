@@ -27,6 +27,19 @@ CREATE TABLE leads (
     tiktok TEXT,
     website TEXT,
     
+    -- Scoring & Profiling
+    score INTEGER DEFAULT 0,
+    tier TEXT DEFAULT 'GRAY',
+    score_breakdown JSONB DEFAULT '{}',
+    last_scored_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Tag System (NEW)
+    tags JSONB DEFAULT '[]',
+    instagram_followers INTEGER,
+    engagement_rate DECIMAL(5,2),
+    posting_frequency TEXT,
+    last_tagged_at TIMESTAMP WITH TIME ZONE,
+    
     -- Metadata
     enriched BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -38,6 +51,14 @@ CREATE INDEX idx_leads_status ON leads(status);
 
 -- Create index on created_at for sorting
 CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
+
+-- Create GIN index on tags for fast JSONB queries (NEW)
+CREATE INDEX idx_leads_tags ON leads USING GIN (tags);
+
+-- Create indexes for tag-related columns (NEW)
+CREATE INDEX idx_leads_tier ON leads(tier);
+CREATE INDEX idx_leads_instagram_followers ON leads(instagram_followers);
+CREATE INDEX idx_leads_engagement_rate ON leads(engagement_rate);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;

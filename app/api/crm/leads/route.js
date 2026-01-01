@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { autoTagLead } from '@/lib/tags';
 import fs from 'fs';
 import path from 'path';
 
@@ -57,8 +58,10 @@ function transformFromDb(row) {
         tags: row.tags || [],
         instagramFollowers: row.instagram_followers,
         engagementRate: row.engagement_rate,
+        postingFrequency: row.posting_frequency,
         scoreBreakdown: row.score_breakdown,
-        lastScoredAt: row.last_scored_at
+        lastScoredAt: row.last_scored_at,
+        lastTaggedAt: row.last_tagged_at
     };
 }
 
@@ -88,8 +91,10 @@ function transformToDb(lead) {
         tags: lead.tags || [],
         instagram_followers: lead.instagramFollowers,
         engagement_rate: lead.engagementRate,
+        posting_frequency: lead.postingFrequency,
         score_breakdown: lead.scoreBreakdown || {},
-        last_scored_at: lead.lastScoredAt
+        last_scored_at: lead.lastScoredAt,
+        last_tagged_at: lead.lastTaggedAt
     };
 }
 
@@ -141,14 +146,27 @@ export async function POST(req) {
 
         console.log(`📦 [API] Received ${leadsToInsert.length} leads to insert`);
 
+        // Auto-tag all leads before inserting
+        console.log('🏷️ [API] Auto-tagging leads...');
+        const taggedLeads = [];
+        for (const lead of leadsToInsert) {
+            try {
+                const tagged = await autoTagLead(lead);
+                taggedLeads.push(tagged);
+            } catch (error) {
+                console.error(`❌ [API] Error auto-tagging lead ${lead.id}:`, error);
+                taggedLeads.push(lead); // Include untagged lead
+            }
+        }
+
         // Check if Supabase is configured
         if (!isSupabaseConfigured()) {
             console.log('⚠️ [API] Supabase not configured, using file-based storage');
             const currentData = readDb();
-            const newLeads = [...leadsToInsert, ...currentData.leads];
+            const newLeads = [...taggedLeads, ...currentData.leads];
             const success = writeDb({ leads: newLeads });
             if (success) {
-                return NextResponse.json({ message: 'Leads added to file storage', count: leadsToInsert.length });
+                return NextResponse.json({ message: 'Leads added to file storage', count: taggedLeads.length });
             } else {
                 throw new Error('Failed to write to file system');
             }
@@ -156,7 +174,7 @@ export async function POST(req) {
 
         // Use Supabase
         console.log('🔄 [SUPABASE] Inserting leads...');
-        const dbLeads = leadsToInsert.map(transformToDb);
+        const dbLeads = taggedLeads.map(transformToDb);
         const { error: insertError } = await supabase
             .from('leads')
             .insert(dbLeads);
@@ -168,7 +186,7 @@ export async function POST(req) {
 
         return NextResponse.json({
             message: 'Leads inserted successfully',
-            count: leadsToInsert.length
+            count: taggedLeads.length
         });
     } catch (error) {
         console.error('❌ [API] Error adding leads:', error);
