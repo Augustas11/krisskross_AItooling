@@ -5,6 +5,7 @@
 
 'use client';
 import React from 'react';
+import { calculateLeadScore } from '../lib/scoring-constants';
 
 /**
  * Get tag color by category
@@ -160,8 +161,19 @@ export function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
       const data = await response.json();
 
       if (data.success && onUpdateTags) {
-        onUpdateTags(data.enrichedData);
-        alert('✅ Lead enriched successfully!');
+        // Calculate new score based on enriched data
+        const mergedLead = { ...lead, ...data.enrichedData };
+        const scoreResult = calculateLeadScore(mergedLead);
+
+        // Merge score into the update payload
+        const finalUpdate = {
+          ...data.enrichedData,
+          score: scoreResult.score,
+          tier: scoreResult.tier
+        };
+
+        onUpdateTags(finalUpdate);
+        alert('✅ Lead enriched & scored successfully!');
       } else {
         alert('❌ Refresh failed: ' + (data.error || 'Unknown error'));
       }
