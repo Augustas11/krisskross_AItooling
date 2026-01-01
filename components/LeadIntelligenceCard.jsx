@@ -67,9 +67,14 @@ export function LeadIntelligenceCard({ lead, isEnriching }) {
                                 </span>
                             )}
                             {lead.website && (
-                                <a href={`https://${lead.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+                                <a
+                                    href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                                >
                                     <Globe className="w-3 h-3" />
-                                    {lead.website}
+                                    {lead.website.replace(/^https?:\/\//, '')}
                                 </a>
                             )}
                             {lead.instagram && (
