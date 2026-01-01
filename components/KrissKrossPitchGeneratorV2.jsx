@@ -6,7 +6,7 @@ import {
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
-    Youtube, Facebook, Send
+    Youtube, Facebook, Send, Pencil, Check
 } from 'lucide-react';
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
 
@@ -78,6 +78,32 @@ export default function KrissKrossPitchGeneratorV3() {
     React.useEffect(() => {
         if (activeTab === 'pitch') loadActivityHistory();
     }, [activeTab]);
+
+    // Lead Card Editing State
+    const [editingLeadIndex, setEditingLeadIndex] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
+
+    const initiateEdit = (index, lead) => {
+        setEditingLeadIndex(index);
+        setEditFormData({ ...lead });
+    };
+
+    const cancelEdit = () => {
+        setEditingLeadIndex(null);
+        setEditFormData({});
+    };
+
+    const handleEditFormChange = (key, value) => {
+        setEditFormData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const saveEdit = (index) => {
+        const updatedLeads = [...foundLeads];
+        updatedLeads[index] = { ...updatedLeads[index], ...editFormData };
+        setFoundLeads(updatedLeads);
+        setEditingLeadIndex(null);
+        setEditFormData({});
+    };
 
     // Load Leads from Server (Supabase ONLY - NO localStorage)
     // Load Leads from Server (Supabase ONLY - NO localStorage)
@@ -1002,6 +1028,81 @@ ${template.cta}`;
                                             (l.name.toLowerCase() === lead.name.toLowerCase())
                                         );
 
+                                        if (editingLeadIndex === idx) {
+                                            return (
+                                                <motion.div
+                                                    key={idx}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="rounded-lg shadow-md border border-blue-200 p-4 bg-white relative ring-2 ring-blue-100"
+                                                >
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <label className="text-xs font-bold text-gray-500 uppercase">Name</label>
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData.name || ''}
+                                                                onChange={(e) => handleEditFormChange('name', e.target.value)}
+                                                                className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-1 font-semibold text-gray-900"
+                                                            />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <label className="text-xs font-bold text-gray-500 uppercase">Website</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.storeUrl || ''}
+                                                                    onChange={(e) => handleEditFormChange('storeUrl', e.target.value)}
+                                                                    className="w-full text-xs border-b border-gray-200 focus:border-blue-500 outline-none py-1"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-bold text-gray-500 uppercase">Instagram</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.instagram || ''}
+                                                                    onChange={(e) => handleEditFormChange('instagram', e.target.value)}
+                                                                    className="w-full text-xs border-b border-gray-200 focus:border-blue-500 outline-none py-1"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData.email || ''}
+                                                                onChange={(e) => handleEditFormChange('email', e.target.value)}
+                                                                className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-1"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                                                            <textarea
+                                                                value={editFormData.briefDescription || ''}
+                                                                onChange={(e) => handleEditFormChange('briefDescription', e.target.value)}
+                                                                rows={2}
+                                                                className="w-full text-xs border border-gray-200 rounded p-2 focus:border-blue-500 outline-none resize-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
+                                                        <button
+                                                            onClick={() => saveEdit(idx)}
+                                                            className="flex-1 bg-blue-600 text-white py-1.5 rounded text-sm font-semibold hover:bg-blue-700 flex justify-center items-center gap-1"
+                                                        >
+                                                            <Check className="w-3 h-3" /> Save
+                                                        </button>
+                                                        <button
+                                                            onClick={cancelEdit}
+                                                            className="px-3 bg-gray-100 text-gray-600 py-1.5 rounded text-sm font-semibold hover:bg-gray-200"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        }
+
                                         return (
                                             <motion.div
                                                 key={idx}
@@ -1011,24 +1112,33 @@ ${template.cta}`;
                                                 className={`rounded-lg shadow-sm border p-5 transition-shadow ${isAlreadyInCrm ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:shadow-md'}`}
                                             >
                                                 <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-start gap-3">
+                                                    <div className="flex items-start gap-3 w-full">
                                                         <input
                                                             type="checkbox"
                                                             checked={selectedLeadIndices.has(idx)}
                                                             onChange={() => toggleLeadSelection(idx)}
                                                             disabled={isAlreadyInCrm}
-                                                            className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                                                            className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer disabled:opacity-50 flex-shrink-0"
                                                         />
-                                                        <div>
-                                                            <h4 className={`font-semibold ${isAlreadyInCrm ? 'text-gray-500' : 'text-gray-900'}`}>{lead.name}</h4>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className={`font-semibold truncate ${isAlreadyInCrm ? 'text-gray-500' : 'text-gray-900'}`}>{lead.name}</h4>
+                                                                {!isAlreadyInCrm && (
+                                                                    <button
+                                                                        onClick={() => initiateEdit(idx, lead)}
+                                                                        className="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                                                                        title="Edit Lead Deatils"
+                                                                    >
+                                                                        <Pencil className="w-3 h-3" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    {isAlreadyInCrm && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">In CRM ✓</span>}
+                                                    {isAlreadyInCrm && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100 whitespace-nowrap ml-2">In CRM ✓</span>}
                                                 </div>
                                                 <p className="text-xs font-medium text-blue-600 mb-2">{lead.productCategory}</p>
                                                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lead.briefDescription}</p>
-
-
 
                                                 <div className="flex gap-2">
                                                     <button
@@ -1043,7 +1153,7 @@ ${template.cta}`;
                                                     </button>
                                                 </div>
                                             </motion.div>
-                                        )
+                                        );
                                     })}
                                 </div>
                             ) : (
