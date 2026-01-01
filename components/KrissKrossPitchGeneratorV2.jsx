@@ -8,7 +8,7 @@ import {
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
-    Youtube, Facebook, Send, Pencil, Check
+    Youtube, Facebook, Send, Pencil, Check, Briefcase
 } from 'lucide-react';
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
 import { supabase } from '../lib/supabase';
