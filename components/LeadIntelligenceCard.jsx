@@ -98,26 +98,26 @@ export function LeadIntelligenceCard({ lead }) {
                     <div className="grid grid-cols-2 gap-4">
                         <MetricCard
                             label="Followers"
-                            value={lead.instagramFollowers?.toLocaleString() || '-'}
-                            subValue={lead.instagramFollowers > 10000 ? '🔥 Great Reach' : '🌱 Growing'}
+                            value={lead.instagramFollowers ? lead.instagramFollowers.toLocaleString() : '-'}
+                            subValue={lead.instagramFollowers ? (lead.instagramFollowers > 10000 ? '🔥 Great Reach' : '🌱 Growing') : null}
                             icon={<Instagram className="w-4 h-4 text-pink-500" />}
                         />
                         <MetricCard
                             label="Engagement"
                             value={lead.engagementRate ? `${lead.engagementRate}%` : '-'}
-                            subValue={lead.engagementRate > 2 ? '✅ Healthy' : '⚠️ Needs Help'}
+                            subValue={lead.engagementRate ? (lead.engagementRate > 2 ? '✅ Healthy' : '⚠️ Needs Help') : null}
                             icon={<TrendingUp className="w-4 h-4 text-green-500" />}
                         />
                         <MetricCard
                             label="Avg Video Views"
-                            value={lead.avgVideoViews?.toLocaleString() || '-'}
+                            value={lead.avgVideoViews ? lead.avgVideoViews.toLocaleString() : '-'}
                             icon={<Eye className="w-4 h-4 text-blue-500" />}
                         />
                         <MetricCard
                             label="Content Type"
-                            value={lead.hasReels ? 'Reels Active' : 'Static Only'}
-                            subValue={lead.hasReels ? '📹 Video Focused' : '📸 Photo Focused'}
-                            isWarning={!lead.hasReels}
+                            value={lead.hasReels === true ? 'Reels Active' : (lead.hasReels === false ? 'Static Only' : '-')}
+                            subValue={lead.hasReels === true ? '📹 Video Focused' : (lead.hasReels === false ? '📸 Photo Focused' : null)}
+                            isWarning={lead.hasReels === false}
                             icon={<Video className="w-4 h-4 text-purple-500" />}
                         />
                     </div>
@@ -254,14 +254,14 @@ function SectionTitle({ icon, title }) {
 
 function MetricCard({ label, value, subValue, icon, isWarning }) {
     return (
-        <div className={`p-4 rounded-xl border ${isWarning ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'} shadow-sm flex flex-col justify-between`}>
-            <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-medium text-gray-500 uppercase">{label}</span>
+        <div className={`p-4 rounded-xl border ${isWarning ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'} shadow-sm flex flex-col justify-between h-full transition-colors`}>
+            <div className="flex justify-between items-start mb-3">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
                 {icon}
             </div>
             <div>
-                <div className="text-xl font-bold text-gray-900">{value}</div>
-                {subValue && <div className={`text-xs mt-1 font-medium ${isWarning ? 'text-orange-600' : 'text-green-600'}`}>{subValue}</div>}
+                <div className="text-xl font-bold text-gray-900 leading-none">{value}</div>
+                {subValue && <div className={`text-xs mt-2 font-semibold ${isWarning ? 'text-orange-600' : 'text-green-600'}`}>{subValue}</div>}
             </div>
         </div>
     );
