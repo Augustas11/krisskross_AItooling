@@ -139,7 +139,7 @@ export function TagCategory({ title, icon, tags, onRemoveTag }) {
 /**
  * TagsSection Component
  */
-export default function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
+export function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
   const [showTags, setShowTags] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
 
