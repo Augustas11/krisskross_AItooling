@@ -969,7 +969,7 @@ ${template.cta}`;
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Top Navigation Bar */}
-            <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center gap-3">
@@ -1262,7 +1262,7 @@ ${template.cta}`;
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: idx * 0.05 }}
-                                                className={`rounded-lg shadow-sm border p-5 transition-shadow ${isAlreadyInCrm ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:shadow-md'}`}
+                                                className={`rounded-lg shadow-sm border p-5 transition-all duration-200 ${isAlreadyInCrm ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1'}`}
                                             >
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div className="flex items-start gap-3 w-full">
@@ -1311,9 +1311,21 @@ ${template.cta}`;
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                                    <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No leads sourced yet</h3>
-                                    <p className="text-gray-600">Paste a URL above to start discovering leads</p>
+                                    <div className="max-w-md mx-auto">
+                                        <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                                            <Search className="w-10 h-10 text-blue-600" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-2">No leads discovered yet</h3>
+                                        <p className="text-gray-600 mb-6">Start by pasting a URL from an e-commerce platform or marketplace to discover potential leads</p>
+                                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-left">
+                                            <p className="text-sm font-semibold text-blue-900 mb-2">💡 Quick Start:</p>
+                                            <ul className="text-sm text-blue-800 space-y-1">
+                                                <li>• Amazon category or seller pages</li>
+                                                <li>• Etsy shop listings</li>
+                                                <li>• TikTok Shop collections</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </motion.div>
@@ -1439,7 +1451,7 @@ ${template.cta}`;
                                                 setCurrentPage(1);
                                             }}
                                             placeholder="Search leads by name, email, category, Instagram..."
-                                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400"
+                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 placeholder-gray-400 transition-all"
                                         />
                                         {crmSearchQuery && (
                                             <button
@@ -1510,7 +1522,7 @@ ${template.cta}`;
                                     <>
                                         <div className="overflow-x-auto">
                                             <table className="w-full">
-                                                <thead className="bg-gray-50 border-b border-gray-200">
+                                                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                                                     <tr>
                                                         <th className="px-6 py-3 text-left w-10">
                                                             <input
@@ -1876,7 +1888,7 @@ ${template.cta}`;
                                                 <motion.div
                                                     initial={{ opacity: 0, y: 20 }}
                                                     animate={{ opacity: 1, y: 0 }}
-                                                    className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
+                                                    className="mt-6 p-6 bg-white rounded-xl border border-gray-200 shadow-lg"
                                                 >
                                                     <div className="flex justify-between items-start mb-4">
                                                         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -1919,7 +1931,7 @@ ${template.cta}`;
                                                         </button>
                                                         <button
                                                             onClick={copyToClipboard}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                                                            className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-lg transition-all ${copied ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
                                                         >
                                                             {copied ? (
                                                                 <>
