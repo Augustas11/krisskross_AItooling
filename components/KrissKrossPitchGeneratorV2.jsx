@@ -1584,70 +1584,71 @@ ${template.cta}`;
                                             )}
                                         </div>
                                     </div>
+                                </div>
 
-                                    {/* History Sidebar */}
-                                    {showActivityHistory && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            className="lg:col-span-1 space-y-4"
-                                        >
-                                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 h-full max-h-[800px] overflow-y-auto">
-                                                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                                    <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
-                                                        <Clock className="w-4 h-4" />
-                                                    </div>
-                                                    Recent Activity
-                                                </h3>
+                                {/* History Sidebar */}
+                                {showActivityHistory && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="lg:col-span-1 space-y-4"
+                                    >
+                                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 h-full max-h-[800px] overflow-y-auto">
+                                            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
+                                                    <Clock className="w-4 h-4" />
+                                                </div>
+                                                Recent Activity
+                                            </h3>
 
-                                                <div className="space-y-6">
-                                                    <div>
-                                                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Generated Pitches</h4>
-                                                        <div className="space-y-3">
-                                                            {activityHistory.pushes?.length > 0 ? activityHistory.pushes.map(push => (
-                                                                <div
-                                                                    key={push.id}
-                                                                    onClick={() => {
-                                                                        setCustomName(push.lead_name);
-                                                                        setContext(push.context);
-                                                                        setGeneratedPitch(push.generated_pitch);
-                                                                        setWasAiGenerated(true);
-                                                                    }}
-                                                                    className="p-3 bg-gray-50 hover:bg-blue-50 border border-gray-100 rounded-lg cursor-pointer transition-colors group"
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-1">
-                                                                        <span className="font-medium text-sm text-gray-900">{push.lead_name}</span>
-                                                                        <span className="text-[10px] text-gray-400">{new Date(push.created_at).toLocaleDateString()}</span>
-                                                                    </div>
-                                                                    <p className="text-xs text-gray-500 line-clamp-2">{push.generated_pitch}</p>
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Generated Pitches</h4>
+                                                    <div className="space-y-3">
+                                                        {activityHistory.pushes?.length > 0 ? activityHistory.pushes.map(push => (
+                                                            <div
+                                                                key={push.id}
+                                                                onClick={() => {
+                                                                    setCustomName(push.lead_name);
+                                                                    setContext(push.context);
+                                                                    setGeneratedPitch(push.generated_pitch);
+                                                                    setWasAiGenerated(true);
+                                                                }}
+                                                                className="p-3 bg-gray-50 hover:bg-blue-50 border border-gray-100 rounded-lg cursor-pointer transition-colors group"
+                                                            >
+                                                                <div className="flex justify-between items-start mb-1">
+                                                                    <span className="font-medium text-sm text-gray-900">{push.lead_name}</span>
+                                                                    <span className="text-[10px] text-gray-400">{new Date(push.created_at).toLocaleDateString()}</span>
                                                                 </div>
-                                                            )) : <p className="text-xs text-gray-400 italic">No pitch history yet.</p>}
-                                                        </div>
+                                                                <p className="text-xs text-gray-500 line-clamp-2">{push.generated_pitch}</p>
+                                                            </div>
+                                                        )) : <p className="text-xs text-gray-400 italic">No pitch history yet.</p>}
                                                     </div>
+                                                </div>
 
-                                                    <div>
-                                                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sent Emails</h4>
-                                                        <div className="space-y-3">
-                                                            {activityHistory.emails?.length > 0 ? activityHistory.emails.map(email => (
-                                                                <div key={email.id} className="p-3 bg-white border border-gray-100 rounded-lg">
-                                                                    <div className="flex justify-between items-start mb-1">
-                                                                        <span className="font-medium text-sm text-gray-900 truncate max-w-[150px]">{email.recipient_email}</span>
-                                                                        <span className="text-[10px] text-gray-400">{new Date(email.sent_at).toLocaleDateString()}</span>
-                                                                    </div>
-                                                                    <p className="text-xs text-blue-600 mb-1">{email.subject}</p>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                                                        <span className="text-[10px] text-gray-500 uppercase">Sent</span>
-                                                                    </div>
+                                                <div>
+                                                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sent Emails</h4>
+                                                    <div className="space-y-3">
+                                                        {activityHistory.emails?.length > 0 ? activityHistory.emails.map(email => (
+                                                            <div key={email.id} className="p-3 bg-white border border-gray-100 rounded-lg">
+                                                                <div className="flex justify-between items-start mb-1">
+                                                                    <span className="font-medium text-sm text-gray-900 truncate max-w-[150px]">{email.recipient_email}</span>
+                                                                    <span className="text-[10px] text-gray-400">{new Date(email.sent_at).toLocaleDateString()}</span>
                                                                 </div>
-                                                            )) : <p className="text-xs text-gray-400 italic">No email history yet.</p>}
-                                                        </div>
+                                                                <p className="text-xs text-blue-600 mb-1">{email.subject}</p>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                                    <span className="text-[10px] text-gray-500 uppercase">Sent</span>
+                                                                </div>
+                                                            </div>
+                                                        )) : <p className="text-xs text-gray-400 italic">No email history yet.</p>}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </motion.div>
-                                    )}
-                                </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
                         </motion.div>
                     )}
 
