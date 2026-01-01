@@ -1546,10 +1546,8 @@ ${template.cta}`;
                                                             />
                                                         </th>
                                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lead</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Score</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tags</th>
                                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Added</th>
                                                         <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                                                     </tr>
                                                 </thead>
@@ -1587,35 +1585,10 @@ ${template.cta}`;
                                                                                 onChange={(e) => handleEditFormChange('productCategory', e.target.value)}
                                                                                 placeholder="Category"
                                                                             />
-                                                                            <input
-                                                                                type="text"
-                                                                                className="w-full text-xs text-blue-500 border-b border-gray-200 focus:border-blue-500 outline-none"
-                                                                                value={editFormData.storeUrl || ''}
-                                                                                onChange={(e) => handleEditFormChange('storeUrl', e.target.value)}
-                                                                                placeholder="Store URL"
-                                                                            />
                                                                         </div>
                                                                     </td>
                                                                     <td className="px-6 py-4 opacity-50" onClick={e => e.stopPropagation()}>
-                                                                        -
-                                                                    </td>
-                                                                    <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
-                                                                        <div className="space-y-2">
-                                                                            <input
-                                                                                type="text"
-                                                                                className="w-full text-xs border-b border-gray-200 focus:border-blue-500 outline-none"
-                                                                                value={editFormData.email || ''}
-                                                                                onChange={(e) => handleEditFormChange('email', e.target.value)}
-                                                                                placeholder="Email"
-                                                                            />
-                                                                            <input
-                                                                                type="text"
-                                                                                className="w-full text-xs border-b border-gray-200 focus:border-blue-500 outline-none"
-                                                                                value={editFormData.instagram || ''}
-                                                                                onChange={(e) => handleEditFormChange('instagram', e.target.value)}
-                                                                                placeholder="Instagram"
-                                                                            />
-                                                                        </div>
+                                                                        <span className="text-xs text-gray-400 italic">Tags not editable</span>
                                                                     </td>
                                                                     <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
                                                                         <select
@@ -1629,7 +1602,6 @@ ${template.cta}`;
                                                                             <option value="Dead">Dead</option>
                                                                         </select>
                                                                     </td>
-                                                                    <td className="px-6 py-4 text-xs text-gray-500" onClick={e => e.stopPropagation()}>{lead.addedAt}</td>
                                                                     <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                                                         <div className="flex justify-end gap-2">
                                                                             <button
@@ -1660,23 +1632,41 @@ ${template.cta}`;
                                                                             className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                                                                         />
                                                                     </td>
-                                                                    <td className="px-6 py-4 flex-1">
-                                                                        <div className="font-semibold text-gray-900 leading-tight">
-                                                                            {lead.name}
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="font-semibold text-gray-900 leading-tight">
+                                                                                {lead.name}
+                                                                            </div>
+                                                                            {lead.score && (
+                                                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                                                                                    ⭐ {lead.score}
+                                                                                </span>
+                                                                            )}
                                                                         </div>
-                                                                        <div className="text-sm text-gray-500">{lead.productCategory || 'Sourced Lead'}</div>
+                                                                        <div className="text-xs text-gray-500 mt-0.5">
+                                                                            {lead.productCategory || 'Sourced Lead'} • {lead.addedAt}
+                                                                        </div>
                                                                     </td>
                                                                     <td className="px-6 py-4">
                                                                         {lead.tags && lead.tags.length > 0 ? (
                                                                             <div className="flex flex-wrap gap-1">
-                                                                                {lead.tags.slice(0, 3).map((tag, idx) => {
-                                                                                    const [cat, name] = typeof tag === 'string' ? tag.split(':') : [tag.category, tag.name];
-                                                                                    return (
-                                                                                        <span key={idx} className="px-1.5 py-0.5 rounded text-[10px] uppercase font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                                                                            {name || cat}
-                                                                                        </span>
-                                                                                    );
-                                                                                })}
+                                                                                {(() => {
+                                                                                    // Priority sort tags: business > pain > content > other
+                                                                                    const priority = { business: 1, pain: 2, content: 3, other: 4 };
+                                                                                    const sortedTags = [...lead.tags].sort((a, b) => {
+                                                                                        const catA = typeof a === 'string' ? 'other' : (a.category || 'other');
+                                                                                        const catB = typeof b === 'string' ? 'other' : (b.category || 'other');
+                                                                                        return (priority[catA] || 4) - (priority[catB] || 4);
+                                                                                    });
+                                                                                    return sortedTags.slice(0, 3).map((tag, idx) => {
+                                                                                        const [cat, name] = typeof tag === 'string' ? tag.split(':') : [tag.category, tag.name];
+                                                                                        return (
+                                                                                            <span key={idx} className="px-1.5 py-0.5 rounded text-[10px] uppercase font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                                                                                {name || cat}
+                                                                                            </span>
+                                                                                        );
+                                                                                    });
+                                                                                })()}
                                                                                 {lead.tags.length > 3 && (
                                                                                     <span className="px-1.5 py-0.5 text-[10px] text-gray-400">+{lead.tags.length - 3}</span>
                                                                                 )}
@@ -1704,16 +1694,8 @@ ${template.cta}`;
                                                                             <option value="Dead">Dead</option>
                                                                         </select>
                                                                     </td>
-                                                                    <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{lead.addedAt}</td>
                                                                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                                         <div className="flex justify-end gap-2">
-                                                                            <button
-                                                                                onClick={() => setViewingLead(lead)}
-                                                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                                title="View Intelligence Card"
-                                                                            >
-                                                                                <Eye className="w-4 h-4" />
-                                                                            </button>
                                                                             <button
                                                                                 onClick={() => initiateCrmEdit(lead)}
                                                                                 className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
