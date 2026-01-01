@@ -215,16 +215,16 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                     <div className="bg-white rounded-xl border border-indigo-100 p-4 shadow-sm">
                         <SectionTitle icon={<Brain className="w-4 h-4 text-indigo-600" />} title="AI Research Summary" />
                         <div className="mt-3">
-                            {lead.ai_research_summary ? (
+                            {lead.aiResearchSummary ? (
                                 <>
                                     <div className={`text-sm text-gray-700 leading-relaxed ${!isResearchExpanded ? 'line-clamp-4' : ''}`}>
-                                        {lead.ai_research_summary.split('\n').slice(0, isResearchExpanded ? undefined : 3).map((para, i) => (
+                                        {lead.aiResearchSummary.split('\n').slice(0, isResearchExpanded ? undefined : 3).map((para, i) => (
                                             <p key={i} className="mb-2">
                                                 {para.replace(/\*\*/g, '').replace(/\[\d+\]/g, '').replace(/###/g, '')}
                                             </p>
                                         ))}
                                     </div>
-                                    {lead.ai_research_summary.split('\n').length > 3 && (
+                                    {lead.aiResearchSummary.split('\n').length > 3 && (
                                         <button
                                             onClick={() => setResearchExpanded(!isResearchExpanded)}
                                             className="mt-3 text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
