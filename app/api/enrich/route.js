@@ -37,8 +37,13 @@ export async function POST(req) {
         }
 
         // 2. Identify Instagram Handle
-        // Prefer explicit handle, then try to extract from valid URLs
-        const handle = lead.instagram || SocialAnalyzer.extractInstagramHandle(lead.website) || SocialAnalyzer.extractInstagramHandle(lead.instagram);
+        let handle = null;
+        if (lead.instagram && lead.instagram !== 'N/A') {
+            handle = SocialAnalyzer.extractInstagramHandle(lead.instagram);
+        }
+        if (!handle && lead.website && lead.website !== 'N/A') {
+            handle = SocialAnalyzer.extractInstagramHandle(lead.website);
+        }
 
         if (!handle) {
             return NextResponse.json({
@@ -52,7 +57,8 @@ export async function POST(req) {
         const metrics = await SocialAnalyzer.fetchInstagramMetrics(handle);
 
         if (!metrics) {
-            return NextResponse.json({ error: 'Failed to fetch metrics from Instagram' }, { status: 502 });
+            console.error(`❌ [Enrich] Failed to fetch metrics for handle: ${handle}`);
+            return NextResponse.json({ error: `Failed to fetch metrics for handle: ${handle}` }, { status: 502 });
         }
 
         // 4. Merge Data
