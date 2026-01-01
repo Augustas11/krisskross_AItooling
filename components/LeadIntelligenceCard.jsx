@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  * LeadIntelligenceCard - The ultimate SDR view
  * Displays comprehensive lead data from Apify, Perplexity, and Claude
  */
-export function LeadIntelligenceCard({ lead }) {
+export function LeadIntelligenceCard({ lead, isEnriching }) {
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, raw
     const [isResearchExpanded, setResearchExpanded] = useState(true);
 
@@ -161,13 +161,20 @@ export function LeadIntelligenceCard({ lead }) {
                                             {/* Simple formatting for text blocks */}
                                             {lead.ai_research_summary.split('\n').map((para, i) => (
                                                 <p key={i} className={`mb-2 ${para.startsWith('**') ? 'font-semibold text-indigo-900' : ''}`}>
-                                                    {para.replace(/\*\*/g, '')}
+                                                    {para.replace(/\*\*/g, '').replace(/\[\d+\]/g, '')}
                                                 </p>
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="text-gray-400 italic text-center py-4">
-                                            No deep research available. Run enrichment to generate insights.
+                                            {isEnriching ? (
+                                                <span className="flex items-center justify-center gap-2 animate-pulse text-indigo-500">
+                                                    <Sparkles className="w-4 h-4" />
+                                                    Running Deep Research...
+                                                </span>
+                                            ) : (
+                                                "No deep research available. Run enrichment to generate insights."
+                                            )}
                                         </div>
                                     )}
                                 </motion.div>

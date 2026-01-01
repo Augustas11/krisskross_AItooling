@@ -139,7 +139,7 @@ export function TagCategory({ title, icon, tags, onRemoveTag }) {
 /**
  * TagsSection Component
  */
-export function TagsSection({ lead, onUpdateTags }) {
+export default function TagsSection({ lead, onUpdateTags, onLoadingStateChange }) {
   const [showTags, setShowTags] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -148,6 +148,8 @@ export function TagsSection({ lead, onUpdateTags }) {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    if (onLoadingStateChange) onLoadingStateChange(true);
+
     try {
       const response = await fetch('/api/enrich', {
         method: 'POST',
@@ -159,7 +161,7 @@ export function TagsSection({ lead, onUpdateTags }) {
 
       if (data.success && onUpdateTags) {
         onUpdateTags(data.enrichedData);
-        alert('✅ Lead refreshed successfully!');
+        alert('✅ Lead enriched successfully!');
       } else {
         alert('❌ Refresh failed: ' + (data.error || 'Unknown error'));
       }
@@ -168,6 +170,7 @@ export function TagsSection({ lead, onUpdateTags }) {
       alert('❌ Refresh failed: ' + error.message);
     } finally {
       setRefreshing(false);
+      if (onLoadingStateChange) onLoadingStateChange(false);
     }
   };
 

@@ -61,6 +61,7 @@ export default function KrissKrossPitchGeneratorV2() {
     const [pitchLead, setPitchLead] = useState(null);
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+    const [isEnrichingLead, setIsEnrichingLead] = useState(false);
 
     const [emailError, setEmailError] = useState(null);
 
@@ -2232,7 +2233,7 @@ ${template.cta}`;
                                             </div>
                                         </div>
                                     ) : (
-                                        <LeadIntelligenceCard lead={viewingLead} />
+                                        <LeadIntelligenceCard lead={viewingLead} isEnriching={isEnrichingLead} />
                                     )}
 
                                     {/* Tags Section with Enrich Button */}
@@ -2240,6 +2241,7 @@ ${template.cta}`;
                                         <div className="px-6 pb-6 bg-white">
                                             <TagsSection
                                                 lead={viewingLead}
+                                                onLoadingStateChange={setIsEnrichingLead}
                                                 onUpdateTags={(enrichedData) => {
                                                     console.log('🔄 [UI] Updating lead with enriched data:', enrichedData);
                                                     setViewingLead(prev => ({ ...prev, ...enrichedData }));
