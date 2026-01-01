@@ -63,67 +63,82 @@ export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
 
     const tagGroups = organizeTags(lead.tags);
 
+    // Helper: Get score color based on value
+    const getScoreColor = (score) => {
+        if (score >= 70) return 'text-blue-600';
+        if (score >= 50) return 'text-green-600';
+        if (score >= 30) return 'text-orange-600';
+        return 'text-red-600';
+    };
+
     return (
         <div className="bg-gray-50/50 min-h-full">
-            {/* 1. HEADER HERO */}
-            <div className="bg-white border-b sticky top-0 z-10 p-6 flex justify-between items-start shadow-sm">
-                <div className="flex gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                        {lead.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
+            {/* 1. HEADER - F-Pattern: Company → Enriched → Match Score */}
+            <div className="bg-white border-b sticky top-0 z-10 p-3 shadow-sm">
+                <div className="flex items-center justify-between">
+                    {/* Left: Avatar + Name */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md">
+                            {lead.name.substring(0, 2).toUpperCase()}
+                        </div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold text-gray-900">{lead.name}</h1>
-                            {lead.verified && <CheckCircle2 className="w-5 h-5 text-blue-500" fill="currentColor" />}
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${lead.enriched ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600'}`}>
-                                {lead.enriched ? 'ENRICHED' : 'NEW LEAD'}
-                            </span>
+                            <h1 className="text-xl font-bold text-gray-900">{lead.name}</h1>
+                            {lead.verified && <CheckCircle2 className="w-4 h-4 text-blue-500" fill="currentColor" />}
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                            {lead.instagramBusinessCategory && (
-                                <span className="flex items-center gap-1">
-                                    <Globe className="w-3 h-3" />
-                                    {lead.instagramBusinessCategory}
-                                </span>
-                            )}
-                            {lead.website && (
-                                <a
-                                    href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                                >
-                                    <Globe className="w-3 h-3" />
-                                    {lead.website.replace(/^https?:\/\//, '')}
-                                </a>
-                            )}
-                            {lead.instagram && (
-                                <a href={`https://instagram.com/${lead.instagram}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-pink-600 transition-colors">
-                                    <Instagram className="w-3 h-3" />
-                                    @{lead.instagram}
-                                </a>
-                            )}
-                        </div>
+                    </div>
+
+                    {/* Center: Enriched Badge */}
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${lead.enriched ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600'}`}>
+                        {lead.enriched ? 'ENRICHED' : 'NEW'}
+                    </span>
+
+                    {/* Right: PROMINENT Match Score */}
+                    <div className="flex flex-col items-end">
+                        <div className={`text-5xl font-black ${getScoreColor(lead.score || 0)}`}>{lead.score || 0}</div>
+                        <div className="text-[9px] uppercase tracking-wider font-bold text-gray-400">Match</div>
                     </div>
                 </div>
 
-                {/* Score Card */}
-                <div className="flex flex-col items-end">
-                    <div className="text-3xl font-black text-gray-900">{lead.score || 0}</div>
-                    <div className="text-xs uppercase tracking-wide font-semibold text-gray-400">Match Score</div>
+                {/* Secondary row: Contact links (compact, icon-focused) */}
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    {lead.instagramBusinessCategory && (
+                        <span className="flex items-center gap-1">
+                            <Globe className="w-3 h-3" />
+                            {lead.instagramBusinessCategory}
+                        </span>
+                    )}
+                    {lead.website && (
+                        <a
+                            href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                        >
+                            <Globe className="w-3 h-3" />
+                            {lead.website.replace(/^https?:\/\//, '')}
+                        </a>
+                    )}
+                    {lead.instagram && (
+                        <a href={`https://instagram.com/${lead.instagram}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-pink-600 transition-colors">
+                            <Instagram className="w-3 h-3" />
+                            @{lead.instagram}
+                        </a>
+                    )}
                 </div>
             </div>
 
-            {/* 2. AI TAGS SECTION - MOVED UP, ALWAYS VISIBLE */}
-            <div className="bg-white border-b p-4">
-                <div className="flex items-center justify-between mb-3">
-                    <SectionTitle icon={<Brain className="w-4 h-4" />} title="AI Analysis Tags" />
-                    <span className="text-xs text-gray-500 font-medium">
-                        {lead.tags?.length || 0} {lead.tags?.length === 1 ? 'tag' : 'tags'}
-                    </span>
+            {/* 2. AI TAGS SECTION - Compact, Icon-First */}
+            <div className="bg-white border-b p-3">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <Brain className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs text-gray-500 font-medium">
+                            {lead.tags?.length || 0} tags
+                        </span>
+                    </div>
                 </div>
                 {Object.keys(tagGroups).length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {/* Render all tag categories dynamically */}
                         {tagGroups.pain && tagGroups.pain.length > 0 && (
                             <TagGroup
@@ -222,16 +237,19 @@ export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
                 )}
             </div>
 
-            {/* 3. MAIN CONTENT GRID (Horizontal Layout) */}
-            <div className="p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* 3. MAIN CONTENT GRID - Tighter Spacing */}
+            <div className="p-3 grid grid-cols-1 lg:grid-cols-12 gap-3">
 
                 {/* LEFT COLUMN: Vitals + Contact (35% width) */}
-                <div className="lg:col-span-4 space-y-4">
+                <div className="lg:col-span-4 space-y-3">
 
-                    {/* SOCIAL VITAL SIGNS */}
+                    {/* SOCIAL METRICS - No verbose label, icon-first */}
                     <div>
-                        <SectionTitle icon={<TrendingUp className="w-4 h-4" />} title="Social Vital Signs" />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="w-4 h-4 text-gray-400" />
+                            <span className="text-xs text-gray-500 font-medium">Social Metrics</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
                             {/* Only show metrics if data exists */}
                             {lead.instagramFollowers && (
                                 <MetricCard
@@ -274,28 +292,31 @@ export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
                         </div>
                     </div>
 
-                    {/* CONTACT INFO (Compact) */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                        <div className="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Contact Details</div>
+                    {/* CONTACT INFO - Icon-First, N/A indicators */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Mail className="w-4 h-4 text-gray-400" />
+                            <span className="text-xs text-gray-500 font-medium">Contact</span>
+                        </div>
                         <div className="space-y-2">
-                            <ContactRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={lead.email} copyable />
-                            <ContactRow icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={lead.phone} copyable />
-                            <ContactRow icon={<MapPin className="w-3.5 h-3.5" />} label="Location" value={lead.businessAddress || 'Unknown'} />
+                            <ContactRow icon={<Mail className="w-3.5 h-3.5" />} value={lead.email} copyable />
+                            <ContactRow icon={<Phone className="w-3.5 h-3.5" />} value={lead.phone} copyable />
+                            <ContactRow icon={<MapPin className="w-3.5 h-3.5" />} value={lead.businessAddress} />
                         </div>
                     </div>
                 </div>
 
                 {/* RIGHT COLUMN: Deep Research (65% width) */}
-                <div className="lg:col-span-8 space-y-4">
-                    {/* DEEP RESEARCH INSIGHTS */}
+                <div className="lg:col-span-8 space-y-3">
+                    {/* DEEP RESEARCH - Compact Header */}
                     <div className="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden flex flex-col">
-                        <div className="bg-indigo-50/50 p-4 flex justify-between items-center border-b border-indigo-100">
+                        <div className="bg-indigo-50/50 p-3 flex justify-between items-center border-b border-indigo-100">
                             <div
                                 className="flex items-center gap-2 cursor-pointer flex-1"
                                 onClick={() => setResearchExpanded(!isResearchExpanded)}
                             >
-                                <Brain className="w-5 h-5 text-indigo-600" />
-                                <h3 className="font-bold text-indigo-900">Deep Research Insights (Triple Threat)</h3>
+                                <Brain className="w-4 h-4 text-indigo-600" />
+                                <h3 className="text-sm font-bold text-indigo-900">Deep Research</h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 {/* Run Deep Research Button */}
@@ -370,13 +391,13 @@ export function LeadIntelligenceCard({ lead, isEnriching, onRunDeepResearch }) {
                 </div>
             </div>
 
-            {/* FOOTER HISTORY LOG (If applicable) */}
-            <div className="p-6 border-t border-gray-200 mt-6 bg-gray-100/50">
-                <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-                    <History className="w-4 h-4" />
-                    Enrichment History
+            {/* FOOTER HISTORY LOG - Compact */}
+            <div className="p-3 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center gap-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    <History className="w-3.5 h-3.5" />
+                    History
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {lead.enrichmentHistory && lead.enrichmentHistory.length > 0 ? (
                         lead.enrichmentHistory.map((event, idx) => (
                             <HistoryItem
@@ -419,33 +440,33 @@ function SectionTitle({ icon, title }) {
 
 function MetricCard({ label, value, subValue, icon, isWarning }) {
     return (
-        <div className={`p-4 rounded-xl border ${isWarning ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'} shadow-sm flex flex-col justify-between h-full transition-colors`}>
-            <div className="flex justify-between items-start mb-3">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
+        <div className={`p-3 rounded-xl border ${isWarning ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'} shadow-sm transition-colors`}>
+            <div className="flex items-center gap-2 mb-1">
                 {icon}
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
             </div>
-            <div>
-                <div className="text-xl font-bold text-gray-900 leading-none">{value}</div>
-                {subValue && <div className={`text-xs mt-2 font-semibold ${isWarning ? 'text-orange-600' : 'text-green-600'}`}>{subValue}</div>}
-            </div>
+            <div className="text-lg font-bold text-gray-900 leading-none">{value}</div>
+            {subValue && <div className={`text-[10px] mt-1 font-semibold ${isWarning ? 'text-orange-600' : 'text-green-600'}`}>{subValue}</div>}
         </div>
     );
 }
 
-function ContactRow({ icon, label, value, copyable }) {
+function ContactRow({ icon, value, copyable }) {
+    const hasValue = value && value !== 'N/A' && value !== 'Unknown';
+
     return (
         <div className="flex items-center justify-between group">
-            <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+            <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg transition-colors ${hasValue ? 'bg-gray-100 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600' : 'bg-red-50 text-red-400'}`}>
                     {icon}
                 </div>
-                {value ? (
+                {hasValue ? (
                     <span className="text-sm font-medium text-gray-900 truncate max-w-[180px]">{value}</span>
                 ) : (
-                    <span className="text-sm italic text-gray-400">N/A</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 border border-red-200">N/A</span>
                 )}
             </div>
-            {value && copyable && (
+            {hasValue && copyable && (
                 <button
                     onClick={() => navigator.clipboard.writeText(value)}
                     className="p-1.5 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
@@ -472,16 +493,16 @@ function TagGroup({ title, tags, icon, color }) {
     if (!tags || tags.length === 0) return null;
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm h-full">
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm h-full">
+            <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-gray-100">
                 {icon}
-                <span className="text-sm font-bold text-gray-800">{title}</span>
+                <span className="text-xs font-bold text-gray-800">{title}</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
                 {tags.map((tag, idx) => (
                     <div
                         key={idx}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium border flex items-center gap-1 ${colorClasses[color] || colorClasses.blue} hover:brightness-95 cursor-help transition-all`}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold border ${colorClasses[color] || colorClasses.blue} hover:brightness-95 cursor-help transition-all`}
                         title={tag.evidence} // Tooltip showing the "WHY" (Perplexity evidence)
                     >
                         {tag.name}
@@ -489,7 +510,7 @@ function TagGroup({ title, tags, icon, color }) {
                 ))}
             </div>
             {tags.length > 0 && tags[0].evidence && (
-                <div className="mt-3 text-xs text-gray-500 italic border-l-2 border-gray-200 pl-2 line-clamp-2">
+                <div className="mt-2 text-[10px] text-gray-500 italic border-l-2 border-gray-200 pl-2 line-clamp-1">
                     "{tags[0].evidence}"
                 </div>
             )}
