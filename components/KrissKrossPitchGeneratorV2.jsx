@@ -2245,6 +2245,24 @@ ${template.cta}`;
                                         <LeadIntelligenceCard lead={viewingLead} />
                                     )}
                                 </div>
+
+
+                                {/* Tags Section with Enrich Button */}
+                                {!isEditingModal && (
+                                    <div className="px-6 pb-6 bg-white">
+                                        <TagsSection
+                                            lead={viewingLead}
+                                            onUpdateTags={(enrichedData) => {
+                                                console.log('🔄 [UI] Updating lead with enriched data:', enrichedData);
+                                                setViewingLead(prev => ({ ...prev, ...enrichedData }));
+                                                setSavedLeads(prev => prev.map(l =>
+                                                    l.id === viewingLead.id ? { ...l, ...enrichedData } : l
+                                                ));
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 {/* Modal Footer */}
                                 <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center mt-auto">
                                     <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
