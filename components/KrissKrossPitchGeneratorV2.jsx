@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LeadIntelligenceCard } from './LeadIntelligenceCard';
 import { TagsSection } from './LeadTags';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
@@ -2149,329 +2150,101 @@ ${template.cta}`;
                                 </div>
 
                                 {/* Modal Body - Scrollable */}
-                                <div className="p-6 overflow-y-auto custom-scrollbar">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* Contact Section */}
-                                        <div className="space-y-6 relative">
+                                {/* Modal Body - Scrollable */}
+                                <div className="overflow-y-auto custom-scrollbar flex-grow bg-white">
+                                    {isEditingModal ? (
+                                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-6">
+                                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center gap-2">
+                                                    <Users className="w-4 h-4" /> Contact Info
+                                                </h3>
 
-                                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
-                                                <Users className="w-4 h-4" /> Contact Information
-                                            </h3>
-
-                                            <div className="space-y-4">
-                                                {isEditingModal ? (
-                                                    <div className="space-y-3">
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Email Address</label>
-                                                            <div className="relative">
-                                                                <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData.email || ''}
-                                                                    onChange={(e) => handleEditFormChange('email', e.target.value)}
-                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                    placeholder="email@example.com"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Phone Number</label>
-                                                            <div className="relative">
-                                                                <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData.phone || ''}
-                                                                    onChange={(e) => handleEditFormChange('phone', e.target.value)}
-                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                    placeholder="+1 234 567 890"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Instagram Handle</label>
-                                                            <div className="relative">
-                                                                <Instagram className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData.instagram || ''}
-                                                                    onChange={(e) => handleEditFormChange('instagram', e.target.value)}
-                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                    placeholder="@username"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Website URL</label>
-                                                            <div className="relative">
-                                                                <Globe className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData.website || ''}
-                                                                    onChange={(e) => handleEditFormChange('website', e.target.value)}
-                                                                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                    placeholder="https://example.com"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-3">
-                                                            <div>
-                                                                <label className="text-xs text-gray-500 font-medium mb-1 block">YouTube</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData.youtube || ''}
-                                                                    onChange={(e) => handleEditFormChange('youtube', e.target.value)}
-                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                    placeholder="Channel URL"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-xs text-gray-500 font-medium mb-1 block">TikTok</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData.tiktok || ''}
-                                                                    onChange={(e) => handleEditFormChange('tiktok', e.target.value)}
-                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                    placeholder="TikTok URL"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 font-medium mb-1 block">Facebook</label>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Email Address</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editFormData.email || ''}
+                                                            onChange={e => handleEditFormChange('email', e.target.value)}
+                                                            className="w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Phone Number</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editFormData.phone || ''}
+                                                            onChange={e => handleEditFormChange('phone', e.target.value)}
+                                                            className="w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Instagram Handle</label>
+                                                        <div className="relative">
+                                                            <Instagram className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                                                             <input
                                                                 type="text"
-                                                                value={editFormData.facebook || ''}
-                                                                onChange={(e) => handleEditFormChange('facebook', e.target.value)}
-                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                                placeholder="Facebook URL"
+                                                                value={editFormData.instagram || ''}
+                                                                onChange={e => handleEditFormChange('instagram', e.target.value)}
+                                                                className="w-full border border-gray-300 pl-9 pr-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                                             />
                                                         </div>
                                                     </div>
-                                                ) : (
-                                                    <>
-                                                        {/* Email */}
-                                                        <div className="group flex items-start gap-4">
-                                                            <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                                                                <Mail className="w-4 h-4 text-blue-600" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Email Address</div>
-                                                                <div className="text-sm text-gray-900 break-all select-all">
-                                                                    {viewingLead.email ? (
-                                                                        <a href={`mailto:${viewingLead.email}`} className="hover:text-blue-600 hover:underline">
-                                                                            {viewingLead.email}
-                                                                        </a>
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic">Not available</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Website URL</label>
+                                                        <div className="relative">
+                                                            <Globe className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData.website || ''}
+                                                                onChange={e => handleEditFormChange('website', e.target.value)}
+                                                                className="w-full border border-gray-300 pl-9 pr-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                                            />
                                                         </div>
-
-                                                        {/* Phone */}
-                                                        <div className="group flex items-start gap-4">
-                                                            <div className="mt-1 w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
-                                                                <Phone className="w-4 h-4 text-green-600" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Phone Number</div>
-                                                                <div className="text-sm text-gray-900 select-all">
-                                                                    {viewingLead.phone || <span className="text-gray-400 italic">Not available</span>}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Instagram */}
-                                                        <div className="group flex items-start gap-4">
-                                                            <div className="mt-1 w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-100 transition-colors">
-                                                                <Instagram className="w-4 h-4 text-pink-600" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Instagram</div>
-                                                                <div className="text-sm text-gray-900 break-all">
-                                                                    {viewingLead.instagram ? (
-                                                                        <a
-                                                                            href={viewingLead.instagram.startsWith('http') ? viewingLead.instagram : `https://instagram.com/${viewingLead.instagram.replace('@', '')}`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="hover:text-pink-600 hover:underline flex items-center gap-1"
-                                                                        >
-                                                                            {viewingLead.instagram} <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic">Not available</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* YouTube */}
-                                                        {viewingLead.youtube && (
-                                                            <div className="group flex items-start gap-4">
-                                                                <div className="mt-1 w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 transition-colors">
-                                                                    <Youtube className="w-4 h-4 text-red-600" />
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">YouTube</div>
-                                                                    <div className="text-sm text-gray-900 break-all">
-                                                                        <a href={ensureAbsoluteUrl(viewingLead.youtube)} target="_blank" rel="noreferrer" className="hover:text-red-600 hover:underline flex items-center gap-1">
-                                                                            {viewingLead.youtube} <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Facebook */}
-                                                        {viewingLead.facebook && (
-                                                            <div className="group flex items-start gap-4">
-                                                                <div className="mt-1 w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                                                                    <Facebook className="w-4 h-4 text-blue-600" />
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <div className="text-xs text-gray-500 font-medium mb-0.5">Facebook</div>
-                                                                    <div className="text-sm text-gray-900 break-all">
-                                                                        <a href={ensureAbsoluteUrl(viewingLead.facebook)} target="_blank" rel="noreferrer" className="hover:text-blue-600 hover:underline flex items-center gap-1">
-                                                                            {viewingLead.facebook} <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* TikTok Shop */}
-                                                        <div className="group flex items-start gap-4">
-                                                            <div className="mt-1 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center flex-shrink-0 group-hover:bg-black/10 transition-colors">
-                                                                <div className="w-4 h-4 flex items-center justify-center font-bold text-[10px] text-black">TT</div>
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">TikTok</div>
-                                                                <div className="text-sm text-gray-900">
-                                                                    {viewingLead.tiktok ? (
-                                                                        <a href={ensureAbsoluteUrl(viewingLead.tiktok)} target="_blank" rel="noreferrer" className="hover:text-black hover:underline flex items-center gap-1 break-all">
-                                                                            {viewingLead.tiktok} <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic">Not available</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Official Website */}
-                                                        <div className="group flex items-start gap-4">
-                                                            <div className="mt-1 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-100 transition-colors">
-                                                                <Globe className="w-4 h-4 text-indigo-600" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Website</div>
-                                                                <div className="text-sm text-gray-900">
-                                                                    {viewingLead.website ? (
-                                                                        <a href={ensureAbsoluteUrl(viewingLead.website)} target="_blank" rel="noreferrer" className="hover:text-indigo-600 hover:underline flex items-center gap-1 break-all">
-                                                                            {viewingLead.website} <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    ) : (
-                                                                        <span className="text-gray-400 italic">Not available</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Business Section */}
-                                        <div className="space-y-6">
-                                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-2">
-                                                <Target className="w-4 h-4" /> Business Profile
-                                            </h3>
+                                            <div className="space-y-6">
+                                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center gap-2">
+                                                    <Briefcase className="w-4 h-4" /> Business Details
+                                                </h3>
 
-                                            <div className="space-y-4">
-                                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                                    <div className="text-xs text-gray-500 font-medium mb-2 uppercase tracking-wide">About Business</div>
-                                                    {isEditingModal ? (
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Physical Address</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editFormData.businessAddress || ''}
+                                                            onChange={e => handleEditFormChange('businessAddress', e.target.value)}
+                                                            className="w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Store / Listing URL</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editFormData.storeUrl || ''}
+                                                            onChange={e => handleEditFormChange('storeUrl', e.target.value)}
+                                                            className="w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-medium text-gray-500 mb-1 block">Business Description</label>
                                                         <textarea
                                                             value={editFormData.briefDescription || ''}
-                                                            onChange={(e) => handleEditFormChange('briefDescription', e.target.value)}
-                                                            className="w-full h-32 text-sm text-gray-700 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-blue-500 custom-scrollbar resize-none"
-                                                            placeholder="Enter business description..."
+                                                            onChange={e => handleEditFormChange('briefDescription', e.target.value)}
+                                                            className="w-full border border-gray-300 p-2 rounded-lg text-sm h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all custom-scrollbar"
+                                                            placeholder="Add notes or description..."
                                                         />
-                                                    ) : (
-                                                        <p className="text-sm text-gray-700 leading-relaxed">
-                                                            {viewingLead.briefDescription || 'No description available for this lead.'}
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Scoring Profile Removed - Use Tags Below */}
-
-                                                <div className="flex items-start gap-3">
-                                                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                                    <div className="w-full">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
-                                                        {isEditingModal ? (
-                                                            <input
-                                                                type="text"
-                                                                value={editFormData.businessAddress || ''}
-                                                                onChange={(e) => handleEditFormChange('businessAddress', e.target.value)}
-                                                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
-                                                                placeholder="Enter address"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-gray-900">
-                                                                {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-start gap-3">
-                                                    <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                                    <div className="w-full">
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
-                                                        {isEditingModal ? (
-                                                            <input
-                                                                type="text"
-                                                                value={editFormData.storeUrl || ''}
-                                                                onChange={(e) => handleEditFormChange('storeUrl', e.target.value)}
-                                                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
-                                                                placeholder="https://store.com"
-                                                            />
-                                                        ) : (
-                                                            viewingLead.storeUrl ? (
-                                                                <a href={ensureAbsoluteUrl(viewingLead.storeUrl)} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
-                                                                    {viewingLead.storeUrl}
-                                                                </a>
-                                                            ) : (
-                                                                <span className="text-sm text-gray-400 italic">Not available</span>
-                                                            )
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Tags Section */}
-                                    {!isEditingModal && (
-                                        <div className="px-6 pb-6 border-t border-gray-100">
-                                            <TagsSection
-                                                lead={viewingLead}
-                                                onUpdateTags={(enrichedData) => {
-                                                    // Update the viewing lead with new tags/data
-                                                    setViewingLead(prev => ({ ...prev, ...enrichedData }));
-
-                                                    // Also update in savedLeads array
-                                                    setSavedLeads(prev => prev.map(l =>
-                                                        l.id === viewingLead.id ? { ...l, ...enrichedData } : l
-                                                    ));
-                                                }}
-                                            />
-                                        </div>
+                                    ) : (
+                                        <LeadIntelligenceCard lead={viewingLead} />
                                     )}
                                 </div>
-
-
                                 {/* Modal Footer */}
                                 <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center mt-auto">
                                     <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
@@ -2526,12 +2299,13 @@ ${template.cta}`;
                                             </>
                                         )}
                                     </div>
-                                </div>
-                            </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-        </div>
+                                </div >
+                            </motion.div >
+                        </motion.div >
+                    )
+                    }
+                </AnimatePresence >
+            </div >
+        </div >
     );
 }

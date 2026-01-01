@@ -61,7 +61,14 @@ function transformFromDb(row) {
         postingFrequency: row.posting_frequency,
         scoreBreakdown: row.score_breakdown,
         lastScoredAt: row.last_scored_at,
-        lastTaggedAt: row.last_tagged_at
+        lastTaggedAt: row.last_tagged_at,
+
+        // New V2 Enrichment Fields
+        aiResearchSummary: row.ai_research_summary,
+        instagramBusinessCategory: row.instagram_business_category,
+        hasReels: row.has_reels,
+        avgVideoViews: row.avg_video_views,
+        enrichmentHistory: row.enrichment_history
     };
 }
 
@@ -94,7 +101,14 @@ function transformToDb(lead) {
         posting_frequency: lead.postingFrequency,
         score_breakdown: lead.scoreBreakdown || {},
         last_scored_at: lead.lastScoredAt,
-        last_tagged_at: lead.lastTaggedAt
+        last_tagged_at: lead.lastTaggedAt,
+
+        // New V2 Enrichment Fields
+        ai_research_summary: lead.ai_research_summary,
+        instagram_business_category: lead.instagramBusinessCategory,
+        has_reels: lead.hasReels,
+        avg_video_views: lead.avgVideoViews,
+        enrichment_history: lead.enrichmentHistory
     };
 }
 
