@@ -8,6 +8,7 @@ import {
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
     Youtube, Facebook, Send
 } from 'lucide-react';
+import { TIERS, getTierForScore } from '../lib/scoring-constants';
 
 export default function KrissKrossPitchGeneratorV3() {
     const [activeTab, setActiveTab] = useState('discover');
@@ -43,6 +44,7 @@ export default function KrissKrossPitchGeneratorV3() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
     const [crmSearchQuery, setCrmSearchQuery] = useState('');
+    const [tierFilter, setTierFilter] = useState('all');
     const [selectedCrmLeadIds, setSelectedCrmLeadIds] = useState(new Set());
     // Pagination & Bulk Processing State
     const [currentPage, setCurrentPage] = useState(1);
@@ -659,10 +661,15 @@ ${template.cta}`;
         ? savedLeads
         : savedLeads.filter(l => (l.status || '').toLowerCase() === crmFilter.toLowerCase());
 
+    // Then by tier
+    const tierFilteredLeads = tierFilter === 'all'
+        ? statusFilteredLeads
+        : statusFilteredLeads.filter(l => (l.tier || 'GRAY') === tierFilter);
+
     // Then apply search query
     const filteredLeads = crmSearchQuery.trim() === ''
-        ? statusFilteredLeads
-        : statusFilteredLeads.filter(lead => {
+        ? tierFilteredLeads
+        : tierFilteredLeads.filter(lead => {
             const searchLower = crmSearchQuery.toLowerCase();
             return (
                 lead.name?.toLowerCase().includes(searchLower) ||
@@ -1042,7 +1049,24 @@ ${template.cta}`;
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
-                                            {filter === 'all' ? 'All Leads' : filter}
+                                            {filter === 'all' ? 'All Status' : filter}
+                                        </button>
+                                    ))}
+                                    <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                                    <span className="text-xs font-semibold text-gray-500 mr-2 flex items-center">TIER:</span>
+                                    {['all', 'GREEN', 'YELLOW', 'RED'].map(tier => (
+                                        <button
+                                            key={tier}
+                                            onClick={() => {
+                                                setTierFilter(tier);
+                                                setCurrentPage(1);
+                                            }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors border ${tierFilter === tier
+                                                ? 'bg-gray-800 text-white border-gray-800'
+                                                : `${TIERS[tier]?.color || 'bg-white text-gray-600'} ${TIERS[tier]?.border || 'border-gray-200'} hover:opacity-80`
+                                                }`}
+                                        >
+                                            {tier === 'all' ? 'All' : tier}
                                         </button>
                                     ))}
                                 </div>
@@ -1075,6 +1099,7 @@ ${template.cta}`;
                                                             />
                                                         </th>
                                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lead</th>
+                                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Score</th>
                                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
                                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Added</th>
@@ -1100,6 +1125,22 @@ ${template.cta}`;
                                                                     {lead.name}
                                                                 </div>
                                                                 <div className="text-sm text-blue-600">{lead.productCategory || 'Sourced Lead'}</div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                {lead.score > 0 ? (
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${TIERS[lead.tier]?.color || 'bg-gray-100 text-gray-800'} ${TIERS[lead.tier]?.border}`}>
+                                                                            {lead.score}
+                                                                        </span>
+                                                                        {lead.tags && lead.tags.length > 0 && (
+                                                                            <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
+                                                                                {lead.tags.length} tags
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-400 text-xs">-</span>
+                                                                )}
                                                             </td>
                                                             <td className="px-6 py-4">
                                                                 <div className="space-y-1 text-sm">
@@ -1599,33 +1640,62 @@ ${template.cta}`;
                                                     </p>
                                                 </div>
 
-                                                <div className="flex items-start gap-3">
-                                                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                                    <div>
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
-                                                        <p className="text-sm text-gray-900">
-                                                            {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
-                                                        </p>
+                                                {/* Scoring Profile */}
+                                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Scoring Profile</div>
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${TIERS[viewingLead.tier]?.color} ${TIERS[viewingLead.tier]?.border}`}>
+                                                            {viewingLead.tier || 'GRAY'}
+                                                        </span>
                                                     </div>
-                                                </div>
+                                                    <div className="flex items-end gap-2 mb-3">
+                                                        <span className="text-3xl font-bold text-gray-900">{viewingLead.score || 0}</span>
+                                                        <span className="text-sm text-gray-500 mb-1">/100 Impact Score</span>
+                                                    </div>
 
-                                                <div className="flex items-start gap-3">
-                                                    <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                                                    <div>
-                                                        <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
-                                                        {viewingLead.storeUrl ? (
-                                                            <a href={ensureAbsoluteUrl(viewingLead.storeUrl)} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
-                                                                {viewingLead.storeUrl}
-                                                            </a>
-                                                        ) : (
-                                                            <span className="text-sm text-gray-400 italic">Not available</span>
-                                                        )}
-                                                    </div>
+                                                    {viewingLead.tags && viewingLead.tags.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {viewingLead.tags.map((tag, idx) => (
+                                                                <span key={idx} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs text-gray-600">
+                                                                    #{tag}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {(!viewingLead.tags || viewingLead.tags.length === 0) && (
+                                                        <p className="text-xs text-gray-400 italic">No automated tags generated yet.</p>
+                                                    )}
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Physical Address</div>
+                                                <p className="text-sm text-gray-900">
+                                                    {viewingLead.businessAddress || <span className="text-gray-400 italic">Address not available</span>}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <Target className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <div className="text-xs text-gray-500 font-medium mb-0.5">Listing/Store URL</div>
+                                                {viewingLead.storeUrl ? (
+                                                    <a href={ensureAbsoluteUrl(viewingLead.storeUrl)} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all block">
+                                                        {viewingLead.storeUrl}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-sm text-gray-400 italic">Not available</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
 
                                 {/* Modal Footer */}
                                 <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center mt-auto">
@@ -1662,7 +1732,7 @@ ${template.cta}`;
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </div>
+            </div >
         </div >
     );
 }

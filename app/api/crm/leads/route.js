@@ -42,6 +42,7 @@ function transformFromDb(row) {
         status: row.status,
         addedAt: row.added_at,
         lastInteraction: row.last_interaction,
+        // Enriched contact information
         businessAddress: row.business_address,
         email: row.email,
         phone: row.phone,
@@ -49,6 +50,15 @@ function transformFromDb(row) {
         tiktok: row.tiktok,
         website: row.website,
         enriched: row.enriched,
+
+        // Scoring & Profiling
+        score: row.score || 0,
+        tier: row.tier || 'GRAY',
+        tags: row.tags || [],
+        instagramFollowers: row.instagram_followers,
+        engagementRate: row.engagement_rate,
+        scoreBreakdown: row.score_breakdown,
+        lastScoredAt: row.last_scored_at
     };
 }
 
@@ -71,6 +81,15 @@ function transformToDb(lead) {
         tiktok: lead.tiktok,
         website: lead.website,
         enriched: lead.enriched || false,
+
+        // Scoring & Profiling
+        score: lead.score || 0,
+        tier: lead.tier || 'GRAY',
+        tags: lead.tags || [],
+        instagram_followers: lead.instagramFollowers,
+        engagement_rate: lead.engagementRate,
+        score_breakdown: lead.scoreBreakdown || {},
+        last_scored_at: lead.lastScoredAt
     };
 }
 
