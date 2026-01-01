@@ -63,8 +63,8 @@ function transformFromDb(row) {
         lastScoredAt: row.last_scored_at,
         lastTaggedAt: row.last_tagged_at,
 
-        // New V2 Enrichment Fields
-        aiResearchSummary: row.ai_research_summary,
+        // New V2 Enrichment Fields (keep snake_case for consistency with component)
+        ai_research_summary: row.ai_research_summary,
         instagramBusinessCategory: row.instagram_business_category,
         hasReels: row.has_reels,
         avgVideoViews: row.avg_video_views,

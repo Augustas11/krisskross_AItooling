@@ -35,7 +35,10 @@ export async function POST(req) {
                     postingFrequency: data.posting_frequency,
                     scoreBreakdown: data.score_breakdown,
                     lastScoredAt: data.last_scored_at,
-                    lastTaggedAt: data.last_tagged_at
+                    lastTaggedAt: data.last_tagged_at,
+                    // CRITICAL: Include Deep Research data from previous sessions
+                    ai_research_summary: data.ai_research_summary,
+                    enrichmentHistory: data.enrichment_history
                 };
             }
         }
@@ -51,6 +54,8 @@ export async function POST(req) {
 
             // 3. Map back to DB snake_case structure
             console.log('[DEBUG] tags before response:', JSON.stringify(enrichedLead.tags));
+            console.log('[DEBUG] ai_research_summary length:', enrichedLead.ai_research_summary?.length || 0);
+            console.log('[DEBUG] enrichmentHistory entries:', enrichedLead.enrichmentHistory?.length || 0);
 
             const dbUpdate = {
                 instagram: enrichedLead.instagram,
@@ -63,7 +68,10 @@ export async function POST(req) {
                 tags: Array.isArray(enrichedLead.tags) ? enrichedLead.tags : [], // Safety check
                 score_breakdown: enrichedLead.scoreBreakdown,
                 last_scored_at: enrichedLead.lastScoredAt,
-                last_tagged_at: new Date().toISOString()
+                last_tagged_at: new Date().toISOString(),
+                // CRITICAL: Save Deep Research results and history
+                ai_research_summary: enrichedLead.ai_research_summary || null,
+                enrichment_history: Array.isArray(enrichedLead.enrichmentHistory) ? enrichedLead.enrichmentHistory : []
             };
 
             // 4. Save to DB
