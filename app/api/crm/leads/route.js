@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { autoTagLead } from '@/lib/tags';
 import { enrollLeadInSequence, getSequenceIdByType } from '@/lib/email-sequences';
+import { logActivity } from '@/lib/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -279,6 +280,12 @@ export async function POST(req) {
                 throw insertError;
             }
 
+            // Log Activity
+            for (const lead of insertedLeads) {
+                // Fire and forget logging
+                logActivity('create_lead', 'lead', lead.id, { name: lead.name, source: body.source });
+            }
+
             // AUTO-ENROLL LOGIC (Phase 2 & 3)
             // Check for trial signups and enroll in onboarding sequence
 
@@ -374,6 +381,9 @@ export async function PUT(req) {
 
         if (error) throw error;
 
+        // Log Activity
+        await logActivity('update_lead', 'lead', leadToUpdate.id, { updates: Object.keys(leadToUpdate) });
+
         return NextResponse.json({ message: 'Lead updated successfully' });
 
     } catch (error) {
@@ -422,6 +432,11 @@ export async function DELETE(req) {
             .in('id', idsToDelete);
 
         if (error) throw error;
+
+        // Log Activity
+        for (const id of idsToDelete) {
+            await logActivity('delete_lead', 'lead', id, {});
+        }
 
         return NextResponse.json({ message: 'Lead(s) deleted successfully' });
 
