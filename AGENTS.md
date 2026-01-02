@@ -51,6 +51,13 @@ Report token status in this format:
 3. Suggest breaking remaining work into new session
 4. Create resumption notes if task incomplete
 
+## Platform Quota Efficiency
+To prevent "Quota Exceeded" errors and work effectively across model limits:
+- **Batching:** Group multiple related edits into one response.
+- **Chaining:** Chain terminal commands (e.g., `npm run lint && npm run test`).
+- **Anticipation:** If a fix likely breaks something else, check it immediately without waiting for a prompt.
+- **No Fillers:** Minimize "I'm working on it" or "Step 1 done, moving to Step 2" messages. Focus on results.
+
 ## When I Question You
 If I ask "why this way?" I'm learning, not challenging.
 Explain:

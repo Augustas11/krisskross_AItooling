@@ -322,7 +322,7 @@ export default function EmailSequenceManager() {
                                         type="text"
                                         value={editingSequence.name}
                                         onChange={(e) => setEditingSequence({ ...editingSequence, name: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                     />
                                 </div>
 
@@ -372,7 +372,7 @@ export default function EmailSequenceManager() {
                                                     type="text"
                                                     value={email.subject}
                                                     onChange={(e) => updateEmail(index, 'subject', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
                                                     placeholder="Email subject..."
                                                 />
                                             </div>
@@ -387,7 +387,7 @@ export default function EmailSequenceManager() {
                                                     onChange={(e) => updateEmail(index, 'body', e.target.value)}
                                                     onFocus={() => setSelectedEmailIndex(index)}
                                                     rows={8}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm text-gray-900"
                                                     placeholder="Email body..."
                                                 />
                                             </div>

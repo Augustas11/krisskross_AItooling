@@ -2,10 +2,11 @@
 description: Manage token limits for complex coding sessions
 ---
 
-# Token Management Workflow
+# Token & Quota Management Workflow
 
 ## Purpose
-Prevent session breakdowns from hitting the 200,000 token budget limit during complex tasks.
+1. **Session Budget:** Prevent breakdowns from the 200,000 token per-session limit.
+2. **Platform Quota:** Preserve messages/credits to avoid "Quota exceeded" errors that lock you out for hours.
 
 ## Before Starting a Complex Task
 
@@ -201,7 +202,22 @@ Create a session summary document:
 
 ---
 
-## Tips for Token Efficiency
+## Platform Quota Preservation (Message Efficiency)
+If you are nearing your hourly or daily limit, we must switch to **High Efficiency Mode**:
+
+### Agent Strategy:
+1. **Batch Tools:** Use `multi_replace_file_content` for all edits in one turn.
+2. **Chain Commands:** Use `&&` to run multiple terminal steps at once.
+3. **Plan Before Do:** Create a comprehensive plan and execute it in as few turns as possible.
+4. **Avoid Small Edits:** Do not send one message per fix. Gather 5+ fixes before sending.
+
+### User Strategy:
+1. **Clear Prompts:** Give multi-step instructions at once.
+2. **Batch Feedback:** Instead of saying "Fix X," then "Fix Y," wait and say "Fix X, Y, and Z" in one message.
+
+---
+
+## Tips for Token & Quota Efficiency
 
 ### Reduce Token Consumption:
 - **View specific files** instead of exploring entire directories

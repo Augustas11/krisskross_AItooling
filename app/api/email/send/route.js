@@ -56,6 +56,19 @@ export async function POST(req) {
                             console.log(`ℹ️ Lead ${leadId} not enrolled: ${enrollResult.error}`);
                         }
                     }
+
+                    // Create automated follow-up tasks
+                    const { createFollowUpTasks } = require('@/app/api/tasks/route');
+                    const { data: leadData } = await supabase
+                        .from('leads')
+                        .select('name')
+                        .eq('id', leadId)
+                        .single();
+
+                    if (leadData) {
+                        await createFollowUpTasks(leadId, leadData.name);
+                        console.log(`✅ Created follow-up tasks for ${leadData.name}`);
+                    }
                 }
             }
         } catch (e) {
