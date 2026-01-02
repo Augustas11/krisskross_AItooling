@@ -8,7 +8,7 @@ import {
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
-    Youtube, Facebook, Send, Pencil, Check, BriefcaseBusiness
+    Youtube, Facebook, Send, Pencil, Check, BriefcaseBusiness, Skull
 } from 'lucide-react';
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
 import { supabase } from '../lib/supabase';
@@ -299,6 +299,11 @@ export default function KrissKrossPitchGeneratorV2() {
             setGeneratedPitch(data.pitch);
             setWasAiGenerated(true);
             loadActivityHistory();
+
+            // Auto-update status to Pitched if it's a CRM lead
+            if (pitchLead && pitchLead.id && !pitchLead.id.startsWith('lead_')) {
+                updateLeadStatus(pitchLead.id, 'Pitched');
+            }
         } catch (error) {
             console.error('AI Generation failed:', error);
             setGenError(error.message);
@@ -518,22 +523,38 @@ ${template.cta}`;
 
     const updateLeadStatus = async (leadId, newStatus) => {
         const updatedDate = new Date().toLocaleDateString();
+
+        // Find the lead first to make sure we have the latest data
+        let targetLead = savedLeads.find(l => l.id === leadId);
+
+        if (!targetLead) {
+            console.warn(`⚠️ [CRM] Lead ${leadId} not found in local state, cannot update status to ${newStatus}`);
+            return;
+        }
+
+        const updatedLead = { ...targetLead, status: newStatus, lastInteraction: updatedDate };
+
+        // Optimistic Update
         setSavedLeads(prev => prev.map(l =>
-            l.id === leadId ? { ...l, status: newStatus, lastInteraction: updatedDate } : l
+            l.id === leadId ? updatedLead : l
         ));
 
         // Save status change to server
         try {
-            const lead = savedLeads.find(l => l.id === leadId);
-            if (lead) {
-                await fetch('/api/crm/leads', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lead: { ...lead, status: newStatus, lastInteraction: updatedDate } })
-                });
+            const response = await fetch('/api/crm/leads', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead: updatedLead })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server responded with ${response.status}`);
             }
+
+            console.log(`✅ [CRM] Status updated for ${targetLead.name} to ${newStatus}`);
         } catch (e) {
-            console.error('Failed to update status', e);
+            console.error('❌ [CRM] Failed to update status on server:', e);
+            // We could revert optimistic update here if needed
         }
     };
 
@@ -1596,17 +1617,14 @@ ${template.cta}`;
                                                                         <span className="text-xs text-gray-400 italic">Tags not editable</span>
                                                                     </td>
                                                                     <td className="px-6 py-4" onClick={e => e.stopPropagation()}>
-                                                                        <select
-                                                                            value={editFormData.status || 'New'}
-                                                                            onChange={(e) => handleEditFormChange('status', e.target.value)}
-                                                                            className="text-xs border border-gray-300 rounded px-2 py-1 outline-none"
-                                                                        >
-                                                                            <option value="New">New</option>
-                                                                            <option value="Pitched">Pitched</option>
-                                                                            <option value="Emailed">Emailed</option>
-                                                                            <option value="Replied">Replied</option>
-                                                                            <option value="Dead">Dead</option>
-                                                                        </select>
+                                                                        <div className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${editFormData.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                            editFormData.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                                                                editFormData.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                                                    editFormData.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                                        'bg-red-50 text-red-700 border-red-200'
+                                                                            }`}>
+                                                                            {editFormData.status || 'New'}
+                                                                        </div>
                                                                     </td>
                                                                     <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                                                         <div className="flex justify-end gap-2">
@@ -1682,23 +1700,16 @@ ${template.cta}`;
                                                                         )}
                                                                     </td>
                                                                     <td className="px-6 py-4">
-                                                                        <select
-                                                                            value={lead.status}
-                                                                            onChange={(e) => {
-                                                                                e.stopPropagation();
-                                                                                updateLeadStatus(lead.id, e.target.value);
-                                                                            }}
-                                                                            className={`text-xs border rounded px-2 py-1 outline-none font-medium ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                        <div
+                                                                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                                                                 lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                                                                                    lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                                                        'bg-red-50 text-red-700 border-red-200'
+                                                                                    lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                                                        lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                                            'bg-red-50 text-red-700 border-red-200'
                                                                                 }`}
                                                                         >
-                                                                            <option value="New">New</option>
-                                                                            <option value="Pitched">Pitched</option>
-                                                                            <option value="Replied">Replied</option>
-                                                                            <option value="Dead">Dead</option>
-                                                                        </select>
+                                                                            {lead.status || 'New'}
+                                                                        </div>
                                                                     </td>
                                                                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                                         <div className="flex justify-end gap-2">
@@ -1708,6 +1719,13 @@ ${template.cta}`;
                                                                                 title="Edit Lead"
                                                                             >
                                                                                 <Pencil className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateLeadStatus(lead.id, 'Dead')}
+                                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                                                title="Mark as Dead"
+                                                                            >
+                                                                                <Skull className="w-4 h-4" />
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => deleteFromCrm(lead.id)}
@@ -2069,17 +2087,14 @@ ${template.cta}`;
                                                             className="text-xl font-bold text-gray-900 border-b border-blue-500 focus:outline-none bg-transparent w-full"
                                                             placeholder="Lead Name"
                                                         />
-                                                        <select
-                                                            value={editFormData.status || 'New'}
-                                                            onChange={(e) => handleEditFormChange('status', e.target.value)}
-                                                            className="text-xs border border-gray-300 rounded px-2 py-1 outline-none"
-                                                        >
-                                                            <option value="New">New</option>
-                                                            <option value="Pitched">Pitched</option>
-                                                            <option value="Emailed">Emailed</option>
-                                                            <option value="Replied">Replied</option>
-                                                            <option value="Dead">Dead</option>
-                                                        </select>
+                                                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold border flex-shrink-0 ${editFormData.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                            editFormData.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                                                editFormData.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                                    editFormData.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                        'bg-red-50 text-red-700 border-red-200'
+                                                            }`}>
+                                                            {editFormData.status || 'New'}
+                                                        </div>
                                                     </div>
                                                     <input
                                                         type="text"

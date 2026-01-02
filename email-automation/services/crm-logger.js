@@ -38,38 +38,40 @@ export async function findLeadByEmail(email) {
 
 /**
  * Updates a lead's status
- * Uses the POST /api/crm/leads endpoint to sync the updated list
+ * Uses the PUT /api/crm/leads endpoint for a single lead update
  */
 export async function updateLeadStatus(leadId, newStatus) {
     const API_URL = process.env.CRM_API_URL || 'http://localhost:3000/api/crm/leads';
 
     try {
-        // 1. Fetch all leads
+        // 1. Fetch the lead first to get current data
         const getResponse = await axios.get(API_URL);
         if (!getResponse.data || !getResponse.data.leads) {
             throw new Error('Could not fetch leads for update');
         }
 
-        let leads = getResponse.data.leads;
-        const leadIndex = leads.findIndex(l => l.id === leadId);
+        const lead = getResponse.data.leads.find(l => l.id === leadId);
 
-        if (leadIndex === -1) {
+        if (!lead) {
             throw new Error(`Lead ${leadId} not found`);
         }
 
         // 2. Update the specific lead
         // Only update if status is different
-        if (leads[leadIndex].status === newStatus) {
+        if (lead.status === newStatus) {
             console.log(`ℹ️ Lead ${leadId} already has status: ${newStatus}`);
             return { success: true };
         }
 
-        leads[leadIndex].status = newStatus;
-        leads[leadIndex].lastInteraction = new Date().toISOString();
+        const updatedLead = {
+            ...lead,
+            status: newStatus,
+            lastInteraction: new Date().toISOString()
+        };
 
-        // 3. Sync full list back
-        console.log(`🔄 Updating lead ${leadId} status to "${newStatus}"...`);
-        await axios.post(API_URL, { leads });
+        // 3. Send update via PUT
+        console.log(`🔄 Updating lead ${leadId} status to "${newStatus}" via PUT...`);
+        await axios.put(API_URL, { lead: updatedLead });
 
         console.log(`✅ Successfully updated lead status.`);
         return { success: true };
