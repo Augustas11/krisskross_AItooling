@@ -55,6 +55,7 @@ export default function KrissKrossPitchGeneratorV2() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const [crmProcessing, setCrmProcessing] = useState(false);
+    const [hasProcessedDeepLink, setHasProcessedDeepLink] = useState(false);
     // duplicate viewingLead removed
 
     // Email Sending State
@@ -251,6 +252,24 @@ export default function KrissKrossPitchGeneratorV2() {
             supabase.removeChannel(channel);
         };
     }, [isCrmInitialized]);
+
+    // Deep Link Logic: Auto-open intelligence card if leadId is in URL
+    React.useEffect(() => {
+        if (isDataLoaded && !hasProcessedDeepLink && savedLeads.length > 0) {
+            const params = new URLSearchParams(window.location.search);
+            const leadIdParam = params.get('leadId');
+
+            if (leadIdParam) {
+                const lead = savedLeads.find(l => l.id === leadIdParam || String(l.id) === leadIdParam);
+                if (lead) {
+                    console.log(`🎯 [Deep Link] Opening intelligence card for: ${lead.name}`);
+                    setViewingLead(lead);
+                    setActiveTab('crm');
+                    setHasProcessedDeepLink(true);
+                }
+            }
+        }
+    }, [isDataLoaded, hasProcessedDeepLink, savedLeads]);
 
     const pitchTemplates = {
         'fashion-seller': [
