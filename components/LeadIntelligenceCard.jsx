@@ -351,6 +351,11 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                             )}
                         </div>
                     </div>
+
+                    {/* ACTIVITY TIMELINE */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <ActivityTimeline lead={lead} />
+                    </div>
                 </div>
             </div>
 
