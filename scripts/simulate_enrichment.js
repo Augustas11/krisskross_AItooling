@@ -42,7 +42,8 @@ async function runTest() {
     try {
         researchNotes = await researchLead(lead);
         console.log('\n[PERPLEXITY RESULT]:');
-        console.log(researchNotes ? researchNotes.substring(0, 500) + '...' : 'No result');
+        const notesStr = typeof researchNotes === 'object' ? JSON.stringify(researchNotes, null, 2) : researchNotes;
+        console.log(notesStr ? notesStr.substring(0, 500) + '...' : 'No result');
     } catch (e) {
         console.error('Perplexity Failed:', e.message);
     }
