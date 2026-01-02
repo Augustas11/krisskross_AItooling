@@ -7,6 +7,7 @@ import {
     CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PlaybookWidget } from './PlaybookWidget';
 // import { getTierForScore } from '../lib/scoring-constants'; // Removed
 
 /**
@@ -147,6 +148,9 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                             </div>
                         </div>
                     </div>
+
+                    {/* PLAYBOOK WIDGET */}
+                    <PlaybookWidget lead={lead} onUpdate={onUpdate} />
 
                     {/* CONTACT INFO (Compact) */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
