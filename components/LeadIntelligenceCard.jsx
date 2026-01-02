@@ -4,7 +4,7 @@ import {
     Instagram, Globe, Mail, Phone, MapPin,
     TrendingUp, Eye, Video, Brain,
     History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon
+    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 // import { getTierForScore } from '../lib/scoring-constants'; // Removed
