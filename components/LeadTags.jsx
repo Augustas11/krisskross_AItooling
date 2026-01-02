@@ -173,7 +173,7 @@ export const TagsSection = React.forwardRef(({ lead, onUpdateTags, onLoadingStat
         };
 
         onUpdateTags(finalUpdate);
-        alert('✅ Lead enriched & scored successfully!');
+        alert('✅ Deep Research Complete (v2.1): Lead enriched & scored!');
       } else {
         alert('❌ Refresh failed: ' + (data.error || 'Unknown error'));
       }
