@@ -375,7 +375,7 @@ ${template.cta}`;
 
             // Update CRM status
             if (pitchLead && pitchLead.id) {
-                updateLeadStatus(pitchLead.id, 'Pitched');
+                updateLeadStatus(pitchLead.id, 'Emailed');
             }
 
             setTimeout(() => {
@@ -1444,6 +1444,10 @@ ${template.cta}`;
                                         <div className="text-sm text-gray-600">Pitched</div>
                                     </div>
                                     <div>
+                                        <div className="text-2xl font-bold text-blue-500">{savedLeads.filter(l => l.status === 'Emailed').length}</div>
+                                        <div className="text-sm text-gray-600">Emailed</div>
+                                    </div>
+                                    <div>
                                         <div className="text-2xl font-bold text-green-600">{savedLeads.filter(l => l.status === 'Replied').length}</div>
                                         <div className="text-sm text-gray-600">Replied</div>
                                     </div>
@@ -1485,7 +1489,7 @@ ${template.cta}`;
 
                                 {/* Filters */}
                                 <div className="flex gap-2 p-4 border-b border-gray-200 overflow-x-auto">
-                                    {['all', 'New', 'Pitched', 'Replied', 'Dead'].map(filter => (
+                                    {['all', 'New', 'Pitched', 'Emailed', 'Replied', 'Dead'].map(filter => (
                                         <button
                                             key={filter}
                                             onClick={() => {
@@ -1599,6 +1603,7 @@ ${template.cta}`;
                                                                         >
                                                                             <option value="New">New</option>
                                                                             <option value="Pitched">Pitched</option>
+                                                                            <option value="Emailed">Emailed</option>
                                                                             <option value="Replied">Replied</option>
                                                                             <option value="Dead">Dead</option>
                                                                         </select>
@@ -2071,6 +2076,7 @@ ${template.cta}`;
                                                         >
                                                             <option value="New">New</option>
                                                             <option value="Pitched">Pitched</option>
+                                                            <option value="Emailed">Emailed</option>
                                                             <option value="Replied">Replied</option>
                                                             <option value="Dead">Dead</option>
                                                         </select>
