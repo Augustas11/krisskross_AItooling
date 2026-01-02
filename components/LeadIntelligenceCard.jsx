@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlaybookWidget } from './PlaybookWidget';
+import { ActivityTimeline } from './ActivityTimeline';
 // import { getTierForScore } from '../lib/scoring-constants'; // Removed
 
 /**

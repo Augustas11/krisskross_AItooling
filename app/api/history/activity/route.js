@@ -4,14 +4,63 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type'); // 'pitch', 'email', or 'all'
+    const type = searchParams.get('type'); // 'pitch', 'email', 'all', or 'lead'
+    const leadId = searchParams.get('leadId');
 
     if (!isSupabaseConfigured()) {
         return NextResponse.json({ data: [] });
     }
 
     try {
-        let results = {};
+        let results = [];
+
+        // CASE 1: Fetch Specific Lead Activity (Timeline)
+        if (leadId) {
+            // 1. Logs
+            const { data: logs, error: logsError } = await supabase
+                .from('user_activity_logs')
+                .select('*')
+                .eq('resource_id', leadId)
+                .order('created_at', { ascending: false });
+
+            if (logsError && logsError.code !== '42P01') console.error('Logs fetch error:', logsError); // Ignore if table missing
+
+            // 2. Emails (History)
+            const { data: emails, error: emailError } = await supabase
+                .from('email_history')
+                .select('*')
+                .eq('lead_id', leadId)
+                .order('sent_at', { ascending: false });
+
+            // 3. Pitches (History) - assumes pitch_history has lead_id or store_url match
+            // For now, let's rely on logs mainly. If logs are sparse, we might miss old data.
+            // Ideally we'd log 'pitch_generated' into user_activity_logs going forward.
+
+            // Normalize and Merge
+            const normalizedLogs = (logs || []).map(l => ({
+                id: `log-${l.id}`,
+                type: 'log',
+                action: l.action_type,
+                details: l.details,
+                timestamp: l.created_at
+            }));
+
+            const normalizedEmails = (emails || []).map(e => ({
+                id: `email-${e.id}`,
+                type: 'email',
+                action: 'Email Sent',
+                details: { subject: e.subject, to: e.recipient_email, status: e.status },
+                timestamp: e.sent_at
+            }));
+
+            results = [...normalizedLogs, ...normalizedEmails]
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            return NextResponse.json({ data: results });
+        }
+
+        // CASE 2: Global Recent History (Legacy / Dashboard)
+        let dashboardResults = {};
 
         if (type === 'pitch' || type === 'all' || !type) {
             const { data, error } = await supabase
@@ -20,8 +69,8 @@ export async function GET(req) {
                 .order('created_at', { ascending: false })
                 .limit(20);
 
-            if (error) throw error;
-            results.pushes = data;
+            if (error && error.code !== '42P01') throw error;
+            dashboardResults.pushes = data || [];
         }
 
         if (type === 'email' || type === 'all' || !type) {
@@ -31,15 +80,14 @@ export async function GET(req) {
                 .order('sent_at', { ascending: false })
                 .limit(20);
 
-            if (error) throw error;
-            results.emails = data;
+            if (error && error.code !== '42P01') throw error;
+            dashboardResults.emails = data || [];
         }
 
-        // If specific type requested, flatten
-        if (type === 'pitch') return NextResponse.json({ data: results.pushes });
-        if (type === 'email') return NextResponse.json({ data: results.emails });
+        if (type === 'pitch') return NextResponse.json({ data: dashboardResults.pushes });
+        if (type === 'email') return NextResponse.json({ data: dashboardResults.emails });
 
-        return NextResponse.json(results);
+        return NextResponse.json(dashboardResults);
 
     } catch (error) {
         console.error('History API Error:', error);
