@@ -8,7 +8,7 @@ import {
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
-    Youtube, Facebook, Send, Pencil, Check, Briefcase
+    Youtube, Facebook, Send, Pencil, Check, BriefcaseBusiness
 } from 'lucide-react';
 import { TIERS, getTierForScore } from '../lib/scoring-constants';
 import { supabase } from '../lib/supabase';
@@ -2173,7 +2173,7 @@ ${template.cta}`;
 
                                             <div className="space-y-6">
                                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center gap-2">
-                                                    <Briefcase className="w-4 h-4" /> Business Details
+                                                    <BriefcaseBusiness className="w-4 h-4" /> Business Details
                                                 </h3>
 
                                                 <div className="space-y-4">
