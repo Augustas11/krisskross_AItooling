@@ -197,21 +197,82 @@ export async function POST(req) {
             }
         }
 
-        // Use Supabase
-        console.log('🔄 [SUPABASE] Inserting leads...');
-        const dbLeads = taggedLeads.map(transformToDb);
-        const { error: insertError } = await supabase
-            .from('leads')
-            .insert(dbLeads);
+        // Use Supabase - Check for duplicates first
+        console.log('🔍 [SUPABASE] Checking for duplicates...');
+        const leadsToInsertFinal = [];
+        const duplicates = [];
 
-        if (insertError) {
-            console.error('❌ [SUPABASE] Error inserting leads:', insertError);
-            throw insertError;
+        for (const lead of taggedLeads) {
+            // Skip if no email or instagram (can't check for duplicates)
+            if (!lead.email && !lead.instagram) {
+                leadsToInsertFinal.push(lead);
+                continue;
+            }
+
+            // Build OR condition for duplicate check
+            let orCondition = '';
+            if (lead.email) orCondition += `email.eq.${lead.email}`;
+            if (lead.instagram) {
+                if (orCondition) orCondition += ',';
+                orCondition += `instagram.eq.${lead.instagram}`;
+            }
+
+            // Check if lead already exists
+            const { data: existing, error: checkError } = await supabase
+                .from('leads')
+                .select('id, name, email, instagram')
+                .or(orCondition)
+                .limit(1);
+
+            if (checkError) {
+                console.error('❌ [SUPABASE] Error checking duplicates:', checkError);
+                leadsToInsertFinal.push(lead);
+                continue;
+            }
+
+            if (existing && existing.length > 0) {
+                // Duplicate found - update last_interaction
+                console.log(`⚠️ [SUPABASE] Duplicate: ${lead.name} (${lead.email || lead.instagram}), updating timestamp`);
+
+                await supabase
+                    .from('leads')
+                    .update({
+                        last_interaction: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', existing[0].id);
+
+                duplicates.push({
+                    name: lead.name,
+                    existingId: existing[0].id,
+                    matchedOn: lead.email ? 'email' : 'instagram'
+                });
+            } else {
+                // No duplicate
+                leadsToInsertFinal.push(lead);
+            }
+        }
+
+        console.log(`✅ [SUPABASE] ${leadsToInsertFinal.length} new, ${duplicates.length} duplicates`);
+
+        // Insert only non-duplicates
+        if (leadsToInsertFinal.length > 0) {
+            const dbLeads = leadsToInsertFinal.map(transformToDb);
+            const { error: insertError } = await supabase
+                .from('leads')
+                .insert(dbLeads);
+
+            if (insertError) {
+                console.error('❌ [SUPABASE] Error inserting leads:', insertError);
+                throw insertError;
+            }
         }
 
         return NextResponse.json({
-            message: 'Leads inserted successfully',
-            count: taggedLeads.length
+            message: 'Leads processed successfully',
+            inserted: leadsToInsertFinal.length,
+            duplicates: duplicates.length,
+            duplicateDetails: duplicates
         });
     } catch (error) {
         console.error('❌ [API] Error adding leads:', error);
