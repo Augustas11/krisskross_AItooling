@@ -54,7 +54,7 @@ function transformFromDb(row) {
 
         // Scoring & Profiling
         score: row.score || 0,
-        tier: row.tier || 'GRAY',
+        // tier: row.tier || 'GRAY', // Removed
         tags: (row.tags || []).map(tag => {
             // Handle tags stored as JSON strings in database
             if (typeof tag === 'string') {
@@ -105,7 +105,7 @@ function transformToDb(lead) {
 
         // Scoring & Profiling
         score: lead.score || 0,
-        tier: lead.tier || 'GRAY',
+        // tier: lead.tier || 'GRAY', // Removed
         tags: lead.tags || [],
         instagram_followers: lead.instagramFollowers,
         engagement_rate: lead.engagementRate,

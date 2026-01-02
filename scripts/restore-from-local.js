@@ -38,7 +38,7 @@ function transformToDb(lead) {
         website: lead.website,
         enriched: lead.enriched || false,
         score: lead.score || 0,
-        tier: lead.tier || 'GRAY',
+        // tier: lead.tier || 'GRAY', // Removed
         tags: lead.tags || [],
         instagram_followers: lead.instagramFollowers,
         engagement_rate: lead.engagementRate,

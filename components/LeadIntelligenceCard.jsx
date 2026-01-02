@@ -7,7 +7,7 @@ import {
     CheckCircle2, AlertTriangle, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getTierForScore } from '../lib/scoring-constants';
+// import { getTierForScore } from '../lib/scoring-constants'; // Removed
 
 /**
  * LeadIntelligenceCard - The ultimate SDR view
@@ -165,8 +165,7 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                                 <div className="text-2xl font-black text-gray-900">{lead.score || 0}</div>
                             </div>
                             <div className="text-right">
-                                <div className="text-xs text-gray-500 mb-1">Tier</div>
-                                <div className="text-sm font-bold text-gray-700">{getTierForScore(lead.score)?.name || 'N/A'}</div>
+                                {/* Tier removed */}
                             </div>
                         </div>
                     </div>

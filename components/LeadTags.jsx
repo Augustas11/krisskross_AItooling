@@ -5,7 +5,7 @@
 
 'use client';
 import React from 'react';
-import { calculateLeadScore } from '../lib/scoring-constants';
+// import { calculateLeadScore } from '../lib/scoring-constants'; // Removed
 
 /**
  * Get tag color by category
@@ -162,14 +162,11 @@ export const TagsSection = React.forwardRef(({ lead, onUpdateTags, onLoadingStat
 
       if (data.success && onUpdateTags) {
         // Calculate new score based on enriched data
-        const mergedLead = { ...lead, ...data.enrichedData };
-        const scoreResult = calculateLeadScore(mergedLead);
-
         // Merge score into the update payload
         const finalUpdate = {
           ...data.enrichedData,
-          score: scoreResult.score,
-          tier: scoreResult.tier
+          // score: scoreResult.score, // Use server score
+          // tier: scoreResult.tier  // Use server tier (or null)
         };
 
         onUpdateTags(finalUpdate);

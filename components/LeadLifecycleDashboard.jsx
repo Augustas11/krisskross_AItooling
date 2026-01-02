@@ -5,7 +5,7 @@ import {
     TrendingUp, TrendingDown, Users, Mail, MessageSquare,
     DollarSign, AlertTriangle, CheckCircle, Clock, Target
 } from 'lucide-react';
-import { TIERS } from '../lib/scoring-constants';
+// import { TIERS } from '../lib/scoring-constants'; // Removed
 
 export default function LeadLifecycleDashboard() {
     const [funnelData, setFunnelData] = useState(null);
@@ -70,7 +70,7 @@ export default function LeadLifecycleDashboard() {
         );
     }
 
-    const { funnel, statusBreakdown, tierBreakdown, conversionRates, scoresByTier } = funnelData;
+    const { funnel, statusBreakdown, conversionRates } = funnelData;
 
     // Identify bottleneck (lowest conversion rate)
     const bottleneck = Object.entries(conversionRates)
@@ -104,8 +104,8 @@ export default function LeadLifecycleDashboard() {
                             key={range}
                             onClick={() => setDateRange(range)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${dateRange === range
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                                 }`}
                         >
                             {range === 'all' ? 'All Time' : `Last ${range}`}
@@ -219,39 +219,8 @@ export default function LeadLifecycleDashboard() {
                     </div>
                 </div>
 
-                {/* Tier Breakdown */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Lead Quality (Tier)</h3>
-                    <div className="space-y-3">
-                        {Object.entries(tierBreakdown).map(([tier, count]) => {
-                            const tierConfig = TIERS[tier];
-                            return (
-                                <div key={tier} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${tierConfig?.color || 'bg-gray-100 text-gray-600'}`}>
-                                            {tier}
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                            Avg: {scoresByTier[tier]}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-32 bg-gray-200 rounded-full h-2">
-                                            <div
-                                                className={`h-2 rounded-full ${tierConfig?.bgColor || 'bg-gray-400'}`}
-                                                style={{ width: `${(count / funnel.total * 100).toFixed(0)}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-sm font-semibold text-gray-900 w-12 text-right">
-                                            {count}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
             </div>
+
 
             {/* Insights */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -267,14 +236,7 @@ export default function LeadLifecycleDashboard() {
                             {parseFloat(conversionRates.overallConversion) < 1 && ' (Below industry benchmark of 2-5%)'}
                         </span>
                     </li>
-                    <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>
-                            {tierBreakdown.GREEN > 0
-                                ? `You have ${tierBreakdown.GREEN} high-quality (GREEN) leads - prioritize these for outreach`
-                                : 'No GREEN tier leads yet - focus on lead quality improvement'}
-                        </span>
-                    </li>
+
                     <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>
@@ -283,7 +245,7 @@ export default function LeadLifecycleDashboard() {
                     </li>
                 </ul>
             </div>
-        </div>
+        </div >
     );
 }
 

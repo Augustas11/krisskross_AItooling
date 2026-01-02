@@ -12,7 +12,6 @@ import {
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
     Youtube, Facebook, Send, Pencil, Check, BriefcaseBusiness, Skull
 } from 'lucide-react';
-import { TIERS, getTierForScore } from '../lib/scoring-constants';
 import { supabase } from '../lib/supabase';
 
 export default function KrissKrossPitchGeneratorV2() {
@@ -51,7 +50,6 @@ export default function KrissKrossPitchGeneratorV2() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [crmFilter, setCrmFilter] = useState('all');
     const [crmSearchQuery, setCrmSearchQuery] = useState('');
-    const [tierFilter, setTierFilter] = useState('all');
     const [selectedCrmLeadIds, setSelectedCrmLeadIds] = useState(new Set());
     // Pagination & Bulk Processing State
     const [currentPage, setCurrentPage] = useState(1);
@@ -600,14 +598,7 @@ ${template.cta}`;
             const enrichedLead = { ...lead, ...result.enrichedData };
 
             // Auto-tagging based on score
-            const score = enrichedLead.score || 0;
-            if (score >= 70) {
-                enrichedLead.tier = 'GREEN';
-            } else if (score >= 40) {
-                enrichedLead.tier = 'YELLOW';
-            } else {
-                enrichedLead.tier = 'RED';
-            }
+            // Legacy scoring removed. Tags are applied by auto-tagger backend logic if needed.
 
             // Update in CRM list
             setSavedLeads(prev => prev.map(l => l.id === lead.id ? enrichedLead : l));
@@ -624,7 +615,7 @@ ${template.cta}`;
                 body: JSON.stringify({ lead: enrichedLead })
             });
 
-            alert(`Enrichment Complete! Status: ${enrichedLead.tier} (${enrichedLead.score}/100)`);
+            alert(`Enrichment Complete! Tags updated.`);
 
         } catch (error) {
             console.error('Enrichment error:', error);
@@ -1008,15 +999,10 @@ ${template.cta}`;
         ? savedLeads
         : savedLeads.filter(l => (l.status || '').toLowerCase() === crmFilter.toLowerCase());
 
-    // Then by tier
-    const tierFilteredLeads = tierFilter === 'all'
-        ? statusFilteredLeads
-        : statusFilteredLeads.filter(l => (l.tier || 'GRAY') === tierFilter);
-
     // Then apply search query
     const filteredLeads = crmSearchQuery.trim() === ''
-        ? tierFilteredLeads
-        : tierFilteredLeads.filter(lead => {
+        ? statusFilteredLeads
+        : statusFilteredLeads.filter(lead => {
             const searchLower = crmSearchQuery.toLowerCase();
             return (
                 lead.name?.toLowerCase().includes(searchLower) ||
@@ -1563,22 +1549,6 @@ ${template.cta}`;
                                         </button>
                                     ))}
                                     <div className="w-px h-6 bg-gray-300 mx-2"></div>
-                                    <span className="text-xs font-semibold text-gray-500 mr-2 flex items-center">TIER:</span>
-                                    {['all', 'GREEN', 'YELLOW', 'RED'].map(tier => (
-                                        <button
-                                            key={tier}
-                                            onClick={() => {
-                                                setTierFilter(tier);
-                                                setCurrentPage(1);
-                                            }}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors border ${tierFilter === tier
-                                                ? 'bg-gray-800 text-white border-gray-800'
-                                                : `${TIERS[tier]?.color || 'bg-white text-gray-600'} ${TIERS[tier]?.border || 'border-gray-200'} hover:opacity-80`
-                                                }`}
-                                        >
-                                            {tier === 'all' ? 'All' : tier}
-                                        </button>
-                                    ))}
                                 </div>
 
                                 {/* Leads Table */}
@@ -1698,11 +1668,6 @@ ${template.cta}`;
                                                                             <div className="font-semibold text-gray-900 leading-tight">
                                                                                 {lead.name}
                                                                             </div>
-                                                                            {lead.score && (
-                                                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-gray-100 text-gray-700 border border-gray-200">
-                                                                                    ⭐ {lead.score}
-                                                                                </span>
-                                                                            )}
                                                                         </div>
                                                                         <div className="text-xs text-gray-500 mt-0.5">
                                                                             {lead.productCategory || 'Sourced Lead'} • {lead.addedAt}

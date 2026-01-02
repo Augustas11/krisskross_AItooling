@@ -64,7 +64,7 @@ export async function POST(req) {
                 posting_frequency: enrichedLead.postingFrequency,
                 enriched: true,
                 score: enrichedLead.score,
-                tier: enrichedLead.tier,
+                // tier: enrichedLead.tier, // Removed
                 tags: Array.isArray(enrichedLead.tags) ? enrichedLead.tags : [], // Safety check
                 score_breakdown: enrichedLead.scoreBreakdown,
                 last_scored_at: enrichedLead.lastScoredAt,

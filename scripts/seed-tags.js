@@ -127,9 +127,7 @@ async function seedTags() {
         total: leads.length,
         tagged: 0,
         errors: 0,
-        green: 0,
-        yellow: 0,
-        red: 0,
+        errors: 0,
         tagCounts: {}
     };
 
@@ -141,11 +139,6 @@ async function seedTags() {
             const tagged = await autoTagLead(lead);
             taggedLeads.push(tagged);
             stats.tagged++;
-
-            // Count priority tiers
-            if (tagged.tier === 'GREEN') stats.green++;
-            else if (tagged.tier === 'YELLOW') stats.yellow++;
-            else if (tagged.tier === 'RED') stats.red++;
 
             // Count tag usage
             if (tagged.tags) {
@@ -195,11 +188,7 @@ async function seedTags() {
     console.log(`Total Leads:       ${stats.total}`);
     console.log(`Successfully Tagged: ${stats.tagged}`);
     console.log(`Errors:            ${stats.errors}`);
-    console.log('');
-    console.log('Priority Distribution:');
-    console.log(`  🟢 GREEN:  ${stats.green} (${Math.round(stats.green / stats.total * 100)}%)`);
-    console.log(`  🟡 YELLOW: ${stats.yellow} (${Math.round(stats.yellow / stats.total * 100)}%)`);
-    console.log(`  🔴 RED:    ${stats.red} (${Math.round(stats.red / stats.total * 100)}%)`);
+    console.log(`Errors:            ${stats.errors}`);
     console.log('');
     console.log('Top 10 Most Common Tags:');
     const sortedTags = Object.entries(stats.tagCounts)

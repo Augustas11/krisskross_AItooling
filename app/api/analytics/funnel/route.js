@@ -24,7 +24,7 @@ export async function GET(req) {
         const dateTo = searchParams.get('to');
 
         // Build query
-        let query = supabase.from('leads').select('status, created_at, tier, score');
+        let query = supabase.from('leads').select('status, created_at, score');
 
         // Apply date filters if provided
         if (dateFrom) {
@@ -49,10 +49,10 @@ export async function GET(req) {
         };
 
         const tierCounts = {
-            'GREEN': 0,
-            'YELLOW': 0,
-            'RED': 0,
-            'GRAY': 0
+            // 'GREEN': 0,
+            // 'YELLOW': 0,
+            // 'RED': 0,
+            // 'GRAY': 0
         };
 
         leads.forEach(lead => {
@@ -64,11 +64,11 @@ export async function GET(req) {
                 statusCounts['New']++;
             }
 
-            // Count by tier
-            const tier = lead.tier || 'GRAY';
-            if (tierCounts.hasOwnProperty(tier)) {
-                tierCounts[tier]++;
-            }
+            // Count by tier - REMOVED
+            // const tier = lead.tier || 'GRAY';
+            // if (tierCounts.hasOwnProperty(tier)) {
+            //     tierCounts[tier]++;
+            // }
         });
 
         // Calculate conversion rates
@@ -84,15 +84,9 @@ export async function GET(req) {
             overallConversion: total > 0 ? (converted / total * 100).toFixed(1) : 0
         };
 
-        // Calculate average scores by tier
+        // Calculate average scores by tier - REMOVED
         const scoresByTier = {};
-        Object.keys(tierCounts).forEach(tier => {
-            const tierLeads = leads.filter(l => (l.tier || 'GRAY') === tier);
-            const avgScore = tierLeads.length > 0
-                ? (tierLeads.reduce((sum, l) => sum + (l.score || 0), 0) / tierLeads.length).toFixed(1)
-                : 0;
-            scoresByTier[tier] = avgScore;
-        });
+        // Object.keys(tierCounts).forEach(tier => { ... });
 
         return NextResponse.json({
             success: true,
@@ -105,9 +99,9 @@ export async function GET(req) {
                 dead: statusCounts['Dead']
             },
             statusBreakdown: statusCounts,
-            tierBreakdown: tierCounts,
+            // tierBreakdown: tierCounts, // Removed
             conversionRates,
-            scoresByTier,
+            // scoresByTier, // Removed
             dateRange: {
                 from: dateFrom || 'all time',
                 to: dateTo || 'now'
