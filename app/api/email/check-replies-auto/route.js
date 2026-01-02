@@ -1,88 +1,120 @@
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { getUnreadReplies, markEmailAsSeen } from '../../../../email-automation/services/imap-client';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/email/check-replies-auto
- * Automated cron job to check for email replies and update lead status
- * Should be called hourly via Vercel Cron
- */
-export async function GET(req) {
-    console.log('🔄 [CRON] Checking for email replies...');
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
-    if (!isSupabaseConfigured()) {
-        return NextResponse.json(
-            { error: 'Supabase not configured' },
-            { status: 500 }
-        );
-    }
+export async function GET() {
+    console.log('🔄 [CRON] Checking for email replies via IMAP...');
+    const logs = [];
 
     try {
-        // Import the reply checker
-        const { checkForReplies } = require('@/email-automation/reply-checker');
+        // 1. Fetch unread emails from IMAP
+        let unreadEmails = [];
+        try {
+            unreadEmails = await getUnreadReplies();
+        } catch (imapError) {
+            console.error('IMAP Connection Failed:', imapError);
+            return NextResponse.json({ error: 'IMAP Check Failed', details: imapError.message }, { status: 500 });
+        }
 
-        // Run the reply check
-        await checkForReplies();
+        if (!unreadEmails || unreadEmails.length === 0) {
+            console.log('📭 No new unread replies.');
+            return NextResponse.json({ message: 'No new replies', processed: 0 });
+        }
 
-        // After checking replies, unenroll any leads that replied from sequences
-        const { data: repliedLeads, error: fetchError } = await supabase
-            .from('leads')
-            .select('id, name, email, in_sequence')
-            .eq('status', 'Replied')
-            .eq('in_sequence', true);
+        logs.push(`Found ${unreadEmails.length} unread emails`);
+        console.log(`📨 Processing ${unreadEmails.length} emails...`);
 
-        if (fetchError) throw fetchError;
+        let processedCount = 0;
+        let matchedCount = 0;
 
-        let unenrolledCount = 0;
+        // 2. Process each email
+        for (const email of unreadEmails) {
+            try {
+                const fromEmail = email.from;
+                const normalizedEmail = fromEmail.trim().toLowerCase();
 
-        if (repliedLeads && repliedLeads.length > 0) {
-            console.log(`📧 Found ${repliedLeads.length} replied leads in sequences, unenrolling...`);
+                // Search for lead by email
+                // Using maybe 'ilike' or just direct match.
+                // Note: email.from might contain name "Name <email>". `imap-client` parses it.
 
-            for (const lead of repliedLeads) {
-                try {
-                    // Unenroll from sequence
-                    const { error: unenrollError } = await supabase
-                        .from('email_sequence_enrollments')
-                        .update({
-                            unenrolled_at: new Date().toISOString(),
-                            unenroll_reason: 'auto_unenroll'
-                        })
-                        .eq('lead_id', lead.id)
-                        .is('completed_at', null)
-                        .is('unenrolled_at', null);
+                const { data: leads, error: searchError } = await supabase
+                    .from('leads')
+                    .select('id, name, status, email, in_sequence')
+                    .ilike('email', normalizedEmail)
+                    .limit(1);
 
-                    if (unenrollError) throw unenrollError;
-
-                    // Update lead flag
-                    const { error: updateError } = await supabase
-                        .from('leads')
-                        .update({ in_sequence: false })
-                        .eq('id', lead.id);
-
-                    if (updateError) throw updateError;
-
-                    unenrolledCount++;
-                    console.log(`✅ Unenrolled ${lead.name} from sequence (replied)`);
-
-                } catch (err) {
-                    console.error(`❌ Error unenrolling lead ${lead.id}:`, err);
+                if (searchError) {
+                    logs.push(`Error searching for ${normalizedEmail}: ${searchError.message}`);
+                    continue;
                 }
+
+                if (leads && leads.length > 0) {
+                    const lead = leads[0];
+                    matchedCount++;
+                    logs.push(`🎯 Matched lead: ${lead.name} (${lead.email})`);
+
+                    // A. Mark as Replied
+                    if (lead.status !== 'Replied') {
+                        await supabase
+                            .from('leads')
+                            .update({
+                                status: 'Replied',
+                                last_interaction: new Date().toISOString(),
+                                // Auto-pause sequence if replied
+                                in_sequence: false
+                            })
+                            .eq('id', lead.id);
+
+                        logs.push(`Updated status to Replied for ${lead.name}`);
+                    }
+
+                    // B. Stop Sequence Enrollment
+                    if (lead.in_sequence) {
+                        await supabase
+                            .from('email_sequence_enrollments')
+                            .update({
+                                completed_at: new Date().toISOString(),
+                                status: 'replied',  // if column exists
+                                unenrolled_at: new Date().toISOString(),
+                                unenroll_reason: 'reply_received'
+                            })
+                            .eq('lead_id', lead.id)
+                            .is('completed_at', null)
+                            .is('unenrolled_at', null);
+
+                        logs.push(`Unenrolled ${lead.name} from sequence`);
+                    }
+
+                    // C. Mark email as seen in IMAP
+                    await markEmailAsSeen(email.uid);
+                    processedCount++;
+
+                } else {
+                    logs.push(`👻 No lead matched for ${normalizedEmail}`);
+                }
+
+            } catch (err) {
+                console.error(`Error processing email ${email.uid}:`, err);
+                logs.push(`Error processing email ${email.uid}: ${err.message}`);
             }
         }
 
         return NextResponse.json({
             success: true,
-            message: `Reply check complete. Unenrolled ${unenrolledCount} leads from sequences.`,
-            unenrolledCount
+            processed: processedCount,
+            matched: matchedCount,
+            logs
         });
 
     } catch (error) {
-        console.error('❌ [CRON] Error checking replies:', error);
-        return NextResponse.json(
-            { error: error.message },
-            { status: 500 }
-        );
+        console.error('❌ [CRON] Fatal error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

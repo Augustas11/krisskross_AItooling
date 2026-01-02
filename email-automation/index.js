@@ -1,12 +1,12 @@
-import { sendEmail } from './services/email-sender';
-import { generatePitchFromAPI } from './services/pitch-generator-client';
-import { logEmailActivity } from './services/crm-logger';
-import { checkForReplies } from './reply-checker';
+const { sendEmail } = require('./services/email-sender');
+const { generatePitchFromAPI } = require('./services/pitch-generator-client');
+const { logEmailActivity } = require('./services/crm-logger');
+const { checkForReplies } = require('./reply-checker');
 
 /**
  * Main orchestrator for sending personalized emails
  */
-export async function sendPersonalizedEmail({ leadId, leadEmail, leadContext, emailContentOverride }) {
+async function sendPersonalizedEmail({ leadId, leadEmail, leadContext, emailContentOverride }) {
     console.log(`Starting email automation for lead: ${leadId} (${leadEmail})`);
 
     try {
@@ -59,4 +59,7 @@ export async function sendPersonalizedEmail({ leadId, leadEmail, leadContext, em
     }
 }
 
-export { checkForReplies };
+module.exports = {
+    sendPersonalizedEmail,
+    checkForReplies
+};

@@ -13,7 +13,14 @@ import { motion, AnimatePresence } from 'framer-motion';
  * LeadIntelligenceCard - The ultimate SDR view
  * Displays comprehensive lead data from Apify, Perplexity, and Claude
  */
-export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment }) {
+import {
+    Instagram, Globe, Mail, Phone, MapPin,
+    TrendingUp, Eye, Video, Brain,
+    History, ChevronDown, ChevronUp, Copy,
+    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon
+} from 'lucide-react';
+
+export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, onUpdate, userCalendlyLink }) {
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, raw
     const [isResearchExpanded, setResearchExpanded] = useState(true);
 
@@ -155,6 +162,34 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                             <ContactRow icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={lead.phone} copyable />
                             <ContactRow icon={<MapPin className="w-3.5 h-3.5" />} label="Location" value={lead.businessAddress || 'Unknown'} />
                         </div>
+
+                        {/* Action Buttons */}
+                        <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-1 gap-2">
+                            <button
+                                onClick={() => {
+                                    if (userCalendlyLink) {
+                                        // Open calendly, potentially pre-filling data
+                                        const url = new URL(userCalendlyLink);
+                                        if (lead.email) url.searchParams.set('email', lead.email);
+                                        if (lead.name) url.searchParams.set('name', lead.name);
+                                        window.open(url.toString(), '_blank');
+
+                                        // Optional: Update status?
+                                        if (onUpdate) onUpdate(lead.id, { nextAction: 'Book Meeting' });
+                                    } else {
+                                        alert('Please set your Calendly link in Settings first!');
+                                    }
+                                }}
+                                className={`w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${userCalendlyLink
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                    }`}
+                                title={userCalendlyLink ? 'Open Scheduler' : 'Configure Scheduler in Settings'}
+                            >
+                                <CalendarIcon className="w-4 h-4" />
+                                {userCalendlyLink ? 'Book Meeting' : 'Setup Calendar'}
+                            </button>
+                        </div>
                     </div>
 
                     {/* TIER + SCORE INDICATOR */}
@@ -164,8 +199,56 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                                 <div className="text-xs text-gray-500 mb-1">Match Score</div>
                                 <div className="text-2xl font-black text-gray-900">{lead.score || 0}</div>
                             </div>
-                            <div className="text-right">
-                                {/* Tier removed */}
+                        </div>
+                    </div>
+
+                    {/* TASK MANAGEMENT (Phase 1) */}
+                    <div className="bg-white rounded-xl border border-blue-200 bg-blue-50/30 p-4 shadow-sm">
+                        <SectionTitle icon={<CheckCircle2 className="w-4 h-4 text-blue-600" />} title="Next Steps" />
+
+                        <div className="space-y-3 mt-3">
+                            {/* Next Action */}
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-gray-400 mb-1 block">Next Action</label>
+                                <select
+                                    className="w-full text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    value={lead.nextAction || ''}
+                                    onChange={(e) => onUpdate && onUpdate(lead.id, { nextAction: e.target.value })}
+                                >
+                                    <option value="">Select Action...</option>
+                                    <option value="Research">Research</option>
+                                    <option value="Connect on LinkedIn">Connect on LinkedIn</option>
+                                    <option value="Send Email">Send Email</option>
+                                    <option value="Follow Up">Follow Up</option>
+                                    <option value="Book Meeting">Book Meeting</option>
+                                    <option value="Close Deal">Close Deal</option>
+                                </select>
+                            </div>
+
+                            {/* Due Date & Assignee */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400 mb-1 block">Due Date</label>
+                                    <input
+                                        type="date"
+                                        className="w-full text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        value={lead.nextActionDue ? lead.nextActionDue.split('T')[0] : ''}
+                                        onChange={(e) => onUpdate && onUpdate(lead.id, { nextActionDue: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400 mb-1 block">Assignee</label>
+                                    <select
+                                        className="w-full text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        value={lead.assignedTo || ''}
+                                        onChange={(e) => onUpdate && onUpdate(lead.id, { assignedTo: e.target.value })}
+                                    >
+                                        <option value="">Unassigned</option>
+                                        <option value="Aug">Aug</option>
+                                        <option value="Reda">Reda</option>
+                                        <option value="Paulius">Paulius</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>

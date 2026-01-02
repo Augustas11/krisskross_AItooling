@@ -1,0 +1,2051 @@
+{
+  "stats": {
+    "total": 172,
+    "complete": 15,
+    "partial": 133,
+    "not_enriched": 24,
+    "failed": 0,
+    "stale": 0,
+    "inconsistent": 70,
+    "missing_triple_threat": {
+      "company": 71,
+      "contact": 43,
+      "intent": 141
+    }
+  },
+  "details": [
+    {
+      "id": "lead_imp_1767174372453_j5o72sju8",
+      "name": "LILLUSORY",
+      "status": "complete",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ovyn6uq46",
+      "name": "REORIA",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_xp15xoh61",
+      "name": "Madison Svetz",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_sd8ghxtfq",
+      "name": "JillianFits",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_5l63uu6v6",
+      "name": "Denise Bolanowski",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ewasv37s1",
+      "name": "Arach&Cloz",
+      "status": "complete",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_e58rf3htq",
+      "name": "SOLY HUX",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_p7dol8o7j",
+      "name": "SUUKSESS",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_i18jdrqlw",
+      "name": "Blooming Jelly",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_xo0c7vnnl",
+      "name": "Arctix",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_wknf9g6h9",
+      "name": "BTFBM",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "test-user-562363",
+      "name": "Test User",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_dl5lz7itx",
+      "name": "Lily Mags",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_py2qt4m88",
+      "name": "Maggie McCormack",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ra5yav6pa",
+      "name": "ETCYY",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_gyb2mb1i0",
+      "name": "Clothed In Grace Blog",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_xnuf6jea9",
+      "name": "The Archive Gazette",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_n03f7ogue",
+      "name": "OFEEFAN",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_732r0a6fq",
+      "name": "OKIRUNDO",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_p8v2olzlq",
+      "name": "BomKinta",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767232160604",
+      "name": "Princess Polly",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_l50k4wgnl",
+      "name": "OQQ",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767269561544",
+      "name": "PJ Paul Jones",
+      "status": "complete",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_wvwbj6k22",
+      "name": "Nat S.",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_9szc9r06o",
+      "name": "Sincerely Deidra",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_bcs3riwe2",
+      "name": "Jenny M",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_esn6vm3sm",
+      "name": "classroom.runway",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_h1b8jo0o9",
+      "name": "Beverly Welch",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_lm97b0gnb",
+      "name": "Jeanine Rechtman",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_a758mlmuc",
+      "name": "GRACE KARIN",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_jdazctmf2",
+      "name": "Milumia",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_5c2r2cctd",
+      "name": "Katharine Bozek.",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_hixzla5em",
+      "name": "DOKOTO",
+      "status": "complete",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_npd28obqz",
+      "name": "Kerys Augbaya",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_drhwqun66",
+      "name": "DStyle Outfit Ideas",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_i2jvdyz06",
+      "name": "Dalia Benavides",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_9cgfxy6sz",
+      "name": "MixShe",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_0s56lvvnn",
+      "name": "Ugerlov",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_trsll1rpw",
+      "name": "Ekouaer",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_86kpo73bf",
+      "name": "Ewedoos",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_qv443ix1h",
+      "name": "Floerns",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_486cmhksq",
+      "name": "VICHYIE",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ry1oh1s48",
+      "name": "Tankaneo",
+      "status": "complete",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_k37s7rcwi",
+      "name": "Timeson",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_njav8uyd",
+      "name": "ZEAGOO",
+      "status": "partial",
+      "issues": [
+        "unclean_instagram_handle"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_3qgg5vd4i",
+      "name": "SAMPEEL",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_zsbf0dgr7",
+      "name": "ZESICA",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_1767270453051",
+      "name": "CRZ YOGA",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_x8bgg8bwr",
+      "name": "ShaperX",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_kvjxhj3q0",
+      "name": "KOMEI",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ajzz7qo20",
+      "name": "MANGOPOP",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372438_rgr5zgu6l",
+      "name": "PINSPARK",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_h1uiqvj0x",
+      "name": "JomeDesign",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_u5bra1vpo",
+      "name": "GUVIVI",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_on61x6r34",
+      "name": "Marvmys",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ody4gc21g",
+      "name": "AFZ",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_z52lvf479",
+      "name": "IUGA",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_xw6x5y4ij",
+      "name": "RUMIA",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_oyvm2ojs3",
+      "name": "AmazingStar",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_w3eh1410i",
+      "name": "XIEER",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url",
+        "unclean_instagram_handle"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_wmnat1wsl",
+      "name": "Avidlove",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_0rq0w03qa",
+      "name": "AYWA",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_75vqz2bjp",
+      "name": "Zeagoo",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372452_1gihaggxt",
+      "name": "ANRABESS",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_1003dxkqp",
+      "name": "Trendy Queen",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_sqkoxwhyw",
+      "name": "AUTOMET",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_z45jtax85",
+      "name": "Saodimallsu",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_5k2h3f4t9",
+      "name": "PRETTYGARDEN",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "dummy_chris_cross_1767184611919",
+      "name": "Chris Cross",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ercosbjw5",
+      "name": "CHICME",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_xrqnw3v78",
+      "name": "EyMuse",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_pto6peayu",
+      "name": "Danysu",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767174372453_ubphu3b2q",
+      "name": "SHEWIN",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_fi7itwzy4",
+      "name": "Gosua",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_rbvc69oxx",
+      "name": "Style With Kristel",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_3dqvatvek",
+      "name": "Chelsey Lucyk",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_w2lydhked",
+      "name": "Jasmina Puri",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ssn3iyj5k",
+      "name": "Lauren Rockensock",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_mzn6p748m",
+      "name": "Kiara Lindeborg",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_zjvsyggzx",
+      "name": "Jada Bair",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_m7vdch5eq",
+      "name": "Dana Mannarino",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_rg3qv6rkk",
+      "name": "Bradley Emmens",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ku2c5e41g",
+      "name": "Hollyann DeVeny",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_y7yvj5nza",
+      "name": "Marissa S",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_w3ubtvxqv",
+      "name": "Jen Smith Style",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_z6jr4vlbu",
+      "name": "Kalyn Pierce",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_57lo9piwo",
+      "name": "Grace Renkemeyer l",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_z4rl6b72a",
+      "name": "Krizia Arlette",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_b82gr47o5",
+      "name": "Alyssa Knudsen",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_09jnp3uzo",
+      "name": "House of Dorough",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_b3bwihlsx",
+      "name": "Amour and Dior",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_l3bgos66e",
+      "name": "Jenny Smith",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_0ym0kdh7p",
+      "name": "Aggi King",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_v5ixtt2bt",
+      "name": "ShopSavvyWithNancyJo",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_m2snmqvxh",
+      "name": "Sidney Tilton",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_y0vbd510g",
+      "name": "My Affordable Looks",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_7ysfobveg",
+      "name": "Natalie Sian Thornton Howard",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_djkff8ltc",
+      "name": "Alexandra Petersson",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ze2oh7xbf",
+      "name": "StyleSorcery 7/24",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_cvj3b0a2h",
+      "name": "StylingTime With Lu",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_s42yo50y8",
+      "name": "DAZYCHIC",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_m10dd6pcb",
+      "name": "OEAK",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_hf0qrc3ra",
+      "name": "EVALESS",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_vt2ddns4b",
+      "name": "Hanes",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_rij1ye64l",
+      "name": "Moss Vintage",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_k30xsyxyf",
+      "name": "TACVASEN.",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_bj5q2oaef",
+      "name": "Bella Dahl.",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_e8a6ypekn",
+      "name": "POOLSIDE",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_2dvi5np8m",
+      "name": "Verdusa.",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_zrlhtqu0k",
+      "name": "GORGLITTER.",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_hajypz6ci",
+      "name": "MEROKEETY",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_vi1rjt83w",
+      "name": "QINSEN",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_8s2lxv5i4",
+      "name": "Wdirara",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_y45lv5dzb",
+      "name": "Viottiset.",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_63ic8sghh",
+      "name": "perfectwhitetee.",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_lvjtfq0jh",
+      "name": "Angashion",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_s0brod7ll",
+      "name": "Pink Queen",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_5vzyqdial",
+      "name": "Lazy Smile",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ijbrqhv6l",
+      "name": "Totatuit",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_7kq2z2gdo",
+      "name": "C202",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_u6g1yptfl",
+      "name": "Kafiloe",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_36bsphp5j",
+      "name": "AROLORA.",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_hwyoidzdq",
+      "name": "Knowfashionstyle.",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_s66ysv2q4",
+      "name": "Pink Classic Boutique",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_75ssjd324",
+      "name": "shop13rianda",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_vs74xclbu",
+      "name": "SHENHE",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_9914iizkt",
+      "name": "Lepunuo",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_mr0z73332",
+      "name": "CHYRII",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_6yf70ggy6",
+      "name": "SweatyRocks",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_yv7tv8m2x",
+      "name": "MakeMeChic",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_6w3p92znm",
+      "name": "Sidefeel",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_l5nyt7i2x",
+      "name": "Sunzel",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_aij4amrwx",
+      "name": "ARSSM",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_i1cynjaci",
+      "name": "EMMIOL",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_wgtrp92b5",
+      "name": "RoseSeek",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_c6rr797ue",
+      "name": "Fruit of the Loom",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ouz0t2o82",
+      "name": "Beverly Hills Polo Club",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_c7q8av9nw",
+      "name": "Cuddl Duds",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ihi7gud42",
+      "name": "MIXER",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_jx9kc9fvs",
+      "name": "CRZ YOGA - US",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_e1s28az0v",
+      "name": "society",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_t2e5yvm37",
+      "name": "SCL social society STY",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_qevlxy6p5",
+      "name": "olchee",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_dhnnj5e0q",
+      "name": "Allegra K",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_26h1ij0sm",
+      "name": "Steve Madden",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_sa2jwy12y",
+      "name": "LOMON",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_ix59igsrk",
+      "name": "CHICGAL",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_73grsksuz",
+      "name": "chouyatou",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_98bb9mfvs",
+      "name": "PEHMEA",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_gvd3foq4f",
+      "name": "LookbookStore",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_vhujc9wx2",
+      "name": "JUSTFASHIONNOW",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_lkcatlvth",
+      "name": "AlvaQ",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_k75b1zo7i",
+      "name": "Eytino",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_tk4wzgvlu",
+      "name": "Naggoo",
+      "status": "partial",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_skkqbsjzi",
+      "name": "Simply Styled By Angie",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_69es091wc",
+      "name": "Truly Enamoured",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_ph6gunwau",
+      "name": "The Gown Warehouse",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_22p4y7oyn",
+      "name": "Pronovias",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_1767341036743_0ac4bmdf8",
+      "name": "La Belle Couture",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_uml1majy6",
+      "name": "The Ivory",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_22cycqx99",
+      "name": "Olivia Bottega",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_v7eodbuvm",
+      "name": "Luna Bianca Bridal Boutique",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_2sy3tbe39",
+      "name": "Galia Lahav",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_bancxicob",
+      "name": "Frieda Brides",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767173676113",
+      "name": "Wiholl",
+      "status": "complete",
+      "issues": [],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_t2yrfg2kp",
+      "name": "The Proposal Bridal",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_1767341036743_gev080rn1",
+      "name": "Rico-A-Mona Bridal",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_1767341036743_j0zknlqq0",
+      "name": "LOHO Bride",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_1767341036743_9xaoeue55",
+      "name": "Zoe Rowyn Bridal",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_dbl9xqtu6",
+      "name": "A Bright Beauty",
+      "status": "not_enriched",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": true,
+        "intent": true
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_axr8wbeyt",
+      "name": "Karina",
+      "status": "partial",
+      "issues": [],
+      "gaps": {
+        "company": true,
+        "contact": false,
+        "intent": false
+      }
+    },
+    {
+      "id": "lead_imp_1767339319740_owebgxpos",
+      "name": "StylishWithT",
+      "status": "complete",
+      "issues": [
+        "invalid_website_url"
+      ],
+      "gaps": {
+        "company": false,
+        "contact": false,
+        "intent": false
+      }
+    }
+  ]
+}

@@ -1,12 +1,12 @@
-import nodemailer from 'nodemailer';
-import { smtpConfig } from '../config/smtp-settings';
+const nodemailer = require('nodemailer');
+const { smtpConfig } = require('../config/smtp-settings');
 
 /**
  * Sends a personalized email using SMTP
  * @param {Object} options - Email options (to, subject, html, text)
  * @returns {Promise<Object>} - Send result
  */
-export async function sendEmail(options) {
+async function sendEmail(options) {
     const transporter = nodemailer.createTransport(smtpConfig);
 
     // Verify connection configuration
@@ -38,3 +38,7 @@ export async function sendEmail(options) {
         throw new Error(`Failed to send email: ${error.message}`);
     }
 }
+
+module.exports = {
+    sendEmail
+};

@@ -42,6 +42,36 @@ export default function KrissKrossPitchGeneratorV2() {
     // CRM State
     const [viewingLead, setViewingLead] = useState(null);
 
+    // --- SETTINGS STATE ---
+    const [calendlyLink, setCalendlyLink] = useState('');
+    const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+    // Load settings on mount
+    useEffect(() => {
+        const loadSettings = async () => {
+            const { data } = await supabase.from('app_settings').select('value').eq('key', 'calendly_link').single();
+            if (data?.value) setCalendlyLink(data.value);
+        };
+        loadSettings();
+    }, []);
+
+    const saveSettings = async () => {
+        setIsSavingSettings(true);
+        try {
+            const { error } = await supabase
+                .from('app_settings')
+                .upsert({ key: 'calendly_link', value: calendlyLink });
+
+            if (error) throw error;
+            setIsSettingsOpen(false);
+        } catch (e) {
+            console.error('Failed to save settings:', e);
+            alert('Error saving settings');
+        } finally {
+            setIsSavingSettings(false);
+        }
+    };
+
 
     // CRM State
     const [savedLeads, setSavedLeads] = useState([]);
@@ -577,6 +607,33 @@ ${template.cta}`;
         }
     };
 
+    const handleLeadUpdate = async (leadId, updates) => {
+        // Optimistic update
+        setSavedLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updates } : l));
+        if (viewingLead && viewingLead.id === leadId) {
+            setViewingLead(prev => ({ ...prev, ...updates }));
+        }
+
+        // Server update
+        try {
+            // Find current lead to merge
+            const currentLead = savedLeads.find(l => l.id === leadId);
+            if (!currentLead) return;
+
+            const updatedLead = { ...currentLead, ...updates }; // Merge updates
+
+            await fetch('/api/crm/leads', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead: updatedLead })
+            });
+            console.log('✅ Lead updated successfully');
+        } catch (e) {
+            console.error('Update failed', e);
+            alert('Failed to save changes.');
+        }
+    };
+
     const handleEnrichLead = async (lead) => {
         if (!lead || !lead.id) return;
 
@@ -1025,7 +1082,76 @@ ${template.cta}`;
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+            {/* SETTINGS MODAL */}
+            <AnimatePresence>
+                {isSettingsOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={() => setIsSettingsOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <Settings className="w-5 h-5 text-gray-500" />
+                                    Settings
+                                </h2>
+                                <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Your Scheduling Link
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="text-gray-400">📅</span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                            placeholder="https://calendly.com/your-name"
+                                            value={calendlyLink}
+                                            onChange={(e) => setCalendlyLink(e.target.value)}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        This link will be used when you click "Book Meeting" in the CRM.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+                                <button
+                                    onClick={() => setIsSettingsOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={saveSettings}
+                                    disabled={isSavingSettings}
+                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {isSavingSettings ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Top Navigation Bar */}
             <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1041,6 +1167,13 @@ ${template.cta}`;
                         </div>
 
                         <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setIsSettingsOpen(true)}
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                                title="Settings"
+                            >
+                                <Settings className="w-5 h-5" />
+                            </button>
                             {isSyncing && (
                                 <span className="flex items-center gap-2 text-xs text-gray-500">
                                     <RefreshCw className="w-3 h-3 animate-spin" />
@@ -2240,6 +2373,7 @@ ${template.cta}`;
                                             lead={viewingLead}
                                             isEnriching={isEnrichingLead}
                                             onTriggerEnrichment={() => enrichTriggerRef.current?.()}
+                                            userCalendlyLink={calendlyLink}
                                         />
                                     )}
 

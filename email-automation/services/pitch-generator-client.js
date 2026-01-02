@@ -1,9 +1,9 @@
-import axios from 'axios';
+const axios = require('axios');
 
 /**
  * Client for the actual Pitch Generator API
  */
-export async function generatePitchFromAPI(leadContext) {
+async function generatePitchFromAPI(leadContext) {
     // Correcting to the actual API endpoint: /api/generate
     const API_URL = process.env.PITCH_GENERATOR_API_URL || `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/generate`;
 
@@ -56,3 +56,7 @@ export async function generatePitchFromAPI(leadContext) {
         };
     }
 }
+
+module.exports = {
+    generatePitchFromAPI
+};

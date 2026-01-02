@@ -1,10 +1,10 @@
-import axios from 'axios';
+const axios = require('axios');
 
 /**
  * Finds a lead by email address
  * Uses the GET /api/crm/leads endpoint and filters locally
  */
-export async function findLeadByEmail(email) {
+async function findLeadByEmail(email) {
     const API_URL = process.env.CRM_API_URL || 'http://localhost:3000/api/crm/leads';
 
     try {
@@ -40,7 +40,7 @@ export async function findLeadByEmail(email) {
  * Updates a lead's status
  * Uses the PUT /api/crm/leads endpoint for a single lead update
  */
-export async function updateLeadStatus(leadId, newStatus) {
+async function updateLeadStatus(leadId, newStatus) {
     const API_URL = process.env.CRM_API_URL || 'http://localhost:3000/api/crm/leads';
 
     try {
@@ -86,9 +86,15 @@ export async function updateLeadStatus(leadId, newStatus) {
  * Logs email activity back to the CRM
  * Note: Actual CRM endpoint is /api/crm/leads
  */
-export async function logEmailActivity(leadId, metadata) {
+async function logEmailActivity(leadId, metadata) {
     // For now, we will just log to console as we rely on status updates.
     // In a future robust implementation, we would append to an 'activities' array on the lead object.
     console.log(`📝 [ACTIVITY LOG] Lead: ${leadId}`, metadata);
     return { success: true };
 }
+
+module.exports = {
+    findLeadByEmail,
+    updateLeadStatus,
+    logEmailActivity
+};

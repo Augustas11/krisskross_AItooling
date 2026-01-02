@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { enrollLeadInSequence, getSequenceIdByType } from '@/lib/email-sequences';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -92,6 +93,28 @@ export async function POST(req) {
         if (updateError) throw updateError;
 
         console.log(`✅ [WEBHOOK] Updated ${lead.name}: intent ${lead.intent_score} → ${newIntentScore}`);
+
+        // --- BEHAVIORAL TRIGGERS ---
+        // Trigger specific email sequences based on actions
+        if (event === 'pricing_page_viewed' || event === 'pricing_page_visited_multiple') {
+            // Check if we should nudge (only if intent is high enough or explicit action)
+            // For now, let's be aggressive: View Pricing -> Get Help
+
+            try {
+                const pricingSeqId = await getSequenceIdByType('pricing_nudge');
+                if (pricingSeqId) {
+                    const result = await enrollLeadInSequence(lead.id, pricingSeqId);
+                    if (result.success) {
+                        console.log(`📧 [WEBHOOK] Enrolled ${lead.name} in Pricing Nudge`);
+                    } else {
+                        console.log(`ℹ️ [WEBHOOK] ${lead.name} already in sequence or errored: ${result.message}`);
+                    }
+                }
+            } catch (seqErr) {
+                console.error('❌ [WEBHOOK] Failed to enroll in pricing nudge:', seqErr);
+            }
+        }
+        // ---------------------------
 
         // Send Discord alert for high-intent actions
         if (shouldAlert && process.env.DISCORD_WEBHOOK_URL) {

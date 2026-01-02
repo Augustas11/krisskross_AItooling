@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { autoTagLead } from '@/lib/tags';
+import { enrollLeadInSequence, getSequenceIdByType } from '@/lib/email-sequences';
 import fs from 'fs';
 import path from 'path';
 
@@ -79,7 +80,12 @@ function transformFromDb(row) {
         instagramBusinessCategory: row.instagram_business_category,
         hasReels: row.has_reels,
         avgVideoViews: row.avg_video_views,
-        enrichmentHistory: row.enrichment_history
+        enrichmentHistory: row.enrichment_history,
+
+        // Task Management (Phase 1)
+        nextAction: row.next_action,
+        nextActionDue: row.next_action_due,
+        assignedTo: row.assigned_to
     };
 }
 
@@ -119,7 +125,12 @@ function transformToDb(lead) {
         instagram_business_category: lead.instagramBusinessCategory,
         has_reels: lead.hasReels,
         avg_video_views: lead.avgVideoViews,
-        enrichment_history: lead.enrichmentHistory
+        enrichment_history: lead.enrichmentHistory,
+
+        // Task Management (Phase 1)
+        next_action: lead.nextAction,
+        next_action_due: lead.nextActionDue,
+        assigned_to: lead.assignedTo
     };
 }
 
@@ -258,13 +269,65 @@ export async function POST(req) {
         // Insert only non-duplicates
         if (leadsToInsertFinal.length > 0) {
             const dbLeads = leadsToInsertFinal.map(transformToDb);
-            const { error: insertError } = await supabase
+            const { data: insertedLeads, error: insertError } = await supabase
                 .from('leads')
-                .insert(dbLeads);
+                .insert(dbLeads)
+                .select(); // Select to get IDs
 
             if (insertError) {
                 console.error('❌ [SUPABASE] Error inserting leads:', insertError);
                 throw insertError;
+            }
+
+            // AUTO-ENROLL LOGIC (Phase 2 & 3)
+            // Check for trial signups and enroll in onboarding sequence
+
+            // We need to resolve this asynchronously but don't block response? 
+            // Better to block to ensure it happens or fire and forget. 
+            // Let's do it in background (no await) to speed up UI, or await to be safe?
+            // Safest: await Promise.all
+            try {
+                // Pre-fetch sequence IDs
+                const [trialSeqId, fashionSeqId, affiliateSeqId] = await Promise.all([
+                    getSequenceIdByType('trial_onboarding'),
+                    getSequenceIdByType('fashion_owner'),
+                    getSequenceIdByType('affiliate')
+                ]);
+
+                if (insertedLeads.length > 0) {
+                    console.log(`🚀 [API] Auto-enrolling ${insertedLeads.length} leads (checking segments)...`);
+
+                    const enrollPromises = insertedLeads.map(async (lead) => {
+                        // 1. Priority: Trial Signups
+                        const isTrial = lead.store_url?.includes('trial') || lead.tags?.includes('trial') || (body.source === 'trial') || body.autoEnroll;
+                        if (isTrial && trialSeqId) {
+                            console.log(`✨ Enrolling ${lead.id} in Trial Sequence`);
+                            return enrollLeadInSequence(lead.id, trialSeqId);
+                        }
+
+                        // 2. Cold Outreach Segments (Only if not a trial)
+                        const category = (lead.product_category || '').toLowerCase();
+                        const tags = (lead.tags || []).map(t => typeof t === 'string' ? t.toLowerCase() : t?.name?.toLowerCase() || '');
+                        const combinedInfo = `${category} ${tags.join(' ')}`;
+
+                        if (fashionSeqId && (combinedInfo.includes('fashion') || combinedInfo.includes('clothing') || combinedInfo.includes('apparel') || combinedInfo.includes('boutique'))) {
+                            console.log(`👗 Enrolling ${lead.id} in Fashion Sequence`);
+                            return enrollLeadInSequence(lead.id, fashionSeqId);
+                        }
+
+                        if (affiliateSeqId && (combinedInfo.includes('affiliate') || combinedInfo.includes('commission') || combinedInfo.includes('ugc') || combinedInfo.includes('creator') || combinedInfo.includes('dropship'))) {
+                            console.log(`🤝 Enrolling ${lead.id} in Affiliate Sequence`);
+                            return enrollLeadInSequence(lead.id, affiliateSeqId);
+                        }
+
+                        // Default: No auto-enrollment for generic cold leads (keep manual control)
+                        return null;
+                    });
+
+                    await Promise.all(enrollPromises);
+                }
+            } catch (seqError) {
+                console.error('⚠️ [API] Failed to auto-enroll leads:', seqError);
             }
         }
 
