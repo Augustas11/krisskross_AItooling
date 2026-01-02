@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LeadIntelligenceCard } from './LeadIntelligenceCard';
 import { TagsSection } from './LeadTags';
 import EmailSequenceManager from './EmailSequenceManager';
+import LeadLifecycleDashboard from './LeadLifecycleDashboard';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
@@ -2080,16 +2081,7 @@ ${template.cta}`;
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className="mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
-                                <p className="text-gray-600">Track your outreach performance</p>
-                            </div>
-
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                                <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Coming Soon</h3>
-                                <p className="text-gray-600">Track response rates, conversion metrics, and more</p>
-                            </div>
+                            <LeadLifecycleDashboard />
                         </motion.div>
                     )}
                 </AnimatePresence>
