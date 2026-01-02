@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LeadIntelligenceCard } from './LeadIntelligenceCard';
 import { TagsSection } from './LeadTags';
+import EmailSequenceManager from './EmailSequenceManager';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
@@ -1016,6 +1017,7 @@ ${template.cta}`;
     const tabs = [
         { id: 'discover', label: 'Lead Discovery', icon: Search },
         { id: 'crm', label: 'CRM', icon: Users, badge: savedLeads.length },
+        { id: 'sequences', label: 'Email Sequences', icon: Mail },
         { id: 'pitch', label: 'Pitch Generator', icon: Sparkles },
         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     ];
@@ -2053,6 +2055,19 @@ ${template.cta}`;
                                     </motion.div>
                                 )}
                             </div>
+                        </motion.div>
+                    )}
+
+                    {/* Email Sequences Tab */}
+                    {activeTab === 'sequences' && (
+                        <motion.div
+                            key="sequences"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <EmailSequenceManager />
                         </motion.div>
                     )}
 
