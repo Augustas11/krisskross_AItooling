@@ -6,6 +6,7 @@ import {
     X, Save, AlertCircle, CheckCircle, Clock, Zap
 } from 'lucide-react';
 import { replaceMergeTags } from '../lib/email-sequences';
+import ReplyDetectionPanel from './ReplyDetectionPanel';
 
 export default function EmailSequenceManager() {
     const [sequences, setSequences] = useState([]);
@@ -210,6 +211,11 @@ export default function EmailSequenceManager() {
                 <p className="text-gray-600">Manage automated email follow-up sequences</p>
             </div>
 
+            {/* Reply Detection Panel */}
+            <div className="mb-6">
+                <ReplyDetectionPanel />
+            </div>
+
             {/* Sequences List */}
             <div className="grid gap-4">
                 {sequences.map((sequence) => (
@@ -222,8 +228,8 @@ export default function EmailSequenceManager() {
                                 <div className="flex items-center gap-3 mb-2">
                                     <h3 className="text-lg font-semibold text-gray-900">{sequence.name}</h3>
                                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${sequence.active
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {sequence.active ? 'Active' : 'Inactive'}
                                     </span>
