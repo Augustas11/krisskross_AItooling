@@ -223,10 +223,11 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                                             </p>
                                         ))}
                                     </div>
-                                    {lead.aiResearchSummary.split('\n').length > 3 && (
+
+                                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                                         <button
                                             onClick={() => setResearchExpanded(!isResearchExpanded)}
-                                            className="mt-3 text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+                                            className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
                                         >
                                             {isResearchExpanded ? (
                                                 <><ChevronUp className="w-3 h-3" /> Show Less</>
@@ -234,7 +235,17 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                                                 <><ChevronDown className="w-3 h-3" /> Expand Full Research</>
                                             )}
                                         </button>
-                                    )}
+
+                                        <button
+                                            onClick={() => onTriggerEnrichment?.(lead)}
+                                            disabled={isEnriching}
+                                            className="text-xs text-gray-400 hover:text-indigo-600 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title="Re-run deep research to update summary"
+                                        >
+                                            <RefreshCw className={`w-3 h-3 ${isEnriching ? 'animate-spin' : ''}`} />
+                                            {isEnriching ? 'Refreshing...' : 'Refresh Research'}
+                                        </button>
+                                    </div>
                                 </>
                             ) : (
                                 <div className="text-center py-6">
@@ -246,7 +257,7 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment })
                                         <div className="space-y-3">
                                             <p className="text-sm text-gray-500">No research available yet</p>
                                             <button
-                                                onClick={() => onTriggerEnrichment?.()}
+                                                onClick={() => onTriggerEnrichment?.(lead)}
                                                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto"
                                             >
                                                 <Brain className="w-4 h-4" />
