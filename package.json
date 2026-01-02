@@ -17,6 +17,7 @@
     "axios": "^1.13.2",
     "framer-motion": "^12.23.26",
     "imap-simple": "^5.1.0",
+    "libphonenumber-js": "^1.12.33",
     "lucide-react": "^0.400.0",
     "mailparser": "^3.9.1",
     "next": "14.2.4",

@@ -55,6 +55,11 @@ export async function POST(req) {
             const dbUpdate = {
                 instagram: enrichedLead.instagram,
                 instagram_followers: enrichedLead.instagramFollowers,
+                email: enrichedLead.email,
+                phone: enrichedLead.phone,
+                business_address: enrichedLead.location, // Map location to business_address
+                website: enrichedLead.website,
+                tiktok: enrichedLead.tiktok,
                 engagement_rate: enrichedLead.engagementRate,
                 posting_frequency: enrichedLead.postingFrequency,
                 enriched: true,

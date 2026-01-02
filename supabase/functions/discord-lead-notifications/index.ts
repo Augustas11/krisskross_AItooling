@@ -15,7 +15,8 @@ serve(async (req) => {
         const notification = getNotificationPayload(type, record, old_record)
         if (!notification) return new Response("Skipped", { status: 200 })
 
-        const response = await fetch(cleanWebhookUrl, {
+        // Use Retry Logic
+        const response = await fetchWithRetry(cleanWebhookUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(notification),
@@ -31,6 +32,41 @@ serve(async (req) => {
         return new Response(`Error: ${e.message}`, { status: 500 })
     }
 })
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 5, backoff = 1000) {
+    try {
+        const res = await fetch(url, options)
+
+        if (res.status === 429 && retries > 0) {
+            let waitTime = backoff
+            const retryAfter = res.headers.get("Retry-After")
+            if (retryAfter) {
+                // Retry-After is usually in seconds
+                waitTime = parseInt(retryAfter) * 1000
+            }
+
+            // Add jitter (0-500ms) to prevent thundering herd
+            const jitter = Math.random() * 500
+            const totalWait = waitTime + jitter
+
+            console.log(`Rate limited (429). Retrying in ${totalWait}ms... (${retries} attempts left)`)
+
+            await new Promise(r => setTimeout(r, totalWait))
+
+            // Exponential backoff for next retry (if not using retry-after)
+            return fetchWithRetry(url, options, retries - 1, backoff * 2)
+        }
+
+        return res
+    } catch (err) {
+        if (retries > 0) {
+            console.log(`Fetch error: ${err.message}. Retrying... (${retries} attempts left)`)
+            await new Promise(r => setTimeout(r, 1000))
+            return fetchWithRetry(url, options, retries - 1, backoff * 2)
+        }
+        throw err
+    }
+}
 
 function getNotificationPayload(type, record, oldRecord) {
     if (type === "INSERT") return createNewLeadEmbed(record)
