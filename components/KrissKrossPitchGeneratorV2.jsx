@@ -1719,15 +1719,22 @@ ${template.cta}`;
                                                                         )}
                                                                     </td>
                                                                     <td className="px-6 py-4">
-                                                                        <div
-                                                                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                                                lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                                                                                    lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                                                                        lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                                                            'bg-red-50 text-red-700 border-red-200'
-                                                                                }`}
-                                                                        >
-                                                                            {lead.status || 'New'}
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div
+                                                                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                                                    lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                                                                        lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                                                            lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                                                'bg-red-50 text-red-700 border-red-200'
+                                                                                    }`}
+                                                                            >
+                                                                                {lead.status || 'New'}
+                                                                            </div>
+                                                                            {lead.in_sequence && (
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-200" title="In automated follow-up sequence">
+                                                                                    📧 Sequence
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     </td>
                                                                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>

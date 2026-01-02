@@ -42,6 +42,21 @@ export async function POST(req) {
                     lead_id: leadId !== 'manual' ? leadId : null,
                     status: 'sent'
                 }]);
+
+                // Auto-enroll in cold outreach follow-up sequence (if not already enrolled)
+                if (leadId && leadId !== 'manual') {
+                    const { enrollLeadInSequence, getDefaultColdOutreachSequenceId } = require('@/lib/email-sequences');
+
+                    const sequenceId = await getDefaultColdOutreachSequenceId();
+                    if (sequenceId) {
+                        const enrollResult = await enrollLeadInSequence(leadId, sequenceId);
+                        if (enrollResult.success) {
+                            console.log(`✅ Auto-enrolled lead ${leadId} in follow-up sequence`);
+                        } else {
+                            console.log(`ℹ️ Lead ${leadId} not enrolled: ${enrollResult.error}`);
+                        }
+                    }
+                }
             }
         } catch (e) {
             console.error('Email history save failed:', e);

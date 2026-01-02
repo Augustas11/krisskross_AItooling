@@ -26,6 +26,31 @@ and think like a strategist, not a traditional programmer.
 - Add logging
 - Create test files
 
+## Token Usage Reporting
+**Critical:** I work with a 200,000 token budget per session. Track and report usage to prevent task breakdowns.
+
+### After Completing Any Task:
+Report token status in this format:
+```
+📊 **Token Status**
+- Used: X tokens
+- Remaining: Y tokens  
+- Budget consumed: Z%
+[⚠️ Warning if >75% used]
+```
+
+### Token Thresholds:
+- **0-50%** (Green): ✅ Safe to continue complex tasks
+- **50-75%** (Yellow): ⚠️ Monitor closely, consider checkpoints
+- **75-90%** (Orange): 🔶 Break remaining work into smaller chunks
+- **90%+** (Red): 🛑 Wrap up current task, prepare session summary
+
+### When >75% Budget Used:
+1. Alert me immediately
+2. Summarize progress so far
+3. Suggest breaking remaining work into new session
+4. Create resumption notes if task incomplete
+
 ## When I Question You
 If I ask "why this way?" I'm learning, not challenging.
 Explain:

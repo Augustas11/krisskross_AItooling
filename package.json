@@ -15,7 +15,6 @@
     "@supabase/supabase-js": "^2.89.0",
     "apify-client": "^2.21.0",
     "axios": "^1.13.2",
-    "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
     "imap-simple": "^5.1.0",
     "lucide-react": "^0.400.0",
@@ -30,6 +29,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
+    "dotenv": "^17.2.3",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4"
   }
