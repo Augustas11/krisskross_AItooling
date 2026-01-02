@@ -27,12 +27,21 @@ export async function POST(req) {
 
         // High-intent events to track
         const highIntentEvents = {
+            // Generic high-intent events
             'pricing_page_viewed': { score: 20, alert: true },
             'demo_video_watched': { score: 25, alert: true },
-            'pricing_page_visited_multiple': { score: 30, alert: true }, // 2+ times in 24h
+            'pricing_page_visited_multiple': { score: 30, alert: true },
             'trial_video_generated': { score: 20, alert: false },
             'trial_video_shared': { score: 25, alert: true },
             'feature_page_visited': { score: 10, alert: false },
+
+            // KrissKross-specific events (from your PostHog)
+            'insufficient_credits_shown': { score: 25, alert: true }, // User hit limit - upsell!
+            'subscription_plan_selected': { score: 35, alert: true }, // HOT! Selecting plan
+            'credits_purchased': { score: 40, alert: true }, // CONVERSION!
+            'billing_success_viewed': { score: 40, alert: true }, // Payment successful!
+            'video_generated': { score: 15, alert: false }, // User engaged
+            'upgrade_clicked': { score: 30, alert: true }, // High intent to upgrade
         };
 
         if (!highIntentEvents[event]) {
@@ -130,6 +139,11 @@ async function sendDiscordAlert({ event, lead, properties }) {
         'demo_video_watched': '🎥 Demo Video Watched',
         'pricing_page_visited_multiple': '🔥 Multiple Pricing Visits',
         'trial_video_shared': '📤 Video Shared on Social',
+        'insufficient_credits_shown': '⚠️ Credits Depleted',
+        'subscription_plan_selected': '🎯 Plan Selected',
+        'credits_purchased': '💳 Credits Purchased',
+        'billing_success_viewed': '✅ Payment Successful',
+        'upgrade_clicked': '⬆️ Upgrade Clicked',
     };
 
     const embed = {
