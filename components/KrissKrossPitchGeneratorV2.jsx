@@ -853,7 +853,22 @@ ${template.cta}`;
             });
 
             if (addedCount > 0) {
+                // Optimistic UI Update
                 setSavedLeads(prev => [...newLeads, ...prev]);
+
+                // Persist to Database immediately
+                fetch('/api/crm/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leads: newLeads })
+                }).then(res => {
+                    if (!res.ok) throw new Error('Database write failed');
+                    console.log(`✅ [CSV Import] Successfully persisted ${addedCount} leads to DB`);
+                }).catch(err => {
+                    console.error('❌ [CSV Import] Failed to save leads to database:', err);
+                    alert('Warning: Imported leads are visible but failed to save to the database. They may disappear on refresh.');
+                });
+
                 alert(`Successfully imported ${addedCount} leads! (${importedLeads.length - addedCount} duplicates skipped)`);
             } else {
                 alert('No new leads found. All imported leads were duplicates.');
