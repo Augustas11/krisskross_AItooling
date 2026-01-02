@@ -4,7 +4,7 @@ import {
     Instagram, Globe, Mail, Phone, MapPin,
     TrendingUp, Eye, Video, Brain,
     History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X
+    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 // import { getTierForScore } from '../lib/scoring-constants'; // Removed
@@ -13,12 +13,6 @@ import { motion, AnimatePresence } from 'framer-motion';
  * LeadIntelligenceCard - The ultimate SDR view
  * Displays comprehensive lead data from Apify, Perplexity, and Claude
  */
-import {
-    Instagram, Globe, Mail, Phone, MapPin,
-    TrendingUp, Eye, Video, Brain,
-    History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon
-} from 'lucide-react';
 
 export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, onUpdate, userCalendlyLink }) {
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, raw
@@ -181,8 +175,8 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                                     }
                                 }}
                                 className={`w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${userCalendlyLink
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                                     }`}
                                 title={userCalendlyLink ? 'Open Scheduler' : 'Configure Scheduler in Settings'}
                             >
