@@ -4,7 +4,7 @@ import {
     Instagram, Globe, Mail, Phone, MapPin,
     TrendingUp, Eye, Video, Brain,
     History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon, RefreshCw
+    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon, RefreshCw, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlaybookWidget } from './PlaybookWidget';
@@ -19,6 +19,9 @@ import { ActivityTimeline } from './ActivityTimeline';
 export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, onUpdate, userCalendlyLink }) {
     const [activeTab, setActiveTab] = useState('overview'); // overview, history, raw
     const [isResearchExpanded, setResearchExpanded] = useState(true);
+    const [isPitchModalOpen, setPitchModalOpen] = useState(false);
+    const [generatedPitch, setGeneratedPitch] = useState('');
+    const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
 
     if (!lead) return null;
 
@@ -26,6 +29,35 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
         // Toast logic could go here
+    };
+
+    // Helper: Generate AI Pitch
+    const generatePitch = async () => {
+        setIsGeneratingPitch(true);
+        setPitchModalOpen(true);
+        setGeneratedPitch('');
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    leadId: lead.id,
+                    targetType: lead.product_category || 'general',
+                    customName: lead.name
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to generate pitch');
+
+            setGeneratedPitch(data.pitch);
+        } catch (error) {
+            console.error('Pitch generation error:', error);
+            setGeneratedPitch('Sorry, pitch generation failed. Please try again or use the manual Pitch Generator tab.');
+        } finally {
+            setIsGeneratingPitch(false);
+        }
     };
 
     // Helper: Categorize tags
@@ -187,6 +219,20 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                             >
                                 <CalendarIcon className="w-4 h-4" />
                                 {userCalendlyLink ? 'Book Meeting' : 'Setup Calendar'}
+                            </button>
+
+                            {/* Draft Pitch with AI */}
+                            <button
+                                onClick={generatePitch}
+                                disabled={!lead.enriched}
+                                className={`w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${lead.enriched
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-sm'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                title={lead.enriched ? 'Generate personalized pitch using AI insights' : 'Enrich lead first to enable AI pitch generation'}
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                {lead.enriched ? 'Draft Pitch with AI' : 'Enrich to Draft'}
                             </button>
                         </div>
                     </div>
@@ -361,6 +407,97 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
 
 
         </div>
+
+        {/* AI Pitch Modal */ }
+    <AnimatePresence>
+        {isPitchModalOpen && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={() => setPitchModalOpen(false)}
+            >
+                <motion.div
+                    initial={{ scale: 0.95, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 20 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+                >
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="text-2xl font-bold flex items-center gap-2">
+                                    <Sparkles className="w-6 h-6" />
+                                    AI-Generated Pitch
+                                </h3>
+                                <p className="text-purple-100 text-sm mt-1">for {lead.name}</p>
+                            </div>
+                            <button
+                                onClick={() => setPitchModalOpen(false)}
+                                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
+                        {isGeneratingPitch ? (
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <RefreshCw className="w-8 h-8 text-purple-600 animate-spin mb-4" />
+                                <p className="text-gray-600 font-medium">Crafting your personalized pitch...</p>
+                                <p className="text-gray-400 text-sm mt-2">Using AI insights from research & tags</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <textarea
+                                    value={generatedPitch}
+                                    onChange={(e) => setGeneratedPitch(e.target.value)}
+                                    className="w-full h-64 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none font-mono text-sm text-gray-800"
+                                    placeholder="Pitch will appear here..."
+                                />
+
+                                {generatedPitch && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 bg-purple-50 p-3 rounded-lg">
+                                        <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                                        <span>Generated using: AI Research Summary, Tags, Social Metrics</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-gray-200 p-4 bg-gray-50 flex gap-3">
+                        <button
+                            onClick={() => copyToClipboard(generatedPitch)}
+                            disabled={!generatedPitch}
+                            className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            <Copy className="w-4 h-4" />
+                            Copy to Clipboard
+                        </button>
+                        <button
+                            onClick={() => {
+                                // Navigate to Pitch Generator tab with pre-filled content
+                                copyToClipboard(generatedPitch);
+                                setPitchModalOpen(false);
+                            }}
+                            disabled={!generatedPitch}
+                            className="flex-1 py-2 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Copy & Close
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+    </AnimatePresence>
     );
 }
 

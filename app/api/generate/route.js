@@ -12,7 +12,48 @@ export async function POST(req) {
             apiKey: apiKey,
         });
 
-        const { targetType, customName, context } = await req.json();
+        const { targetType, customName, context, leadId } = await req.json();
+
+        // Auto-populate context from CRM if leadId provided
+        let enrichedContext = context;
+        let leadData = null;
+
+        if (leadId) {
+            try {
+                const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
+                if (isSupabaseConfigured()) {
+                    const { data: lead, error } = await supabase
+                        .from('leads')
+                        .select('*')
+                        .eq('id', leadId)
+                        .single();
+
+                    if (!error && lead) {
+                        leadData = lead;
+                        // Auto-populate context from enriched CRM data
+                        const contextParts = [];
+
+                        if (lead.product_category) contextParts.push(`Business Category: ${lead.product_category}`);
+                        if (lead.instagram_followers) contextParts.push(`Instagram: ${lead.instagram_followers.toLocaleString()} followers`);
+                        if (lead.engagement_rate) contextParts.push(`Engagement Rate: ${lead.engagement_rate}%`);
+                        if (lead.tags && Array.isArray(lead.tags) && lead.tags.length > 0) {
+                            const tagNames = lead.tags.map(t => t.name || t).slice(0, 5).join(', ');
+                            contextParts.push(`Key Insights: ${tagNames}`);
+                        }
+                        if (lead.ai_research_summary) {
+                            // Extract first 200 chars of summary
+                            const summary = lead.ai_research_summary.substring(0, 200).trim();
+                            contextParts.push(`AI Research: ${summary}...`);
+                        }
+
+                        enrichedContext = contextParts.join('\n');
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching lead data:', e);
+                // Continue with manual context if fetch fails
+            }
+        }
 
         const systemPrompt = `You are the KrissKross AI Brand Voice Expert. Your goal is to generate high-converting outreach pitches for SDRs.
 
@@ -26,7 +67,7 @@ Voice Guidelines:
 
 Target: ${targetType}
 Recipient Name: ${customName || 'Prospect'}
-${context ? `Additional Context: ${context}` : ''}
+${enrichedContext ? `Additional Context: ${enrichedContext}` : ''}
 
 CRITICAL: If context is provided (like a profile link, bio, or product details), weave it into the hook or value prop to make the pitch feel deeply personalized and not robotic.
 
@@ -37,7 +78,7 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
             max_tokens: 300,
             system: systemPrompt,
             messages: [
-                { role: "user", content: `Generate a KrissKross pitch for ${customName ? customName : 'a ' + targetType}.${context ? ` Use this context to personalize it: ${context}` : ''}` }
+                { role: "user", content: `Generate a KrissKross pitch for ${customName ? customName : 'a ' + targetType}.${enrichedContext ? ` Use this context to personalize it: ${enrichedContext}` : ''}` }
             ],
         });
 
@@ -50,9 +91,10 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
                 const { error: historyError } = await supabase
                     .from('pitch_history')
                     .insert([{
-                        lead_name: customName || 'Unknown',
+                        lead_id: leadId || null,
+                        lead_name: customName || leadData?.name || 'Unknown',
                         target_type: targetType,
-                        context: context,
+                        context: enrichedContext || context,
                         generated_pitch: pitchText,
                         was_ai_generated: true
                     }]);
