@@ -1,6 +1,7 @@
+// ... imports
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { getSession, hashPassword, validatePasswordStrength } from '@/lib/auth';
 
 export async function GET(request) {
     try {
@@ -21,6 +22,66 @@ export async function GET(request) {
         return NextResponse.json({ users });
     } catch (error) {
         console.error('Fetch users error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
+export async function POST(request) {
+    try {
+        const session = await getSession();
+        if (!session || session.role !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+
+        const body = await request.json();
+        const { email, password, fullName, role } = body;
+
+        // Validation
+        if (!email || !password || !fullName) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const { valid, message } = validatePasswordStrength(password);
+        if (!valid) {
+            return NextResponse.json({ error: message }, { status: 400 });
+        }
+
+        // Hash password
+        const passwordHash = await hashPassword(password);
+
+        // Insert
+        const { data, error } = await supabase
+            .from('users')
+            .insert({
+                email,
+                password_hash: passwordHash,
+                full_name: fullName,
+                role: role || 'user',
+                status: 'active'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === '23505') {
+                return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+            }
+            throw error;
+        }
+
+        // Log activity
+        await supabase.from('user_activity_logs').insert({
+            user_id: session.userId,
+            action_type: 'create_user',
+            resource_type: 'user',
+            resource_id: data.id,
+            details: { email, role: role || 'user' }
+        });
+
+        return NextResponse.json({ success: true, user: data });
+
+    } catch (error) {
+        console.error('Create user error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
