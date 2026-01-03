@@ -6,6 +6,7 @@ import { TagsSection } from './LeadTags';
 import EmailSequenceManager from './EmailSequenceManager';
 import LeadLifecycleDashboard from './LeadLifecycleDashboard';
 import ActivityFeed from './ActivityFeed';
+import SDRTutorial from './SDRTutorial';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
@@ -1047,16 +1048,16 @@ ${template.cta}`;
         setPitchLead(lead); // Store complete lead for emailing
         setRecipientEmail(lead.email || '');
         setCustomName(lead.name || '');
-        
+
         // Build rich context from CRM data
         const contextParts = [];
-        
+
         // 1. Full AI Research Summary (most valuable!)
         if (lead.aiResearchSummary || lead.ai_research_summary) {
             const summary = lead.aiResearchSummary || lead.ai_research_summary;
             contextParts.push(`=== COMPANY RESEARCH ===\n${summary}\n`);
         }
-        
+
         // 2. Business basics
         if (lead.productCategory || lead.product_category) {
             contextParts.push(`Business Type: ${lead.productCategory || lead.product_category}`);
@@ -1064,7 +1065,7 @@ ${template.cta}`;
         if (lead.businessAddress || lead.business_address) {
             contextParts.push(`Location: ${lead.businessAddress || lead.business_address}`);
         }
-        
+
         // 3. Social proof
         if (lead.instagramFollowers || lead.instagram_followers) {
             const followers = lead.instagramFollowers || lead.instagram_followers;
@@ -1074,18 +1075,18 @@ ${template.cta}`;
             const rate = lead.engagementRate || lead.engagement_rate;
             contextParts.push(`Engagement Rate: ${rate}%`);
         }
-        
+
         // 4. Tags (pain points, business insights, content gaps)
         if (lead.tags && Array.isArray(lead.tags) && lead.tags.length > 0) {
             const painTags = lead.tags.filter(t => t.category === 'pain').map(t => t.name);
             const businessTags = lead.tags.filter(t => t.category === 'business').map(t => t.name);
             const contentTags = lead.tags.filter(t => t.category === 'content').map(t => t.name);
-            
+
             if (painTags.length > 0) contextParts.push(`\n=== PAIN POINTS ===\n${painTags.join(', ')}`);
             if (businessTags.length > 0) contextParts.push(`\n=== BUSINESS INSIGHTS ===\n${businessTags.join(', ')}`);
             if (contentTags.length > 0) contextParts.push(`\n=== CONTENT GAPS ===\n${contentTags.join(', ')}`);
         }
-        
+
         setContext(contextParts.join('\n'));
         setActiveTab('pitch');
         setGeneratedPitch('');
@@ -1124,7 +1125,6 @@ ${template.cta}`;
         { id: 'crm', label: 'CRM', icon: Users, badge: savedLeads.length },
         { id: 'sequences', label: 'Email Sequences', icon: Mail },
         { id: 'pitch', label: 'Pitch Generator', icon: Sparkles },
-        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     ];
 
     return (
@@ -1212,13 +1212,28 @@ ${template.cta}`;
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                             <button
-                                onClick={() => setIsSettingsOpen(true)}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
-                                title="Settings"
+                                onClick={() => setActiveTab('analytics')}
+                                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'analytics'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    }`}
+                                title="Analytics"
                             >
-                                <Settings className="w-5 h-5" />
+                                <BarChart3 className="w-4 h-4" />
+                                <span className="hidden sm:inline">Analytics</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('tutorial')}
+                                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'tutorial'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    }`}
+                                title="Tutorial"
+                            >
+                                <FileText className="w-4 h-4" />
+                                <span className="hidden sm:inline">Tutorial</span>
                             </button>
                             {isSyncing && (
                                 <span className="flex items-center gap-2 text-xs text-gray-500">
@@ -1226,8 +1241,12 @@ ${template.cta}`;
                                     Syncing...
                                 </span>
                             )}
-                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                <Settings className="w-5 h-5 text-gray-600" />
+                            <button
+                                onClick={() => setIsSettingsOpen(true)}
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                                title="Settings"
+                            >
+                                <Settings className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -2254,6 +2273,19 @@ ${template.cta}`;
                             transition={{ duration: 0.2 }}
                         >
                             <LeadLifecycleDashboard />
+                        </motion.div>
+                    )}
+
+                    {/* Tutorial Tab */}
+                    {activeTab === 'tutorial' && (
+                        <motion.div
+                            key="tutorial"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <SDRTutorial />
                         </motion.div>
                     )}
                 </AnimatePresence>
