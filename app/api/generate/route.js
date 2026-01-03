@@ -32,18 +32,33 @@ export async function POST(req) {
                         leadData = lead;
                         // Auto-populate context from enriched CRM data
                         const contextParts = [];
-
-                        if (lead.product_category) contextParts.push(`Business Category: ${lead.product_category}`);
-                        if (lead.instagram_followers) contextParts.push(`Instagram: ${lead.instagram_followers.toLocaleString()} followers`);
-                        if (lead.engagement_rate) contextParts.push(`Engagement Rate: ${lead.engagement_rate}%`);
-                        if (lead.tags && Array.isArray(lead.tags) && lead.tags.length > 0) {
-                            const tagNames = lead.tags.map(t => t.name || t).slice(0, 5).join(', ');
-                            contextParts.push(`Key Insights: ${tagNames}`);
-                        }
+                        
+                        // 1. Full AI Research Summary (most valuable!)
                         if (lead.ai_research_summary) {
-                            // Extract first 200 chars of summary
-                            const summary = lead.ai_research_summary.substring(0, 200).trim();
-                            contextParts.push(`AI Research: ${summary}...`);
+                            contextParts.push(`=== COMPANY RESEARCH ===\n${lead.ai_research_summary}\n`);
+                        }
+                        
+                        // 2. Business basics
+                        if (lead.product_category) contextParts.push(`Business Type: ${lead.product_category}`);
+                        if (lead.business_address) contextParts.push(`Location: ${lead.business_address}`);
+                        
+                        // 3. Social proof
+                        if (lead.instagram_followers) {
+                            contextParts.push(`Instagram: ${lead.instagram_followers.toLocaleString()} followers`);
+                        }
+                        if (lead.engagement_rate) {
+                            contextParts.push(`Engagement Rate: ${lead.engagement_rate}%`);
+                        }
+                        
+                        // 4. Key insights from tags (pain points, business type, content needs)
+                        if (lead.tags && Array.isArray(lead.tags) && lead.tags.length > 0) {
+                            const painTags = lead.tags.filter(t => t.category === 'pain').map(t => t.name);
+                            const businessTags = lead.tags.filter(t => t.category === 'business').map(t => t.name);
+                            const contentTags = lead.tags.filter(t => t.category === 'content').map(t => t.name);
+                            
+                            if (painTags.length > 0) contextParts.push(`\n=== PAIN POINTS ===\n${painTags.join(', ')}`);
+                            if (businessTags.length > 0) contextParts.push(`\n=== BUSINESS INSIGHTS ===\n${businessTags.join(', ')}`);
+                            if (contentTags.length > 0) contextParts.push(`\n=== CONTENT GAPS ===\n${contentTags.join(', ')}`);
                         }
 
                         enrichedContext = contextParts.join('\n');
