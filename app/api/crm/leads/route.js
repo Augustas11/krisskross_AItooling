@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { autoTagLead } from '@/lib/tags';
 import { enrollLeadInSequence, getSequenceIdByType } from '@/lib/email-sequences';
 import { logActivity } from '@/lib/logger';
+import { emitActivity } from '@/lib/activity-emitter';
 import fs from 'fs';
 import path from 'path';
 
@@ -284,6 +285,19 @@ export async function POST(req) {
             for (const lead of insertedLeads) {
                 // Fire and forget logging
                 logActivity('create_lead', 'lead', lead.id, { name: lead.name, source: body.source });
+
+                // Emit to Activity Feed
+                emitActivity({
+                    actorId: null, // TODO: Extract from auth context when auth is implemented
+                    actorName: 'System',
+                    actionVerb: 'created',
+                    actionType: 'lead',
+                    entityType: 'lead',
+                    entityId: lead.id,
+                    entityName: lead.name,
+                    metadata: { source: body.source, product_category: lead.product_category },
+                    priority: 5
+                });
             }
 
             // AUTO-ENROLL LOGIC (Phase 2 & 3)
@@ -384,6 +398,25 @@ export async function PUT(req) {
         // Log Activity
         await logActivity('update_lead', 'lead', leadToUpdate.id, { updates: Object.keys(leadToUpdate) });
 
+        // Emit to Activity Feed (detect field changes)
+        const updatedFields = Object.keys(leadToUpdate).filter(key => key !== 'id');
+        if (updatedFields.length > 0) {
+            await emitActivity({
+                actorId: null, // TODO: Extract from auth context
+                actorName: 'User', // TODO: Get actual user name from auth
+                actionVerb: 'updated',
+                actionType: 'lead',
+                entityType: 'lead',
+                entityId: leadToUpdate.id,
+                entityName: leadToUpdate.name,
+                metadata: {
+                    fields_updated: updatedFields,
+                    field_count: updatedFields.length
+                },
+                priority: 3
+            });
+        }
+
         return NextResponse.json({ message: 'Lead updated successfully' });
 
     } catch (error) {
@@ -436,6 +469,19 @@ export async function DELETE(req) {
         // Log Activity
         for (const id of idsToDelete) {
             await logActivity('delete_lead', 'lead', id, {});
+
+            // Emit to Activity Feed
+            await emitActivity({
+                actorId: null, // TODO: Extract from auth context
+                actorName: 'User', // TODO: Get actual user name
+                actionVerb: 'deleted',
+                actionType: 'lead',
+                entityType: 'lead',
+                entityId: id,
+                entityName: 'Lead', // We don't have the name after deletion
+                metadata: {},
+                priority: 4
+            });
         }
 
         return NextResponse.json({ message: 'Lead(s) deleted successfully' });

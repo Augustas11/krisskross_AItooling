@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendPersonalizedEmail } from '@/email-automation/index';
+import { emitActivity } from '@/lib/activity-emitter';
 
 export async function POST(req) {
     try {
@@ -68,6 +69,22 @@ export async function POST(req) {
                     if (leadData) {
                         await createFollowUpTasks(leadId, leadData.name);
                         console.log(`✅ Created follow-up tasks for ${leadData.name}`);
+
+                        // Emit to Activity Feed
+                        await emitActivity({
+                            actorId: null, // TODO: Extract from auth context
+                            actorName: 'User', // TODO: Get actual user name
+                            actionVerb: 'sent',
+                            actionType: 'email',
+                            entityType: 'lead',
+                            entityId: leadId,
+                            entityName: leadData.name,
+                            metadata: {
+                                subject: emailSubject,
+                                recipient: leadEmail
+                            },
+                            priority: 7
+                        });
                     }
                 }
             }

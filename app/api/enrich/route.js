@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { SocialAnalyzer } from '@/lib/social-analyzer';
 import { enrichAndTagLead } from '@/lib/tags/enrichment.js';
+import { emitActivity } from '@/lib/activity-emitter';
 
 export async function POST(req) {
     console.log('✨ [API] POST /api/enrich');
@@ -81,6 +82,26 @@ export async function POST(req) {
 
                 if (updateError) throw updateError;
                 console.log(`✅ [Enrich] Database updated for lead ${leadId}`);
+
+                // Emit to Activity Feed
+                const enrichedFields = Object.keys(dbUpdate).filter(key =>
+                    dbUpdate[key] !== null && dbUpdate[key] !== undefined && key !== 'enriched'
+                );
+                await emitActivity({
+                    actorId: null,
+                    actorName: 'System',
+                    actionVerb: 'enriched',
+                    actionType: 'lead',
+                    entityType: 'lead',
+                    entityId: leadId,
+                    entityName: lead.name,
+                    metadata: {
+                        fields_updated: enrichedFields,
+                        has_ai_research: !!enrichedLead.ai_research_summary,
+                        tags_count: enrichedLead.tags?.length || 0
+                    },
+                    priority: 3
+                });
             }
 
             return NextResponse.json({

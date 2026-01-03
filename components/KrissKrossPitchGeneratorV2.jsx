@@ -5,17 +5,18 @@ import { LeadIntelligenceCard } from './LeadIntelligenceCard';
 import { TagsSection } from './LeadTags';
 import EmailSequenceManager from './EmailSequenceManager';
 import LeadLifecycleDashboard from './LeadLifecycleDashboard';
+import ActivityFeed from './ActivityFeed';
 import {
     Sparkles, RefreshCw, MessageSquare, Clock, DollarSign, TrendingUp,
     Copy, CheckCircle, Trash2, Target, Search, Download, ChevronRight,
     Zap, Users, Mail, Instagram, MapPin, ExternalLink, Filter, BarChart3,
     FileText, Settings, Plus, Edit3, X, Globe, Phone, Eye, Upload,
-    Youtube, Facebook, Send, Pencil, Check, BriefcaseBusiness, Skull
+    Youtube, Facebook, Send, Pencil, Check, BriefcaseBusiness, Skull, Activity
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function KrissKrossPitchGeneratorV2() {
-    const [activeTab, setActiveTab] = useState('crm');
+    const [activeTab, setActiveTab] = useState('activity');
     const [targetType, setTargetType] = useState('fashion-seller');
     const [customName, setCustomName] = useState('');
     const [recipientEmail, setRecipientEmail] = useState('');
@@ -1074,6 +1075,7 @@ ${template.cta}`;
         });
 
     const tabs = [
+        { id: 'activity', label: 'Activity Feed', icon: Activity },
         { id: 'discover', label: 'Lead Discovery', icon: Search },
         { id: 'crm', label: 'CRM', icon: Users, badge: savedLeads.length },
         { id: 'sequences', label: 'Email Sequences', icon: Mail },
@@ -1220,6 +1222,19 @@ ${template.cta}`;
             {/* Main Content Area */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <AnimatePresence mode="wait">
+                    {/* Activity Feed Tab */}
+                    {activeTab === 'activity' && (
+                        <motion.div
+                            key="activity"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <ActivityFeed />
+                        </motion.div>
+                    )}
+
                     {/* Lead Discovery Tab */}
                     {activeTab === 'discover' && (
                         <motion.div
