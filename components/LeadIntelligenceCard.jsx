@@ -409,8 +409,8 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
 
         </div>
 
-        {/* AI Pitch Modal */ }
-    <AnimatePresence>
+        {/* AI Pitch Modal */}
+        <AnimatePresence>
         {isPitchModalOpen && (
             <motion.div
                 initial={{ opacity: 0 }}
