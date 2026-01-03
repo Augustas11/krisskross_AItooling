@@ -494,7 +494,7 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                             Copy & Close
                         </button>
                     </div>
-                </motion.div>
+                </div>
             </motion.div>
         )}
     </AnimatePresence>
