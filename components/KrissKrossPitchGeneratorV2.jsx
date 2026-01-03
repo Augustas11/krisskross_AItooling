@@ -337,7 +337,12 @@ export default function KrissKrossPitchGeneratorV2() {
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetType, customName, context }),
+                body: JSON.stringify({
+                    targetType,
+                    customName,
+                    context,
+                    leadId: pitchLead?.id // Pass leadId if available for auto-population
+                }),
             });
 
             const data = await response.json();
