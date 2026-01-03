@@ -1045,9 +1045,48 @@ ${template.cta}`;
 
     const selectLead = (lead) => {
         setPitchLead(lead); // Store complete lead for emailing
-        setRecipientEmail(lead.email || ''); // Pre-fill email, allow editing
+        setRecipientEmail(lead.email || '');
         setCustomName(lead.name || '');
-        setContext(`${lead.briefDescription || ''} ${lead.productCategory ? `Category: ${lead.productCategory}` : ''} ${lead.storeUrl ? `Store: ${lead.storeUrl}` : ''}`.trim());
+        
+        // Build rich context from CRM data
+        const contextParts = [];
+        
+        // 1. Full AI Research Summary (most valuable!)
+        if (lead.aiResearchSummary || lead.ai_research_summary) {
+            const summary = lead.aiResearchSummary || lead.ai_research_summary;
+            contextParts.push(`=== COMPANY RESEARCH ===\n${summary}\n`);
+        }
+        
+        // 2. Business basics
+        if (lead.productCategory || lead.product_category) {
+            contextParts.push(`Business Type: ${lead.productCategory || lead.product_category}`);
+        }
+        if (lead.businessAddress || lead.business_address) {
+            contextParts.push(`Location: ${lead.businessAddress || lead.business_address}`);
+        }
+        
+        // 3. Social proof
+        if (lead.instagramFollowers || lead.instagram_followers) {
+            const followers = lead.instagramFollowers || lead.instagram_followers;
+            contextParts.push(`Instagram: ${followers.toLocaleString()} followers`);
+        }
+        if (lead.engagementRate || lead.engagement_rate) {
+            const rate = lead.engagementRate || lead.engagement_rate;
+            contextParts.push(`Engagement Rate: ${rate}%`);
+        }
+        
+        // 4. Tags (pain points, business insights, content gaps)
+        if (lead.tags && Array.isArray(lead.tags) && lead.tags.length > 0) {
+            const painTags = lead.tags.filter(t => t.category === 'pain').map(t => t.name);
+            const businessTags = lead.tags.filter(t => t.category === 'business').map(t => t.name);
+            const contentTags = lead.tags.filter(t => t.category === 'content').map(t => t.name);
+            
+            if (painTags.length > 0) contextParts.push(`\n=== PAIN POINTS ===\n${painTags.join(', ')}`);
+            if (businessTags.length > 0) contextParts.push(`\n=== BUSINESS INSIGHTS ===\n${businessTags.join(', ')}`);
+            if (contentTags.length > 0) contextParts.push(`\n=== CONTENT GAPS ===\n${contentTags.join(', ')}`);
+        }
+        
+        setContext(contextParts.join('\n'));
         setActiveTab('pitch');
         setGeneratedPitch('');
         setWasAiGenerated(false);
