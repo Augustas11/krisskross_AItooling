@@ -483,7 +483,6 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                         </button>
                         <button
                             onClick={() => {
-                                // Navigate to Pitch Generator tab with pre-filled content
                                 copyToClipboard(generatedPitch);
                                 setPitchModalOpen(false);
                             }}
@@ -494,7 +493,7 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                             Copy & Close
                         </button>
                     </div>
-                </div>
+                </motion.div>
             </motion.div>
         )}
     </AnimatePresence>
