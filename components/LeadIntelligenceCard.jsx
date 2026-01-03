@@ -221,19 +221,6 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                                 {userCalendlyLink ? 'Book Meeting' : 'Setup Calendar'}
                             </button>
 
-                            {/* Draft Pitch with AI */}
-                            <button
-                                onClick={generatePitch}
-                                disabled={!lead.enriched}
-                                className={`w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${lead.enriched
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-sm'
-                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    }`}
-                                title={lead.enriched ? 'Generate personalized pitch using AI insights' : 'Enrich lead first to enable AI pitch generation'}
-                            >
-                                <Sparkles className="w-4 h-4" />
-                                {lead.enriched ? 'Draft Pitch with AI' : 'Enrich to Draft'}
-                            </button>
                         </div>
                     </div>
 
