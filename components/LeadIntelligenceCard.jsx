@@ -406,6 +406,7 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
             </div>
 
 
+
         </div>
 
         {/* AI Pitch Modal */ }
