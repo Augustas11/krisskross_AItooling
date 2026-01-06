@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { shouldSendNextEmail, replaceMergeTags, unenrollLeadFromSequence } from '@/lib/email-sequences';
-import { sendEmail } from '@/email-automation/services/email-sender';
+import { sendEmail } from '@/email-automation/index';
 
 /**
  * GET /api/sequences/process
@@ -150,7 +150,8 @@ export async function GET(req) {
                     to: lead.email,
                     subject: subject,
                     text: body,
-                    html: body.replace(/\n/g, '<br>')
+                    html: body.replace(/\n/g, '<br>'),
+                    lead_id: lead.id // For SendGrid tracking
                 });
 
                 // Log to email history
