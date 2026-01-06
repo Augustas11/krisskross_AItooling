@@ -21,6 +21,10 @@ const KNOWN_LISTING_PATTERNS = [
     { regex: /\/collections\/[^/]+$/, type: 'general_collection' },
     { regex: /\/category\/[^/]+$/, type: 'general_category' },
     { regex: /\/shop\/?$/, type: 'general_shop_root' },
+    // Pinterest patterns (including regional variants like uk.pinterest.com)
+    { regex: /pinterest\.[a-z.]+\/search\/pins/, type: 'pinterest_search' },
+    { regex: /pinterest\.[a-z.]+\/pin\//, type: 'pinterest_pin' },
+    { regex: /pinterest\.[a-z.]+\/ideas\//, type: 'pinterest_ideas' },
 ];
 
 function detectUrlType(url) {
@@ -75,10 +79,21 @@ async function executePerplexitySearch(url, apiKey) {
             return JSON.parse(jsonMatch[0]);
         } catch (e) {
             console.error("JSON Parse Error in Perplexity match", e);
-            // Fallback to trying to parse the whole string if match failed
+            // Return a helpful error instead of cryptic JSON parse error
+            throw new Error(`Failed to parse AI response. The AI returned: "${content.substring(0, 100)}..." Please try again.`);
         }
     }
-    return JSON.parse(content);
+
+    // If no JSON match found, check if it's a known error response
+    if (content.toLowerCase().includes('cannot') || content.toLowerCase().includes('unable')) {
+        throw new Error(`AI could not process this URL. Response: "${content.substring(0, 150)}"`);
+    }
+
+    try {
+        return JSON.parse(content);
+    } catch (e) {
+        throw new Error(`Failed to parse AI response. Please try a different URL or try again.`);
+    }
 }
 
 async function executeGrokSearch(content, apiKey) {

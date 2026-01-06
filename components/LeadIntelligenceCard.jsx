@@ -9,6 +9,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlaybookWidget } from './PlaybookWidget';
 import { ActivityTimeline } from './ActivityTimeline';
+import { InstagramEngagementSection } from './instagram/EngagementSection';
+import CommentList from './instagram/CommentList';
+import InstagramCommentsSection from './instagram/CommentsSection';
 // import { getTierForScore } from '../lib/scoring-constants'; // Removed
 
 /**
@@ -184,6 +187,14 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
 
                     {/* PLAYBOOK WIDGET */}
                     <PlaybookWidget lead={lead} onUpdate={onUpdate} />
+
+                    {/* INSTAGRAM ENGAGEMENT SECTION */}
+                    {(lead.instagram || lead.instagram_handle) && (
+                        <InstagramEngagementSection
+                            leadId={lead.id}
+                            instagramHandle={lead.instagram_handle || lead.instagram}
+                        />
+                    )}
 
                     {/* CONTACT INFO (Compact) */}
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">

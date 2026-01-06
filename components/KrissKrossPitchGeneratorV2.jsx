@@ -37,6 +37,7 @@ export default function KrissKrossPitchGeneratorV2() {
     const [sourceError, setSourceError] = useState(null);
     const [provider, setProvider] = useState('perplexity'); // 'perplexity' | 'grok' (Firecrawl removed - out of credits)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isSearchOptionsOpen, setIsSearchOptionsOpen] = useState(false); // Separate from Settings modal
     const [selectedLeadIndices, setSelectedLeadIndices] = useState(new Set());
     const [searchHistory, setSearchHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
@@ -753,6 +754,37 @@ ${template.cta}`;
         }
     };
 
+    // Bulk status change for selected CRM leads
+    const handleBulkStatusChange = async (newStatus) => {
+        if (selectedCrmLeadIds.size === 0) return;
+
+        setCrmProcessing(true);
+        const idsToUpdate = Array.from(selectedCrmLeadIds);
+
+        // Optimistic update
+        setSavedLeads(prev => prev.map(lead =>
+            selectedCrmLeadIds.has(lead.id) ? { ...lead, status: newStatus } : lead
+        ));
+        setSelectedCrmLeadIds(new Set());
+
+        try {
+            // Update each lead in Supabase
+            for (const leadId of idsToUpdate) {
+                await fetch(`/api/crm/leads?id=${leadId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+            }
+        } catch (e) {
+            console.error('Failed to bulk update status', e);
+            // Refresh to get accurate state
+            fetchLeads();
+        } finally {
+            setCrmProcessing(false);
+        }
+    };
+
     const exportToCsv = () => {
         if (savedLeads.length === 0) return;
 
@@ -996,6 +1028,26 @@ ${template.cta}`;
         });
     };
 
+    // Toggle all leads in Lead Discovery (Select All)
+    const toggleAllLeadSelection = () => {
+        // Get indices of leads NOT already in CRM (only selectable leads)
+        const selectableIndices = foundLeads
+            .map((lead, idx) => ({ lead, idx }))
+            .filter(({ lead }) => !savedLeads.some(l =>
+                (l.storeUrl && lead.storeUrl && l.storeUrl === lead.storeUrl) ||
+                (l.name.toLowerCase() === lead.name.toLowerCase())
+            ))
+            .map(({ idx }) => idx);
+
+        if (selectedLeadIndices.size === selectableIndices.length && selectableIndices.length > 0) {
+            // All selected, deselect all
+            setSelectedLeadIndices(new Set());
+        } else {
+            // Select all selectable
+            setSelectedLeadIndices(new Set(selectableIndices));
+        }
+    };
+
     // Handle saving selected leads to CRM (or all if none selected)
     const handleSaveSelectedToCrm = async () => {
         let addedCount = 0;
@@ -1216,8 +1268,8 @@ ${template.cta}`;
                             <button
                                 onClick={() => setActiveTab('analytics')}
                                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'analytics'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }`}
                                 title="Analytics"
                             >
@@ -1227,8 +1279,8 @@ ${template.cta}`;
                             <button
                                 onClick={() => setActiveTab('tutorial')}
                                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'tutorial'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }`}
                                 title="Tutorial"
                             >
@@ -1396,14 +1448,14 @@ ${template.cta}`;
                                 {/* Search Settings Toggle - REMOVED Enrichment Options */}
                                 <div className="mt-4">
                                     <button
-                                        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                                        onClick={() => setIsSearchOptionsOpen(!isSearchOptionsOpen)}
                                         className="text-xs font-semibold text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors"
                                     >
                                         <Settings className="w-3 h-3" />
-                                        {isSettingsOpen ? 'Hide Options' : 'Search Options'}
+                                        {isSearchOptionsOpen ? 'Hide Options' : 'Search Options'}
                                     </button>
 
-                                    {isSettingsOpen && (
+                                    {isSearchOptionsOpen && (
                                         <motion.div
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: 'auto', opacity: 1 }}
@@ -1425,10 +1477,29 @@ ${template.cta}`;
                             {/* Bulk Actions Header */}
                             {foundLeads.length > 0 && (
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        Found {foundLeads.length} Leads
-                                    </h3>
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedLeadIndices.size > 0 && selectedLeadIndices.size === foundLeads.filter((lead) => !savedLeads.some(l =>
+                                                    (l.storeUrl && lead.storeUrl && l.storeUrl === lead.storeUrl) ||
+                                                    (l.name.toLowerCase() === lead.name.toLowerCase())
+                                                )).length}
+                                                onChange={toggleAllLeadSelection}
+                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Select All</span>
+                                        </label>
+                                        {selectedLeadIndices.size > 0 && (
+                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                                                {selectedLeadIndices.size} selected
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            Found {foundLeads.length} Leads
+                                        </h3>
                                         <button
                                             onClick={handleSaveSelectedToCrm}
                                             className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1620,11 +1691,28 @@ ${template.cta}`;
                                             <button
                                                 onClick={deleteSelectedCrmLeads}
                                                 disabled={crmProcessing}
-                                                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 font-semibold rounded-lg transition-colors mr-2 border border-red-200 disabled:opacity-50"
+                                                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 font-semibold rounded-lg transition-colors border border-red-200 disabled:opacity-50"
                                             >
                                                 <Trash2 className="w-4 h-4" />
-                                                Delete Selected ({selectedCrmLeadIds.size})
+                                                Delete ({selectedCrmLeadIds.size})
                                             </button>
+                                            <select
+                                                onChange={(e) => {
+                                                    if (e.target.value) {
+                                                        handleBulkStatusChange(e.target.value);
+                                                        e.target.value = ''; // Reset dropdown
+                                                    }
+                                                }}
+                                                disabled={crmProcessing}
+                                                className="px-3 py-2 bg-white border border-gray-300 rounded-lg font-medium text-sm text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer disabled:opacity-50"
+                                            >
+                                                <option value="">Move to...</option>
+                                                <option value="New">New</option>
+                                                <option value="Pitched">Pitched</option>
+                                                <option value="Emailed">Emailed</option>
+                                                <option value="Replied">Replied</option>
+                                                <option value="Dead">Dead</option>
+                                            </select>
                                         </>
                                     )}
                                     <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition-colors cursor-pointer">
@@ -2465,6 +2553,7 @@ ${template.cta}`;
                                             isEnriching={isEnrichingLead}
                                             onTriggerEnrichment={() => enrichTriggerRef.current?.()}
                                             userCalendlyLink={calendlyLink}
+                                            onUpdate={handleLeadUpdate}
                                         />
                                     )}
 
