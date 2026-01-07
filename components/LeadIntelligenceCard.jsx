@@ -126,10 +126,24 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                     </div>
                 </div>
 
-                {/* Score Card */}
-                <div className="flex flex-col items-end">
+                {/* Score Card & Actions */}
+                <div className="flex flex-col items-end gap-2">
                     <div className="text-3xl font-black text-gray-900">{lead.score || 0}</div>
                     <div className="text-xs uppercase tracking-wide font-semibold text-gray-400">Match Score</div>
+                    <button
+                        onClick={() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('leadId', lead.id);
+                            copyToClipboard(url.toString());
+                            // Simple alert fallback if no toast system
+                            alert('Link copied to clipboard!');
+                        }}
+                        className="mt-2 text-xs flex items-center gap-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Copy shareable link to this lead"
+                    >
+                        <Copy className="w-3 h-3" />
+                        Share Link
+                    </button>
                 </div>
             </div>
 
