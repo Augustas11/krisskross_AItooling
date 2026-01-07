@@ -214,7 +214,19 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                         <div className="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Contact Details</div>
                         <div className="space-y-2">
-                            <ContactRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={lead.email} copyable />
+                            {(() => {
+                                const allEmails = [...new Set([lead.email, ...(lead.other_emails || [])].filter(Boolean))];
+                                if (allEmails.length === 0) return <ContactRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={null} />;
+                                return allEmails.map((email, idx) => (
+                                    <ContactRow
+                                        key={idx}
+                                        icon={<Mail className="w-3.5 h-3.5" />}
+                                        label={idx === 0 ? "Email" : "Alt Email"}
+                                        value={email}
+                                        copyable
+                                    />
+                                ));
+                            })()}
                             <ContactRow icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={lead.phone} copyable />
                             <ContactRow icon={<MapPin className="w-3.5 h-3.5" />} label="Location" value={lead.businessAddress || 'Unknown'} />
                         </div>
