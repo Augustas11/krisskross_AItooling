@@ -35,20 +35,34 @@ export async function POST(req) {
         // Log to history
         try {
             const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
+            console.log(`📧 [DEBUG] Supabase configured: ${isSupabaseConfigured()}`);
+            console.log(`📧 [DEBUG] leadId: ${leadId}, leadEmail: ${leadEmail}`);
+
             if (isSupabaseConfigured()) {
-                await supabase.from('email_history').insert([{
+                // Insert email history
+                const { data: historyData, error: historyError } = await supabase.from('email_history').insert([{
                     recipient_email: leadEmail,
                     subject: emailSubject,
                     body: emailBody,
                     lead_id: leadId !== 'manual' ? leadId : null,
                     status: 'sent'
-                }]);
+                }]).select();
+
+                if (historyError) {
+                    console.error('❌ [DEBUG] email_history insert error:', historyError);
+                } else {
+                    console.log('✅ [DEBUG] email_history insert success:', historyData);
+                }
 
                 // Auto-enroll in cold outreach follow-up sequence (if not already enrolled)
                 if (leadId && leadId !== 'manual') {
+                    console.log(`📧 [DEBUG] Processing leadId=${leadId} (not manual)`);
+
                     const { enrollLeadInSequence, getDefaultColdOutreachSequenceId } = require('@/lib/email-sequences');
 
                     const sequenceId = await getDefaultColdOutreachSequenceId();
+                    console.log(`📧 [DEBUG] Cold outreach sequence ID: ${sequenceId}`);
+
                     if (sequenceId) {
                         const enrollResult = await enrollLeadInSequence(leadId, sequenceId);
                         if (enrollResult.success) {
@@ -60,11 +74,13 @@ export async function POST(req) {
 
                     // Create automated follow-up tasks
                     const { createFollowUpTasks } = require('@/app/api/tasks/route');
-                    const { data: leadData } = await supabase
+                    const { data: leadData, error: leadError } = await supabase
                         .from('leads')
                         .select('name')
                         .eq('id', leadId)
                         .single();
+
+                    console.log(`📧 [DEBUG] Lead query result:`, { leadData, leadError });
 
                     if (leadData) {
                         await createFollowUpTasks(leadId, leadData.name);
@@ -85,7 +101,12 @@ export async function POST(req) {
                             },
                             priority: 7
                         });
+                        console.log('✅ [DEBUG] Activity emitted');
+                    } else {
+                        console.error(`❌ [DEBUG] Lead ${leadId} not found in database for activity/tasks!`);
                     }
+                } else {
+                    console.log(`📧 [DEBUG] Skipping sequence/activity - leadId is 'manual' or empty`);
                 }
             }
         } catch (e) {

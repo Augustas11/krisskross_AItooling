@@ -438,9 +438,14 @@ ${template.cta}`;
             setSuccessMessage(`✅ Email sent to ${recipientEmail}`);
             loadActivityHistory();
 
-            // Update CRM status
+            // Update CRM status to Emailed
+            console.log(`📧 [DEBUG] Email sent successfully, updating lead status to Emailed...`);
+            console.log(`📧 [DEBUG] pitchLead.id = ${pitchLead?.id}`);
             if (pitchLead && pitchLead.id) {
-                updateLeadStatus(pitchLead.id, 'Emailed');
+                await updateLeadStatus(pitchLead.id, 'Emailed');
+                console.log(`✅ [DEBUG] Status update to Emailed completed`);
+            } else {
+                console.error(`❌ [DEBUG] Cannot update status - pitchLead.id is missing!`);
             }
 
             // Extended timeout for success state (5 seconds)
@@ -586,6 +591,7 @@ ${template.cta}`;
     };
 
     const updateLeadStatus = async (leadId, newStatus) => {
+        console.log(`🔄 [DEBUG] updateLeadStatus called: leadId=${leadId}, newStatus=${newStatus}`);
         const updatedDate = new Date().toLocaleDateString();
 
         // Find the lead first to make sure we have the latest data
@@ -596,6 +602,8 @@ ${template.cta}`;
             return;
         }
 
+        console.log(`📋 [DEBUG] Found lead: ${targetLead.name}, current status: ${targetLead.status} → updating to: ${newStatus}`);
+
         const updatedLead = { ...targetLead, status: newStatus, lastInteraction: updatedDate };
 
         // Optimistic Update
@@ -605,6 +613,7 @@ ${template.cta}`;
 
         // Save status change to server
         try {
+            console.log(`🌐 [DEBUG] Sending PUT request to /api/crm/leads for ${targetLead.name}...`);
             const response = await fetch('/api/crm/leads', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -615,7 +624,7 @@ ${template.cta}`;
                 throw new Error(`Server responded with ${response.status}`);
             }
 
-            console.log(`✅ [CRM] Status updated for ${targetLead.name} to ${newStatus}`);
+            console.log(`✅ [CRM] Status updated for ${targetLead.name}: ${targetLead.status} → ${newStatus}`);
         } catch (e) {
             console.error('❌ [CRM] Failed to update status on server:', e);
             // We could revert optimistic update here if needed
