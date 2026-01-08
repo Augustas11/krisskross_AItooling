@@ -1,0 +1,166 @@
+/**
+ * Instagram Manual Sync API Route
+ * POST /api/instagram/sync
+ * 
+ * Manually sync recent conversations and messages from Instagram API
+ * Use for: initial backfill, recovery from missed webhooks, manual refresh
+ */
+
+import { NextResponse } from 'next/server';
+import instagramAPI from '@/lib/instagram-api';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { matchInstagramToLead } from '@/lib/instagram-lead-matching';
+
+export async function POST(request) {
+    try {
+        const body = await request.json();
+        const hoursBack = body.hours_back || 24;
+        const force = body.force || false;
+
+        console.log(`Starting Instagram sync (${hoursBack} hours back)`);
+
+        // Check Supabase configured
+        if (!isSupabaseConfigured()) {
+            return NextResponse.json({
+                success: false,
+                error: 'Supabase not configured'
+            }, { status: 500 });
+        }
+
+        // Get Instagram account info from credentials
+        const { data: credentials, error: credError } = await supabase
+            .from('instagram_credentials')
+            .select('instagram_account_id, instagram_username')
+            .eq('connection_status', 'connected')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (credError || !credentials?.instagram_account_id) {
+            return NextResponse.json({
+                success: false,
+                error: 'No connected Instagram account found. Initialize connection first.'
+            }, { status: 400 });
+        }
+
+        const accountId = credentials.instagram_account_id;
+
+        // Fetch conversations from Instagram
+        const conversationsResult = await instagramAPI.getConversations(accountId, 50);
+
+        if (!conversationsResult.success) {
+            return NextResponse.json({
+                success: false,
+                error: conversationsResult.error || 'Failed to fetch conversations from Instagram'
+            }, { status: 400 });
+        }
+
+        const conversations = conversationsResult.data.data || [];
+        console.log(`Fetched ${conversations.length} conversations from Instagram`);
+
+        let processed = 0;
+        let matched = 0;
+        let errors = 0;
+
+        // Process each conversation
+        for (const conversation of conversations) {
+            try {
+                // Get messages in this conversation
+                const messagesResult = await instagramAPI.getMessages(conversation.id, 20);
+
+                if (!messagesResult.success) {
+                    console.error(`Failed to fetch messages for ${conversation.id}`);
+                    errors++;
+                    continue;
+                }
+
+                const messages = messagesResult.data.data || [];
+
+                // Get participant info (assuming 1-to-1 DM)
+                const participant = conversation.participants?.data?.[0];
+                if (!participant) {
+                    console.log(`Skipping conversation ${conversation.id} - no participant info`);
+                    continue;
+                }
+
+                // Try to match to lead
+                const matchResult = await matchInstagramToLead(participant.id, {
+                    instagramUserId: participant.id,
+                    interactionType: 'dm'
+                });
+
+                if (matchResult.success && matchResult.lead) {
+                    matched++;
+                }
+
+                // Store each message as interaction
+                for (const message of messages) {
+                    const { error: msgError } = await supabase
+                        .from('instagram_interactions')
+                        .upsert({
+                            lead_id: matchResult.lead?.id || null,
+                            interaction_type: 'dm',
+                            instagram_user_id: message.from?.id || participant.id,
+                            instagram_username: message.from?.username || participant.id,
+                            message_content: message.message || null,
+                            instagram_timestamp: message.created_time || new Date().toISOString(),
+                            metadata: {
+                                message_id: message.id,
+                                conversation_id: conversation.id
+                            }
+                        }, {
+                            onConflict: 'instagram_user_id,instagram_timestamp'
+                        });
+
+                    if (!msgError) {
+                        processed++;
+                    }
+                }
+
+                // Update conversation record
+                await supabase
+                    .from('instagram_conversations')
+                    .upsert({
+                        instagram_thread_id: conversation.id,
+                        instagram_user_id: participant.id,
+                        instagram_username: participant.username || participant.id,
+                        lead_id: matchResult.lead?.id || null,
+                        last_message_at: conversation.updated_time || new Date().toISOString(),
+                        status: 'active'
+                    }, {
+                        onConflict: 'instagram_thread_id'
+                    });
+
+            } catch (convError) {
+                console.error(`Error processing conversation:`, convError);
+                errors++;
+            }
+        }
+
+        // Update last sync timestamp
+        await supabase
+            .from('instagram_credentials')
+            .update({ last_sync_at: new Date().toISOString() })
+            .eq('instagram_account_id', accountId);
+
+        console.log(`✓ Sync complete: ${processed} interactions, ${matched} matched to leads`);
+
+        return NextResponse.json({
+            success: true,
+            summary: {
+                conversations_fetched: conversations.length,
+                interactions_processed: processed,
+                leads_matched: matched,
+                errors: errors,
+                synced_at: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        console.error('Instagram sync error:', error);
+        return NextResponse.json({
+            success: false,
+            error: error.message || 'Internal server error'
+        }, { status: 500 });
+    }
+}
