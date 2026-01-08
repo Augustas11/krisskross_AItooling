@@ -52,14 +52,17 @@ export function ActivityTimeline({ lead }) {
             <div className="relative border-l-2 border-gray-100 ml-3 space-y-8 pl-6 pb-2">
                 {activities.map((item, idx) => {
                     const isEmail = item.type === 'email';
+                    const isReply = item.type === 'reply';
                     const isCreate = item.action === 'create_lead';
                     const icon = isEmail ? <Mail className="w-4 h-4" /> :
-                        isCreate ? <PlusCircle className="w-4 h-4" /> :
-                            <Edit className="w-4 h-4" />;
+                        isReply ? <Mail className="w-4 h-4" /> :
+                            isCreate ? <PlusCircle className="w-4 h-4" /> :
+                                <Edit className="w-4 h-4" />;
 
                     const colorClass = isEmail ? 'bg-blue-100 text-blue-600 border-blue-200' :
-                        isCreate ? 'bg-green-100 text-green-600 border-green-200' :
-                            'bg-gray-100 text-gray-500 border-gray-200';
+                        isReply ? 'bg-purple-100 text-purple-600 border-purple-200' :
+                            isCreate ? 'bg-green-100 text-green-600 border-green-200' :
+                                'bg-gray-100 text-gray-500 border-gray-200';
 
                     return (
                         <div key={item.id || idx} className="relative group">
@@ -108,6 +111,17 @@ function renderDetails(item) {
                         {status}
                     </span>
                 )}
+            </div>
+        );
+    }
+
+    if (item.type === 'reply') {
+        const { subject, from, preview } = item.details || {};
+        return (
+            <div>
+                <p><span className="font-medium text-pink-600">Reply from {from}</span></p>
+                <p className="text-gray-500 italic mt-1">"{preview}"</p>
+                <p className="text-[10px] text-gray-400 mt-1">{subject}</p>
             </div>
         );
     }

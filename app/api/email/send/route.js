@@ -64,7 +64,8 @@ export async function POST(req) {
                     console.log(`📧 [DEBUG] Cold outreach sequence ID: ${sequenceId}`);
 
                     if (sequenceId) {
-                        const enrollResult = await enrollLeadInSequence(leadId, sequenceId);
+                        // Start at Step 2 because we just sent Step 1 manually
+                        const enrollResult = await enrollLeadInSequence(leadId, sequenceId, 2);
                         if (enrollResult.success) {
                             console.log(`✅ Auto-enrolled lead ${leadId} in follow-up sequence`);
                         } else {

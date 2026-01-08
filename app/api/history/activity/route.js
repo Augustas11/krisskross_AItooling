@@ -32,9 +32,12 @@ export async function GET(req) {
                 .eq('lead_id', leadId)
                 .order('sent_at', { ascending: false });
 
-            // 3. Pitches (History) - assumes pitch_history has lead_id or store_url match
-            // For now, let's rely on logs mainly. If logs are sparse, we might miss old data.
-            // Ideally we'd log 'pitch_generated' into user_activity_logs going forward.
+            // 3. Activity Feed (New System)
+            const { data: activityFeed, error: activityError } = await supabase
+                .from('activity_feed')
+                .select('*')
+                .eq('entity_id', leadId)
+                .order('first_occurred_at', { ascending: false });
 
             // Normalize and Merge
             const normalizedLogs = (logs || []).map(l => ({
@@ -53,8 +56,18 @@ export async function GET(req) {
                 timestamp: e.sent_at
             }));
 
-            results = [...normalizedLogs, ...normalizedEmails]
+            const normalizedActivities = (activityFeed || []).map(a => ({
+                id: `activity-${a.id}`,
+                type: a.action_type === 'email' && a.action_verb === 'detected reply' ? 'reply' : 'activity',
+                action: a.action_verb,
+                details: a.metadata,
+                timestamp: a.first_occurred_at
+            }));
+
+            results = [...normalizedLogs, ...normalizedEmails, ...normalizedActivities]
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+
 
             return NextResponse.json({ data: results });
         }

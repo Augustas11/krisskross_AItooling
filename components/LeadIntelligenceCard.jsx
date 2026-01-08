@@ -4,7 +4,7 @@ import {
     Instagram, Globe, Mail, Phone, MapPin,
     TrendingUp, Eye, Video, Brain,
     History, ChevronDown, ChevronUp, Copy,
-    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon, RefreshCw
+    CheckCircle2, AlertTriangle, X, Calendar as CalendarIcon, RefreshCw, Repeat
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlaybookWidget } from './PlaybookWidget';
@@ -130,6 +130,14 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                 <div className="flex flex-col items-end gap-2">
                     <div className="text-3xl font-black text-gray-900">{lead.score || 0}</div>
                     <div className="text-xs uppercase tracking-wide font-semibold text-gray-400">Match Score</div>
+
+                    {lead.in_sequence && (
+                        <div className="mt-1 flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-100">
+                            <Repeat className="w-3 h-3" />
+                            Active Sequence
+                        </div>
+                    )}
+
                     <button
                         onClick={() => {
                             const url = new URL(window.location.href);

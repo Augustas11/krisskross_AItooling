@@ -60,6 +60,29 @@ export async function GET() {
                     matchedCount++;
                     logs.push(`🎯 Matched lead: ${lead.name} (${lead.email})`);
 
+                    // Log Activity Feed Event
+                    try {
+                        await supabase.from('activity_feed').insert({
+                            actor_name: 'System',
+                            action_verb: 'detected reply',
+                            action_type: 'email',
+                            entity_type: 'lead',
+                            entity_id: lead.id,
+                            entity_name: lead.name,
+                            metadata: {
+                                subject: email.subject,
+                                from: email.from,
+                                preview: email.preview,
+                                previously_in_sequence: lead.in_sequence
+                            },
+                            priority: 8,
+                            first_occurred_at: new Date().toISOString()
+                        });
+                        logs.push(`Logged activity for ${lead.name}`);
+                    } catch (actErr) {
+                        console.error('Error logging activity:', actErr);
+                    }
+
                     // A. Mark as Replied
                     if (lead.status !== 'Replied') {
                         await supabase
