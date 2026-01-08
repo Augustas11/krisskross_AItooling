@@ -39,25 +39,17 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
-        // Calculate token expiry (60 days from now for long-lived token)
-        const tokenExpiresAt = new Date();
-        tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 60);
-
-        // Store credentials in database
+        // Update Instagram account info in existing credentials record
         const { data: credential, error: dbError } = await supabase
             .from('instagram_credentials')
-            .upsert({
-                app_id: process.env.INSTAGRAM_APP_ID,
-                access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
-                token_expires_at: tokenExpiresAt.toISOString(),
+            .update({
                 instagram_account_id: account.id,
                 instagram_username: account.username,
                 connection_status: 'connected',
+                last_sync_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
-            }, {
-                onConflict: 'app_id',
-                returning: 'representation'
             })
+            .eq('id', '550e8400-e29b-41d4-a716-446655440000')
             .select()
             .single();
 
@@ -72,10 +64,10 @@ export async function POST(request) {
         }
 
         if (dbError) {
-            console.error('Failed to store Instagram credentials:', dbError);
+            console.error('Failed to update Instagram credentials:', dbError);
             return NextResponse.json({
                 success: false,
-                error: 'Failed to store credentials in database: ' + (dbError.message || 'Unknown error')
+                error: 'Failed to update credentials in database: ' + (dbError.message || 'Unknown error')
             }, { status: 500 });
         }
 
@@ -88,7 +80,7 @@ export async function POST(request) {
                 username: account.username,
                 account_type: account.account_type
             },
-            token_expires_at: tokenExpiresAt.toISOString(),
+            token_expires_at: credential?.token_expires_at,
             stored: true
         });
 
