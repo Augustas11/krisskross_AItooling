@@ -87,7 +87,11 @@ function transformFromDb(row) {
         // Task Management (Phase 1)
         nextAction: row.next_action,
         nextActionDue: row.next_action_due,
-        assignedTo: row.assigned_to
+        assignedTo: row.assigned_to,
+
+        // Email Sequence Status
+        in_sequence: row.in_sequence,
+        sequence_paused: row.sequence_paused,
     };
 }
 
@@ -132,7 +136,9 @@ function transformToDb(lead) {
         // Task Management (Phase 1)
         next_action: lead.nextAction,
         next_action_due: lead.nextActionDue,
-        assigned_to: lead.assignedTo
+        assigned_to: lead.assignedTo,
+        in_sequence: lead.in_sequence,
+        sequence_paused: lead.sequence_paused
     };
 }
 

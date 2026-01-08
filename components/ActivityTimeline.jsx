@@ -126,13 +126,46 @@ function renderDetails(item) {
         );
     }
 
+    if (item.action === 'sent' && item.type === 'activity') { // Handle 'sent' from activity feed
+        const { subject, recipient } = item.details || {};
+        return (
+            <div>
+                <p><span className="font-medium">Subject:</span> {subject || '(No Subject)'}</p>
+                <p className="text-xs text-gray-400">To: {recipient}</p>
+            </div>
+        );
+    }
+
+    const actionLower = (item.action || '').toLowerCase();
+
+    // Consolidated Update Handler (covers 'updated' from ActivityFeed and 'update_lead' from Logs)
+    if (actionLower === 'updated' || actionLower === 'update_lead') {
+        const details = item.details || {};
+        // ActivityFeed uses 'fields_updated', generic logs uses 'updates'
+        const fields = details.fields_updated || details.updates;
+
+        if (fields && Array.isArray(fields)) {
+            return (
+                <div className="flex flex-wrap gap-1">
+                    <span className="text-gray-500 text-xs">Updated fields:</span>
+                    {fields.map(f => (
+                        <span key={f} className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] code">
+                            {f}
+                        </span>
+                    ))}
+                </div>
+            );
+        }
+    }
+
+
     // Generic Logs
     if (item.details) {
-        // Safe check for simple updates list
+        // Safe check for simple updates list from old logs
         if (item.details.updates && Array.isArray(item.details.updates)) {
             return <p>Updated fields: {item.details.updates.join(', ')}</p>;
         }
-        // General text dump for now if complex
+        // General text dump for now if complex, but skip empty objects
         if (Object.keys(item.details).length === 0) return null;
 
         return (
