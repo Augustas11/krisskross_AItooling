@@ -19,7 +19,7 @@ export async function GET() {
     try {
         const payload = {
             personalizations: [{
-                to: [{ email: 'augustas.staras@gmail.com' }] // Send to developer/admin
+                to: [{ email: 'hello@krisskross.ai' }] // Send to hello@krisskross.ai as requested
             }],
             from: {
                 email: fromEmail,
