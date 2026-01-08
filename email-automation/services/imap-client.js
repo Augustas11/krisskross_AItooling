@@ -33,20 +33,6 @@ async function getUnreadReplies() {
 
         const searchCriteria = ['UNSEEN'];
         const fetchOptions = {
-            bodies: ['HEADER', 'TEXT'],
-            markSeen: false
-        };
-        // Note: For full robustness we'd fetch bodies: [''] to get everything,
-        // but 'TEXT' often suffices if we parse it right. 
-        // However, 'TEXT' in Multipart emails might be the raw boundary.
-        // Let's stick to 'HEADER' and 'TEXT' but try to parse the TEXT part as quoted-printable if needed.
-        // ACTUALLY, to fix the specific content-type garbage, we need to parse the content.
-        // Let's try to decode the preview.
-
-        // REVISION: The best way to fix this is to use MAILPARSER on the body.
-        // But we need the headers + body for mailparser to work best.
-        // Let's fetch the full source.
-        const fetchOptions = {
             bodies: [''], // Fetch full source
             markSeen: false
         };
