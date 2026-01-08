@@ -19,7 +19,7 @@ This guide covers the setup and configuration of the Instagram Business API inte
 The following environment variables have been added to `.env.local`:
 
 ```bash
-INSTAGRAM_APP_ID=1187682906764579
+INSTAGRAM_APP_ID=749654080971157
 INSTAGRAM_APP_SECRET=[REDACTED]
 INSTAGRAM_ACCESS_TOKEN=[REDACTED]
 ```
@@ -170,7 +170,7 @@ If any permissions are missing, you'll see a warning message.
 **Warning:** "Missing permissions: instagram_manage_messages"
 
 **Solutions:**
-1. Go to [Facebook Developer Dashboard](https://developers.facebook.com/apps/1187682906764579)
+1. Go to [Facebook Developer Dashboard](https://developers.facebook.com/apps/749654080971157)
 2. Navigate to **Instagram** → **Permissions**
 3. Request missing permissions
 4. Re-generate access token with new permissions

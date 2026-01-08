@@ -1,7 +1,7 @@
 # Generate Instagram Access Token - Step by Step
 
 ## App Details
-- **App ID:** 1187682906764579
+- **App ID:** 749654080971157
 - **App Name:** KrissKross Leads CRM
 - **App Secret:** [REDACTED]
 
@@ -15,7 +15,7 @@
    - Go to: https://developers.facebook.com/tools/explorer
 
 2. **Select Your App:**
-   - In the top dropdown, select: **KrissKross Leads CRM** (1187682906764579)
+   - In the top dropdown, select: **KrissKross Leads CRM** (749654080971157)
 
 3. **Generate Token:**
    - Click the "Generate Access Token" button
@@ -72,7 +72,7 @@ Once you have the short-lived token, paste it here and I'll:
 - Try logging out and back into Facebook
 
 ### "App not found"
-- Verify you have access to App 1187682906764579
+- Verify you have access to App 749654080971157
 - Check you're logged into the correct Facebook account
 - Go to https://developers.facebook.com/apps/ to see your apps
 

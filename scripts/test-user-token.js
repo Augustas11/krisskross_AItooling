@@ -97,20 +97,14 @@ async function testToken() {
         console.log('🔍 App Identification:');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        const facebookAppId = '749654080971157';
-        const instagramAppId = '1187682906764579';
+        const validAppId = '749654080971157'; // KrissKross.ai
 
-        if (data.app_id === facebookAppId) {
-            console.log('✅ Token belongs to: Facebook App (749654080971157)');
-            console.log('   App Name: KrissKross.ai\n');
-            console.log('⚠️  Your code is configured for App: 1187682906764579');
-            console.log('   ACTION: Update .env.local to use App ID 749654080971157\n');
-        } else if (data.app_id === instagramAppId) {
-            console.log('✅ Token belongs to: Instagram App (1187682906764579)');
-            console.log('   App Name: KrissKross Leads CRM\n');
-            console.log('✅ This matches your current configuration!\n');
+        if (data.app_id === validAppId) {
+            console.log(`✅ Token belongs to: KrissKross.ai (${validAppId})`);
+            console.log('✅ App ID matches configuration!\n');
         } else {
-            console.log(`⚠️  Token belongs to: Unknown App (${data.app_id})\n`);
+            console.log(`⚠️  Token belongs to: Unknown App (${data.app_id})`);
+            console.log(`   Expected: ${validAppId}\n`);
         }
 
         // Test Instagram access
