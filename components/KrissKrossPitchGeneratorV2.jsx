@@ -99,6 +99,7 @@ export default function KrissKrossPitchGeneratorV2() {
     const enrichTriggerRef = React.useRef(null);
 
     const [emailError, setEmailError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null); // Toast notification state
 
     // History State
     const [activityHistory, setActivityHistory] = useState({ pushes: [], emails: [] });
@@ -410,6 +411,7 @@ ${template.cta}`;
         setIsSendingEmail(true);
         setEmailError(null);
         setEmailSent(false);
+        setSuccessMessage(null);
 
         try {
             const response = await fetch('/api/email/send', {
@@ -433,6 +435,7 @@ ${template.cta}`;
             }
 
             setEmailSent(true);
+            setSuccessMessage(`✅ Email sent to ${recipientEmail}`);
             loadActivityHistory();
 
             // Update CRM status
@@ -440,9 +443,11 @@ ${template.cta}`;
                 updateLeadStatus(pitchLead.id, 'Emailed');
             }
 
+            // Extended timeout for success state (5 seconds)
             setTimeout(() => {
                 setEmailSent(false);
-            }, 3000);
+                setSuccessMessage(null);
+            }, 5000);
 
             // Log success or show notification
             console.log('Email sent successfully:', data);
@@ -450,6 +455,8 @@ ${template.cta}`;
         } catch (error) {
             console.error('Email sending error:', error);
             setEmailError(error.message);
+            // Clear error after 8 seconds
+            setTimeout(() => setEmailError(null), 8000);
         } finally {
             setIsSendingEmail(false);
         }
@@ -2259,6 +2266,33 @@ ${template.cta}`;
                                                             )}
                                                         </button>
                                                     </div>
+
+                                                    {/* Success/Error Toast Banner */}
+                                                    <AnimatePresence>
+                                                        {successMessage && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, y: -10 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                exit={{ opacity: 0, y: -10 }}
+                                                                className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3"
+                                                            >
+                                                                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                                                <span className="text-green-800 font-medium">{successMessage}</span>
+                                                            </motion.div>
+                                                        )}
+                                                        {emailError && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, y: -10 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                exit={{ opacity: 0, y: -10 }}
+                                                                className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3"
+                                                            >
+                                                                <X className="w-5 h-5 text-red-600 flex-shrink-0" />
+                                                                <span className="text-red-800 font-medium">Failed to send: {emailError}</span>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+
                                                     <textarea
                                                         value={generatedPitch}
 
