@@ -22,14 +22,21 @@ read -p "Which app has Instagram? (A or B): " app_choice
 
 if [ "$app_choice" = "A" ] || [ "$app_choice" = "a" ]; then
     APP_ID="749654080971157"
-    APP_SECRET="11f1d7b0101a9cd6901950a0ce83e3d9"
     APP_NAME="KrissKross.ai"
 elif [ "$app_choice" = "B" ] || [ "$app_choice" = "b" ]; then
     APP_ID="1187682906764579"
-    APP_SECRET="24cdcf261b0cbbacac0063638c0ecef6"
     APP_NAME="KrissKross Leads CRM"
 else
     echo "❌ Invalid choice. Please run the script again and choose A or B."
+    exit 1
+fi
+
+echo ""
+echo "🔑 Enter App Secret for $APP_NAME:"
+read -s APP_SECRET
+echo ""
+if [ -z "$APP_SECRET" ]; then
+    echo "❌ App Secret is required."
     exit 1
 fi
 

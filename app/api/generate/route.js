@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req) {
     try {
@@ -32,16 +33,16 @@ export async function POST(req) {
                         leadData = lead;
                         // Auto-populate context from enriched CRM data
                         const contextParts = [];
-                        
+
                         // 1. Full AI Research Summary (most valuable!)
                         if (lead.ai_research_summary) {
                             contextParts.push(`=== COMPANY RESEARCH ===\n${lead.ai_research_summary}\n`);
                         }
-                        
+
                         // 2. Business basics
                         if (lead.product_category) contextParts.push(`Business Type: ${lead.product_category}`);
                         if (lead.business_address) contextParts.push(`Location: ${lead.business_address}`);
-                        
+
                         // 3. Social proof
                         if (lead.instagram_followers) {
                             contextParts.push(`Instagram: ${lead.instagram_followers.toLocaleString()} followers`);
@@ -49,13 +50,13 @@ export async function POST(req) {
                         if (lead.engagement_rate) {
                             contextParts.push(`Engagement Rate: ${lead.engagement_rate}%`);
                         }
-                        
+
                         // 4. Key insights from tags (pain points, business type, content needs)
                         if (lead.tags && Array.isArray(lead.tags) && lead.tags.length > 0) {
                             const painTags = lead.tags.filter(t => t.category === 'pain').map(t => t.name);
                             const businessTags = lead.tags.filter(t => t.category === 'business').map(t => t.name);
                             const contentTags = lead.tags.filter(t => t.category === 'content').map(t => t.name);
-                            
+
                             if (painTags.length > 0) contextParts.push(`\n=== PAIN POINTS ===\n${painTags.join(', ')}`);
                             if (businessTags.length > 0) contextParts.push(`\n=== BUSINESS INSIGHTS ===\n${businessTags.join(', ')}`);
                             if (contentTags.length > 0) contextParts.push(`\n=== CONTENT GAPS ===\n${contentTags.join(', ')}`);
@@ -101,9 +102,19 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
 
         // Auto-save to history (Fire & Forget for speed)
         try {
-            const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
-            if (isSupabaseConfigured()) {
-                const { error: historyError } = await supabase
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+            if (supabaseUrl && supabaseServiceKey) {
+                // Use Service Role to bypass RLS for history logging
+                const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+                    auth: {
+                        autoRefreshToken: false,
+                        persistSession: false
+                    }
+                });
+
+                const { error: historyError } = await supabaseAdmin
                     .from('pitch_history')
                     .insert([{
                         lead_id: leadId || null,
@@ -115,6 +126,8 @@ Keep it under 100 words. Be conversational but professional. Use line breaks for
                     }]);
 
                 if (historyError) console.error('Error saving pitch history:', historyError);
+            } else {
+                console.warn('Skipping history save: Missing SUPABASE_SERVICE_ROLE_KEY');
             }
         } catch (e) { console.error('History save failed', e); }
 

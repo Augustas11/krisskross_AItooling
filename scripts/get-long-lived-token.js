@@ -4,10 +4,16 @@
  * Usage: node scripts/get-long-lived-token.js <SHORT_TOKEN>
  */
 
+require('dotenv').config({ path: '.env.local' });
 const https = require('https');
 
 const APP_ID = '1187682906764579';
-const APP_SECRET = '24cdcf261b0cbbacac0063638c0ecef6';
+const APP_SECRET = process.env.INSTAGRAM_APP_SECRET;
+
+if (!APP_SECRET) {
+    console.error('❌ Error: INSTAGRAM_APP_SECRET must be set in .env.local');
+    process.exit(1);
+}
 
 const args = process.argv.slice(2);
 const SHORT_TOKEN = args[0];

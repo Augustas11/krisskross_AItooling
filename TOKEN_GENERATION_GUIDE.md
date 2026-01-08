@@ -3,7 +3,7 @@
 ## App Details
 - **App ID:** 1187682906764579
 - **App Name:** KrissKross Leads CRM
-- **App Secret:** 24cdcf261b0cbbacac0063638c0ecef6
+- **App Secret:** [REDACTED]
 
 ---
 

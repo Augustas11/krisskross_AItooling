@@ -5,10 +5,16 @@
  * This helps diagnose if Error 101 is caused by an invalid App Secret.
  */
 
+require('dotenv').config({ path: '.env.local' });
 const https = require('https');
 
-const APP_ID = '1187682906764579';
-const APP_SECRET = '24cdcf261b0cbbacac0063638c0ecef6';
+const APP_ID = process.env.INSTAGRAM_APP_ID;
+const APP_SECRET = process.env.INSTAGRAM_APP_SECRET;
+
+if (!APP_ID || !APP_SECRET) {
+    console.error('❌ Error: INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET must be set in .env.local');
+    process.exit(1);
+}
 
 function validateCredentials() {
     console.log('Testing App Credentials...');

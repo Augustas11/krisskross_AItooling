@@ -47,13 +47,13 @@ function formatRelativeTime(timestamp) {
 function buildDeepLink(activity) {
     switch (activity.entity_type) {
         case 'lead':
-            return `/crm?leadId=${activity.entity_id}`;
+            return `/crm/dashboard?leadId=${activity.entity_id}`;
         case 'deal':
             return `/deals/${activity.entity_id}`;
         case 'contact':
             return `/contacts/${activity.entity_id}`;
         default:
-            return '/crm';
+            return '/crm/dashboard';
     }
 }
 

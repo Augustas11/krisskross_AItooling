@@ -34,7 +34,7 @@ This means the token is either expired, revoked, or not properly authorized.
    After getting the short-lived token, convert it to long-lived (60 days):
    
    ```bash
-   curl -i -X GET "https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=1187682906764579&client_secret=24cdcf261b0cbbacac0063638c0ecef6&fb_exchange_token=SHORT_LIVED_TOKEN"
+   curl -i -X GET "https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=1187682906764579&client_secret=[REDACTED]&fb_exchange_token=SHORT_LIVED_TOKEN"
    ```
 
 5. **Update .env.local:**

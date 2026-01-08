@@ -159,7 +159,7 @@ This guide walks through systematic debugging of your Facebook App setup to iden
 After getting short-lived token from Graph Explorer, convert it:
 
 ```bash
-curl "https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=1187682906764579&client_secret=24cdcf261b0cbbacac0063638c0ecef6&fb_exchange_token=YOUR_SHORT_LIVED_TOKEN"
+curl "https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=1187682906764579&client_secret=[REDACTED]&fb_exchange_token=YOUR_SHORT_LIVED_TOKEN"
 ```
 
 This returns a long-lived token (60 days).

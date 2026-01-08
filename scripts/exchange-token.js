@@ -4,10 +4,18 @@
  * Usage: node scripts/exchange-token.js
  */
 
+require('dotenv').config({ path: '.env.local' });
 const https = require('https');
 
-const APP_SECRET = '24cdcf261b0cbbacac0063638c0ecef6';
-const SHORT_LIVED_TOKEN = 'IGAAQ4MPnDdSNBZAGFvSThQR0xQd21UejBDRkJ1SzhyUGZAHZAjdiVFl5T0J3b1ItN3JCa29ubXFqMFg0TWJiazZAhcWVuOXhmUF84eDFpYWprZAnFvZAjNPUWhfQkoxVTdQNWVaT3NOUXFUVUZAFTDRNMlFGeWV0YXFrS1NCTXpScnBtawZDZD';
+const APP_SECRET = process.env.INSTAGRAM_APP_SECRET;
+
+if (!APP_SECRET) {
+    console.error('❌ Error: INSTAGRAM_APP_SECRET must be set in .env.local');
+    process.exit(1);
+}
+
+// Token to exchange (passed as argument or hardcoded for testing - preferably argument)
+const SHORT_LIVED_TOKEN = process.argv[2] || 'SHORT_TOKEN_HERE';
 
 // Basic Display API Exchange URL
 const BASE_URL = 'https://graph.instagram.com/access_token';

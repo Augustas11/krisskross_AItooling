@@ -20,8 +20,8 @@ The following environment variables have been added to `.env.local`:
 
 ```bash
 INSTAGRAM_APP_ID=1187682906764579
-INSTAGRAM_APP_SECRET=24cdcf261b0cbbacac0063638c0ecef6
-INSTAGRAM_ACCESS_TOKEN=IGAAQ4MPnDdSNBZAFptMFJNaWhYWkVhSW1ZAR2gxS2NhOVpVeTJabmpuNTVGVXNXSkFpLV95V2ZAzMGZA6S1FjYjdTZAWJ5aUhSYXZAsZADJYRzlCTVU1Tk56ZAUhxS0I1NU1NUXlBOGs4V1p2R1JDUkdaNW1QRjFhdVlnbVE3VVpXbmtwYwZDZD
+INSTAGRAM_APP_SECRET=[REDACTED]
+INSTAGRAM_ACCESS_TOKEN=[REDACTED]
 ```
 
 **⚠️ Security Note:** These variables are already gitignored. Never commit `.env.local` to version control.
