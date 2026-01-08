@@ -74,6 +74,24 @@ export async function GET(request, { params }) {
         const commentCount = interactions?.filter(i => i.interaction_type === 'comment').length || 0;
         const mentionCount = interactions?.filter(i => i.interaction_type === 'mention').length || 0;
 
+        // Get unread DM count
+        const unreadDmCount = interactions?.filter(i =>
+            i.interaction_type === 'dm' &&
+            i.direction === 'inbound' &&
+            !i.read_at
+        ).length || 0;
+
+        // Get last DM (inbound)
+        const lastDm = interactions?.find(i =>
+            i.interaction_type === 'dm' &&
+            i.direction === 'inbound'
+        );
+
+        // Get last comment
+        const lastComment = interactions?.find(i =>
+            i.interaction_type === 'comment'
+        );
+
         // Get most recent interactions
         const recentInteractions = interactions?.slice(0, 5) || [];
 
@@ -98,6 +116,11 @@ export async function GET(request, { params }) {
                 engagement_level: engagementLevel,
                 has_active_conversation: !!conversation,
                 unread_messages: conversation?.unread_count || 0,
+                unread_dm_count: unreadDmCount,
+                last_dm_text: lastDm?.message_content || null,
+                last_dm_timestamp: lastDm?.instagram_timestamp || null,
+                last_comment_text: lastComment?.message_content || null,
+                last_comment_timestamp: lastComment?.instagram_timestamp || null,
                 last_interaction_at: interactions?.[0]?.instagram_timestamp || null
             },
             recent_interactions: recentInteractions,

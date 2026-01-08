@@ -1,0 +1,10 @@
+{
+    "name": "instagram-sync",
+    "version": "1.0.0",
+    "description": "Automated Instagram sync pipeline for conversations, messages, and comments",
+    "main": "index.ts",
+    "scripts": {
+        "test": "deno test --allow-all"
+    },
+    "dependencies": {}
+}

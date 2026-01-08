@@ -81,6 +81,30 @@ export function InstagramEngagementSection({ leadId, instagramHandle }) {
                 </span>
             </div>
 
+            {/* Unread DM Alert - NEW */}
+            {stats.unread_dm_count > 0 && (
+                <div className="bg-red-50 border border-red-300 rounded-lg p-3 mb-4">
+                    <div className="flex items-center gap-2">
+                        <MessageCircle className="w-4 h-4 text-red-600" />
+                        <div className="flex-1">
+                            <p className="text-sm font-semibold text-red-800">
+                                {stats.unread_dm_count} unread message{stats.unread_dm_count > 1 ? 's' : ''}
+                            </p>
+                            {stats.last_dm_text && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    "{stats.last_dm_text.slice(0, 50)}{stats.last_dm_text.length > 50 ? '...' : ''}"
+                                </p>
+                            )}
+                            {stats.last_dm_timestamp && (
+                                <p className="text-xs text-red-500 mt-1">
+                                    {formatRelativeTime(stats.last_dm_timestamp)}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-3 mb-4">
                 <StatCard
@@ -164,6 +188,22 @@ export function InstagramEngagementSection({ leadId, instagramHandle }) {
             </div>
         </div>
     );
+}
+
+// Helper function to format relative time
+function formatRelativeTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
 }
 
 // Helper Components
