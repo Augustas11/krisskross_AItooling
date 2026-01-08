@@ -34,32 +34,27 @@ async function getUnreadReplies() {
         const searchCriteria = ['UNSEEN'];
         const fetchOptions = {
             bodies: ['HEADER', 'TEXT'],
-            markSeen: false // Don't mark as seen until processed
+            markSeen: false
+        };
+        // Note: For full robustness we'd fetch bodies: [''] to get everything,
+        // but 'TEXT' often suffices if we parse it right. 
+        // However, 'TEXT' in Multipart emails might be the raw boundary.
+        // Let's stick to 'HEADER' and 'TEXT' but try to parse the TEXT part as quoted-printable if needed.
+        // ACTUALLY, to fix the specific content-type garbage, we need to parse the content.
+        // Let's try to decode the preview.
+
+        // REVISION: The best way to fix this is to use MAILPARSER on the body.
+        // But we need the headers + body for mailparser to work best.
+        // Let's fetch the full source.
+        const fetchOptions = {
+            bodies: [''], // Fetch full source
+            markSeen: false
         };
 
         const messages = await connection.search(searchCriteria, fetchOptions);
         console.log(`📥 Found ${messages.length} unread messages.`);
 
-        const parsedEmails = [];
-
-        for (const message of messages) {
-            const all = message.parts.find(part => part.which === 'TEXT');
-            const id = message.attributes.uid;
-            const idHeader = "Imap-Id: " + id + "\r\n";
-
-            // Simple parsing to get basic info
-            // For robust parsing we ideally use mailparser on the stream, but 'imap-simple' provides parts.
-            // Let's use the helper to get the full body if possible or just headers for matching.
-            // Actually, imap-simple's `getParts` is needed for full body.
-            // Simpler approach: match by header first.
-
-            // Let's fetch the full message source for mailparser to handle complexities
-            // Rearchitecting fetch options slightly to get full body for parsing
-        }
-
-        // Re-implementing search to work better with mailparser
-        // We need the full source to parse reliably
-        return await processMessagesWithParser(messages, connection);
+        return await processMessagesWithParser(messages);
 
     } catch (error) {
         console.error('❌ IMAP Error:', error);
@@ -71,38 +66,33 @@ async function getUnreadReplies() {
     }
 }
 
-async function processMessagesWithParser(messages, connection) {
+async function processMessagesWithParser(messages) {
     const results = [];
 
     for (const item of messages) {
         try {
-            const bodyPart = item.parts.find(part => part.which === 'TEXT');
-            const headerPart = item.parts.find(part => part.which === 'HEADER');
+            // imap-simple returns parts. If we requested [''], it comes as parts[0].
+            const allPart = item.parts.find(p => p.which === '');
+            const uid = item.attributes.uid;
 
-            // Note: imap-simple splits header and body. 
-            // For simple Reply detection, we mostly need From, Subject, Date, and Snippet.
+            if (allPart) {
+                // Parse full source
+                const parsed = await simpleParser(allPart.body);
 
-            // Let's construct a simple object from headers
-            const headers = headerPart.body;
-            const from = headers.from ? headers.from[0] : '';
-            const subject = headers.subject ? headers.subject[0] : '';
-            const msgId = headers['message-id'] ? headers['message-id'][0] : '';
-            const inReplyTo = headers['in-reply-to'] ? headers['in-reply-to'][0] : null;
-
-            // Extract email address from "Name <email@domain.com>"
-            const emailMatch = from.match(/<(.+)>/);
-            const senderEmail = emailMatch ? emailMatch[1] : from.trim();
-
-            results.push({
-                uid: item.attributes.uid,
-                from: senderEmail,
-                rawFrom: from,
-                subject: subject,
-                date: item.attributes.date,
-                inReplyTo: inReplyTo,
-                messageId: msgId,
-                preview: bodyPart ? bodyPart.body.substring(0, 200) : ''
-            });
+                results.push({
+                    uid: uid,
+                    from: parsed.from ? parsed.from.text : '',
+                    subject: parsed.subject,
+                    date: parsed.date,
+                    messageId: parsed.messageId,
+                    inReplyTo: parsed.inReplyTo,
+                    // Use text body, fallback to html, or empty
+                    preview: (parsed.text || parsed.html || '').substring(0, 200).replace(/\n/g, ' ').trim()
+                });
+            } else {
+                // Fallback if something went wrong (shouldn't if we ask for '')
+                console.warn(`⚠️ No body found for msg ${uid}`);
+            }
 
         } catch (err) {
             console.error('Error parsing message:', err);

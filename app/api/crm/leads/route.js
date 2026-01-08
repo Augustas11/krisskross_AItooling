@@ -394,6 +394,18 @@ export async function PUT(req) {
         // Remove ID from update payload if it's the primary key, strictly speaking, but supabase handles it. 
         // Ideally we update based on ID in valid SQL.
 
+        // Fetch current lead to detect actual changes
+        const { data: currentLead, error: fetchError } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('id', leadToUpdate.id)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching lead for diff:', fetchError);
+            // Fallback: Proceed with update but skip smart logging
+        }
+
         const { error } = await supabase
             .from('leads')
             .update(dbLead)
@@ -401,23 +413,37 @@ export async function PUT(req) {
 
         if (error) throw error;
 
-        // Log Activity
-        await logActivity('update_lead', 'lead', leadToUpdate.id, { updates: Object.keys(leadToUpdate) });
+        // Detect actual changes
+        const changedFields = [];
+        if (currentLead) {
+            const significantFields = ['status', 'in_sequence', 'sequence_paused', 'assigned_to'];
 
-        // Emit to Activity Feed (detect field changes)
-        const updatedFields = Object.keys(leadToUpdate).filter(key => key !== 'id');
-        if (updatedFields.length > 0) {
+            // Compare DB format vs DB format
+            // dbLead is the new payload in DB format
+            for (const key of significantFields) {
+                // strict comparison or loose?
+                // dbLead might have undefined for missing keys if partial, but transformToDb fills holes? 
+                // transformToDb fills holes with frontend object.
+                // If frontend obj is full, dbLead is full.
+                if (JSON.stringify(currentLead[key]) !== JSON.stringify(dbLead[key])) {
+                    changedFields.push(key);
+                }
+            }
+        }
+
+        // Only emit if significant fields changed
+        if (changedFields.length > 0) {
             await emitActivity({
-                actorId: null, // TODO: Extract from auth context
-                actorName: 'User', // TODO: Get actual user name from auth
+                actorId: null,
+                actorName: 'User',
                 actionVerb: 'updated',
                 actionType: 'lead',
                 entityType: 'lead',
                 entityId: leadToUpdate.id,
                 entityName: leadToUpdate.name,
                 metadata: {
-                    fields_updated: updatedFields,
-                    field_count: updatedFields.length
+                    fields_updated: changedFields,
+                    field_count: changedFields.length
                 },
                 priority: 3
             });

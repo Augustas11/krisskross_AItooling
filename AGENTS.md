@@ -78,6 +78,7 @@ Critical systems: CRM Leads DB, credits, auth
 - `node scripts/migrate-to-supabase.js` - Sync local data to remote Supabase
 - `node scripts/send-test-email.js` - Verify SMTP/Email integration
 - `node scripts/test-apify.js` - Test Apify scraping connection
+- `/push` - Trigger agent to commit changes and push to GitHub
 
 ---
 
