@@ -52,7 +52,7 @@ export async function GET(req) {
                 id: `email-${e.id}`,
                 type: 'email',
                 action: 'Email Sent',
-                details: { subject: e.subject, to: e.recipient_email, status: e.status },
+                details: { subject: e.subject, to: e.recipient_email, status: e.status, body: e.body },
                 timestamp: e.sent_at
             }));
 

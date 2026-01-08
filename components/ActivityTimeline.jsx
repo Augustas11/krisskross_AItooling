@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { History, Mail, Edit, CheckCircle2, Clock, Trash2, PlusCircle, AlertCircle } from 'lucide-react';
+import { EmailContentModal } from './EmailContentModal';
 
 export function ActivityTimeline({ lead }) {
     const [activities, setActivities] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedEmail, setSelectedEmail] = useState(null);
 
     useEffect(() => {
         if (lead?.id) {
@@ -71,7 +73,19 @@ export function ActivityTimeline({ lead }) {
                                 {icon}
                             </div>
 
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                className={`bg-white rounded-lg border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow ${isEmail ? 'cursor-pointer hover:border-blue-300' : ''}`}
+                                onClick={() => {
+                                    if (isEmail) {
+                                        setSelectedEmail({
+                                            subject: item.details?.subject,
+                                            to: item.details?.to,
+                                            status: item.details?.status,
+                                            body: item.details?.body
+                                        });
+                                    }
+                                }}
+                            >
                                 <div className="flex justify-between items-start mb-1">
                                     <span className="font-semibold text-sm text-gray-900 capitalize">
                                         {formatActionName(item.action)}
@@ -90,6 +104,12 @@ export function ActivityTimeline({ lead }) {
                     );
                 })}
             </div>
+
+            <EmailContentModal
+                isOpen={!!selectedEmail}
+                onClose={() => setSelectedEmail(null)}
+                email={selectedEmail}
+            />
         </div>
     );
 }
