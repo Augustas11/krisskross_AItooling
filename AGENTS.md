@@ -26,6 +26,10 @@ and think like a strategist, not a traditional programmer.
 - Add logging
 - Create test files
 
+### Deployment Rules
+- **Verify Build Locally:** ALWAYS run `npm run build` before pushing code to avoid breaking the Vercel deployment.
+- **Dependencies:** Use `npm ci` instead of `npm install` to ensure deterministic builds.
+
 ## Token Usage Reporting
 **Critical:** I work with a 200,000 token budget per session. Track and report usage to prevent task breakdowns.
 
