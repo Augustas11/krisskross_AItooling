@@ -21,13 +21,11 @@ export async function POST(request, { params }) {
             process.env.SUPABASE_SERVICE_ROLE_KEY
         );
 
-        // Check if we have a pending_instagram_matches table
-        // If not, we can add metadata to the conversation
+        // Update instagram_pending_matches table
         const { error: updateError } = await supabase
-            .from('instagram_conversations')
+            .from('instagram_pending_matches')
             .update({
-                status: 'ignored',
-                metadata: { ignored_at: new Date().toISOString() }
+                match_status: 'ignored'
             })
             .eq('id', matchId);
 

@@ -15,41 +15,17 @@ export async function GET(request) {
             process.env.SUPABASE_SERVICE_ROLE_KEY
         );
 
-        // Check if pending_instagram_matches table exists, if not use conversations
-        let query;
-        let useFallback = false;
+        // Query the instagram_pending_matches table (correct table name)
+        let query = supabase
+            .from('instagram_pending_matches')
+            .select('*');
 
-        try {
-            // Try the dedicated pending matches table first
-            query = supabase
-                .from('pending_instagram_matches')
-                .select('*');
-
-            if (status !== 'all') {
-                query = query.eq('status', status);
-            }
-
-            query = query.order('first_seen_at', { ascending: false });
-        } catch {
-            useFallback = true;
+        // Use correct field name: match_status (not status)
+        if (status !== 'all') {
+            query = query.eq('match_status', status);
         }
 
-        // Fallback: Find conversations without lead_id
-        if (useFallback) {
-            query = supabase
-                .from('instagram_conversations')
-                .select(`
-                    id,
-                    instagram_user_id,
-                    instagram_username,
-                    last_message_at,
-                    last_message_preview,
-                    created_at
-                `)
-                .is('lead_id', null)
-                .order('created_at', { ascending: false })
-                .limit(50);
-        }
+        query = query.order('first_seen_at', { ascending: false });
 
         const { data: pending, error } = await query;
 
@@ -61,11 +37,15 @@ export async function GET(request) {
             }, { status: 500 });
         }
 
-        // Get stats
+        // Get stats from instagram_pending_matches
         const { count: totalCount } = await supabase
-            .from('instagram_conversations')
+            .from('instagram_pending_matches')
+            .select('*', { count: 'exact', head: true });
+
+        const { count: pendingCount } = await supabase
+            .from('instagram_pending_matches')
             .select('*', { count: 'exact', head: true })
-            .is('lead_id', null);
+            .eq('match_status', 'pending');
 
         // Format response with suggested leads based on username similarity
         const formattedPending = await Promise.all((pending || []).map(async (match) => {
@@ -98,9 +78,9 @@ export async function GET(request) {
                 id: match.id,
                 instagram_user_id: match.instagram_user_id,
                 instagram_username: match.instagram_username,
-                first_seen_at: match.first_seen_at || match.created_at,
-                message_preview: match.last_message_preview || match.message_preview,
-                status: match.status || 'pending',
+                first_seen_at: match.first_seen_at,
+                message_preview: match.message_preview,
+                status: match.match_status || 'pending',
                 suggested_leads: withScores.sort((a, b) => b.similarity - a.similarity)
             };
         }));
@@ -109,9 +89,9 @@ export async function GET(request) {
             success: true,
             pending: formattedPending,
             stats: {
-                total: totalCount || pending?.length || 0,
-                pending: pending?.length || 0,
-                linked: 0 // Would come from today's linked count
+                total: totalCount || 0,
+                pending: pendingCount || 0,
+                linked: 0
             }
         });
 
