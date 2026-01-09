@@ -23,11 +23,13 @@ import {
 } from 'lucide-react';
 
 // ============ PENDING MATCH CARD ============
-function PendingMatchCard({ match, onLink, onIgnore, isProcessing }) {
+function PendingMatchCard({ match, onLink, onIgnore, onCreate, isProcessing }) {
     const [showLeadSearch, setShowLeadSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [newLeadName, setNewLeadName] = useState(match.instagram_username || '');
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -62,10 +64,10 @@ function PendingMatchCard({ match, onLink, onIgnore, isProcessing }) {
                     </div>
                 </div>
                 <span className={`px-2 py-1 text-xs rounded-full ${match.status === 'pending'
-                        ? 'bg-amber-100 text-amber-700'
-                        : match.status === 'ignored'
-                            ? 'bg-gray-100 text-gray-600'
-                            : 'bg-green-100 text-green-700'
+                    ? 'bg-amber-100 text-amber-700'
+                    : match.status === 'ignored'
+                        ? 'bg-gray-100 text-gray-600'
+                        : 'bg-green-100 text-green-700'
                     }`}>
                     {match.status || 'Pending'}
                 </span>
@@ -150,6 +152,45 @@ function PendingMatchCard({ match, onLink, onIgnore, isProcessing }) {
                             ))}
                         </div>
                     )}
+
+                    {/* Create New Lead */}
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                        {!isCreating ? (
+                            <button
+                                onClick={() => setIsCreating(true)}
+                                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-pink-600 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors"
+                            >
+                                <UserPlus className="w-4 h-4" />
+                                Create New Lead
+                            </button>
+                        ) : (
+                            <div className="space-y-2">
+                                <label className="block text-xs font-medium text-gray-700">Lead Name</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newLeadName}
+                                        onChange={(e) => setNewLeadName(e.target.value)}
+                                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-500"
+                                        placeholder="Enter lead name"
+                                    />
+                                    <button
+                                        onClick={() => onCreate(match.id, newLeadName)}
+                                        disabled={isProcessing || !newLeadName.trim()}
+                                        className="px-3 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50 text-xs font-medium"
+                                    >
+                                        Create
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => setIsCreating(false)}
+                                    className="text-xs text-gray-500 hover:text-gray-700 underline"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -234,6 +275,30 @@ export default function PendingMatchesPage() {
         }
     };
 
+    // Create new lead
+    const handleCreate = async (matchId, name) => {
+        setIsProcessing(true);
+        try {
+            const res = await fetch(`/api/instagram/pending-matches/${matchId}/create-lead`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                fetchMatches();
+            } else {
+                alert(data.error || 'Failed to create lead');
+            }
+        } catch (error) {
+            console.error('Create failed:', error);
+            alert('Failed to create lead');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     // Ignore match
     const handleIgnore = async (matchId) => {
         setIsProcessing(true);
@@ -298,8 +363,8 @@ export default function PendingMatchesPage() {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === f
-                                    ? 'bg-pink-500 text-white'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                ? 'bg-pink-500 text-white'
+                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                 }`}
                         >
                             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -326,6 +391,7 @@ export default function PendingMatchesPage() {
                                 key={match.id}
                                 match={match}
                                 onLink={handleLink}
+                                onCreate={handleCreate}
                                 onIgnore={handleIgnore}
                                 isProcessing={isProcessing}
                             />
