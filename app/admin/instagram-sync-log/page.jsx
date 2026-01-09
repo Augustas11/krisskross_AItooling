@@ -21,7 +21,7 @@ import {
 
 // ============ SYNC LOG ROW ============
 function SyncLogRow({ log }) {
-    const isSuccess = log.status === 'success';
+    const isSuccess = log.status === 'success' || log.status === 'completed';
     const isRunning = log.status === 'running';
 
     return (
@@ -37,7 +37,7 @@ function SyncLogRow({ log }) {
                     )}
                     <span className={`text-sm font-medium ${isSuccess ? 'text-green-700' : isRunning ? 'text-blue-700' : 'text-red-700'
                         }`}>
-                        {log.status?.charAt(0).toUpperCase() + log.status?.slice(1)}
+                        {isSuccess ? 'Completed' : log.status?.charAt(0).toUpperCase() + log.status?.slice(1)}
                     </span>
                 </div>
             </td>
@@ -51,15 +51,15 @@ function SyncLogRow({ log }) {
                 <div className="flex items-center gap-4 text-sm">
                     <span className="flex items-center gap-1 text-blue-600">
                         <MessageCircle className="w-3 h-3" />
-                        {log.conversations_synced || 0}
+                        {log.conversations_synced || log.items_processed || 0}
                     </span>
                     <span className="flex items-center gap-1 text-purple-600">
                         <Activity className="w-3 h-3" />
-                        {log.messages_synced || 0}
+                        {log.messages_synced || log.items_matched || 0}
                     </span>
                     <span className="flex items-center gap-1 text-green-600">
                         <Users className="w-3 h-3" />
-                        {log.leads_matched || 0}
+                        {log.leads_matched || log.items_pending || 0}
                     </span>
                 </div>
             </td>
@@ -81,11 +81,37 @@ function formatDateTime(timestamp) {
     });
 }
 
+// ============ TOAST NOTIFICATION ============
+function Toast({ message, type, onClose }) {
+    useEffect(() => {
+        const timer = setTimeout(onClose, 5000);
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-slide-in ${type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`}>
+            {type === 'success' ? (
+                <CheckCircle className="w-5 h-5" />
+            ) : type === 'error' ? (
+                <XCircle className="w-5 h-5" />
+            ) : (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+            )}
+            <span className="font-medium">{message}</span>
+            <button onClick={onClose} className="ml-2 opacity-70 hover:opacity-100">×</button>
+        </div>
+    );
+}
+
 // ============ MAIN PAGE COMPONENT ============
 export default function SyncLogPage() {
     const [logs, setLogs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isTriggering, setIsTriggering] = useState(false);
+    const [toast, setToast] = useState(null);
     const [stats, setStats] = useState({
         totalSyncs: 0,
         successRate: 0,
@@ -116,6 +142,8 @@ export default function SyncLogPage() {
         if (isTriggering) return;
 
         setIsTriggering(true);
+        setToast({ message: 'Starting sync...', type: 'info' });
+
         try {
             const res = await fetch('/api/instagram/sync', {
                 method: 'POST'
@@ -123,14 +151,16 @@ export default function SyncLogPage() {
             const data = await res.json();
 
             if (data.success) {
-                // Refresh logs after a delay
-                setTimeout(fetchLogs, 2000);
+                setToast({ message: '✓ Sync completed successfully!', type: 'success' });
+                // Refresh logs immediately and again after a short delay
+                await fetchLogs();
+                setTimeout(fetchLogs, 3000);
             } else {
-                alert(data.error || 'Failed to trigger sync');
+                setToast({ message: `✗ Sync failed: ${data.error || 'Unknown error'}`, type: 'error' });
             }
         } catch (error) {
             console.error('Trigger sync failed:', error);
-            alert('Failed to trigger sync');
+            setToast({ message: `✗ Failed to trigger sync: ${error.message}`, type: 'error' });
         } finally {
             setIsTriggering(false);
         }
@@ -149,6 +179,15 @@ export default function SyncLogPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-6">
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
