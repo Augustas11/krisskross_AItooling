@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * GET /api/instagram/conversations/[id]/messages
+ * GET /api/instagram/conversations/[conversationId]/messages
  * Fetch full message history for a conversation
  */
 export async function GET(request, { params }) {
     try {
-        const { id: conversationId } = params;
+        const { conversationId } = params;
 
         if (!conversationId) {
             return NextResponse.json({

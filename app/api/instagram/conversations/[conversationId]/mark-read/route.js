@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * POST /api/instagram/conversations/[id]/mark-read
+ * POST /api/instagram/conversations/[conversationId]/mark-read
  * Mark all messages in a conversation as read
  */
 export async function POST(request, { params }) {
     try {
-        const { id: conversationId } = params;
+        const { conversationId } = params;
 
         if (!conversationId) {
             return NextResponse.json({
