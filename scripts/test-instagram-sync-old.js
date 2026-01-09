@@ -30,7 +30,9 @@ async function testInstagramSync() {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error('❌ Sync failed:', data.error);
+            console.error('❌ Sync failed:', data.error || data);
+            console.error('Status:', response.status);
+            console.error('Full response:', JSON.stringify(data, null, 2));
             process.exit(1);
         }
 

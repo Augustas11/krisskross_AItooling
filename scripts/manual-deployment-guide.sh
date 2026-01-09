@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Manual Deployment Instructions for Instagram Integration
+# Since Supabase CLI requires manual setup, follow these steps:
+
+echo "📋 Instagram Integration - Manual Deployment Guide"
+echo "=================================================="
+echo ""
+
+echo "✅ Step 1: GitHub Deployment - COMPLETE"
+echo "   Committed and pushed to GitHub successfully"
+echo "   Vercel will automatically deploy frontend changes"
+echo ""
+
+echo "📊 Step 2: Deploy Database Migration to Supabase"
+echo "   Option A: Via Supabase Dashboard (Recommended)"
+echo "   1. Go to https://supabase.com/dashboard"
+echo "   2. Select your project"
+echo "   3. Navigate to SQL Editor"
+echo "   4. Copy and paste the contents of:"
+echo "      supabase/migrations/20260108_instagram_enhancements.sql"
+echo "   5. Click 'Run'"
+echo ""
+echo "   Option B: Via psql (if you have database URL)"
+echo "   psql \"\$DATABASE_URL\" -f supabase/migrations/20260108_instagram_enhancements.sql"
+echo ""
+
+echo "⚡ Step 3: Deploy Edge Function"
+echo "   Option A: Via Supabase Dashboard"
+echo "   1. Go to Edge Functions in Supabase Dashboard"
+echo "   2. Click 'Create Function'"
+echo "   3. Name: instagram-sync"
+echo "   4. Copy contents from: supabase/functions/instagram-sync/index.ts"
+echo "   5. Click 'Deploy'"
+echo ""
+echo "   Option B: Via Supabase CLI (if installed)"
+echo "   npx supabase functions deploy instagram-sync --no-verify-jwt"
+echo ""
+
+echo "🧪 Step 4: Test the Deployment"
+echo "   Run: node scripts/test-instagram-sync.js"
+echo ""
+
+echo "⏰ Step 5: Set Up Automated Sync (Optional)"
+echo "   Run this SQL in Supabase SQL Editor:"
+echo "   "
+echo "   SELECT cron.schedule("
+echo "     'instagram-sync-15min',"
+echo "     '*/15 * * * *',"
+echo "     \$\$"
+echo "     SELECT net.http_post("
+echo "       url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/instagram-sync',"
+echo "       headers := '{\"Authorization\": \"Bearer YOUR_ANON_KEY\"}'::jsonb,"
+echo "       body := '{}'::jsonb"
+echo "     );"
+echo "     \$\$"
+echo "   );"
+echo ""
+
+echo "📝 Files to Deploy:"
+echo "   - supabase/migrations/20260108_instagram_enhancements.sql (Database)"
+echo "   - supabase/functions/instagram-sync/index.ts (Edge Function)"
+echo ""
+
+echo "✅ Frontend changes will deploy automatically via Vercel"
+echo ""

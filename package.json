@@ -12,7 +12,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.3",
     "@mendable/firecrawl-js": "^4.10.0",
-    "@supabase/supabase-js": "^2.89.0",
+    "@supabase/supabase-js": "^2.90.0",
     "apify-client": "^2.21.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",

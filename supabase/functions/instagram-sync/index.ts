@@ -68,14 +68,19 @@ serve(async (req) => {
 
             const { instagram_account_id, access_token } = credentials;
 
-            // Sync conversations and messages
-            console.log('📥 Syncing conversations...');
-            const conversationResults = await syncConversations(instagram_account_id, access_token);
-            totalProcessed += conversationResults.processed;
-            totalMatched += conversationResults.matched;
-            totalPending += conversationResults.pending;
+            // NOTE: Conversations/DM sync is disabled until Facebook App Review approves
+            // instagram_manage_messages permission. Error (#3) occurs without approval.
+            // To enable: Submit for App Review at developers.facebook.com
 
-            // Sync comments
+            // Sync conversations and messages (DISABLED - requires App Review)
+            // console.log('📥 Syncing conversations...');
+            // const conversationResults = await syncConversations(instagram_account_id, access_token);
+            // totalProcessed += conversationResults.processed;
+            // totalMatched += conversationResults.matched;
+            // totalPending += conversationResults.pending;
+            console.log('⏭️ Skipping conversations (requires App Review approval)');
+
+            // Sync comments (ENABLED - works without App Review)
             console.log('💬 Syncing comments...');
             const commentResults = await syncComments(instagram_account_id, access_token);
             totalProcessed += commentResults.processed;
