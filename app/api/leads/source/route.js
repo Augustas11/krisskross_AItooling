@@ -171,16 +171,39 @@ export async function POST(req) {
                 const startTime = Date.now();
                 const perplexityResult = await executePerplexitySearch(url, perplexityKey);
                 const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-                logs.push(createLog('api_response', `Perplexity completed in ${duration}s`));
+
+                const leadsFound = perplexityResult.shops?.length || 0;
+                logs.push(createLog('api_response', `Perplexity completed in ${duration}s, found ${leadsFound} leads`));
+
+                // Check if this is an Amazon URL for specific feedback
+                const isAmazonUrl = url.toLowerCase().includes('amazon.');
+
+                // Provide helpful message when no leads found
+                let message = null;
+                if (leadsFound === 0) {
+                    if (isAmazonUrl) {
+                        message = 'No seller data extracted from this Amazon page. Amazon pages often block automated data extraction. Try: (1) A different Amazon URL format (search page, category page), (2) The Grok provider for more persistent extraction, or (3) A non-Amazon listing page.';
+                    } else {
+                        message = 'No leads found on this page. The AI could not identify seller/brand information. Try a different URL or use the Grok provider for deeper analysis.';
+                    }
+                    logs.push(createLog('warning', 'Zero leads extracted', { suggestion: 'Try Grok provider or different URL' }));
+                }
 
                 return NextResponse.json({
                     leads: perplexityResult.shops || [],
                     method: 'perplexity_search',
+                    message,
                     logs
                 });
             } catch (e) {
                 logs.push(createLog('error', 'Perplexity Exception', e.message));
-                return NextResponse.json({ error: e.message, logs }, { status: 500 });
+
+                // Provide actionable error message
+                const errorMessage = e.message.includes('parse')
+                    ? 'AI could not process this page format. Try the Grok provider instead.'
+                    : e.message;
+
+                return NextResponse.json({ error: errorMessage, logs }, { status: 500 });
             }
         }
 

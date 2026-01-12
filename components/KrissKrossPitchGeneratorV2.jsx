@@ -2016,18 +2016,26 @@ ${template.cta}`;
                                                                             <span className="text-xs text-gray-400 italic">No tags</span>
                                                                         )}
                                                                     </td>
-                                                                    <td className="px-6 py-4">
+                                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                                                         <div className="flex items-center gap-2">
-                                                                            <div
-                                                                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                                                    lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                                                                                        lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                                                                            lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                                                                'bg-red-50 text-red-700 border-red-200'
+                                                                            <select
+                                                                                value={lead.status || 'New'}
+                                                                                onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                                                                                className={`text-[10px] font-bold px-2 py-1 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-400' :
+                                                                                        lead.status === 'Enriched' ? 'bg-teal-50 text-teal-700 border-teal-200 focus:ring-teal-400' :
+                                                                                            lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 focus:ring-indigo-400' :
+                                                                                                lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200 focus:ring-purple-400' :
+                                                                                                    lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200 focus:ring-green-400' :
+                                                                                                        'bg-red-50 text-red-700 border-red-200 focus:ring-red-400'
                                                                                     }`}
                                                                             >
-                                                                                {lead.status || 'New'}
-                                                                            </div>
+                                                                                <option value="New">NEW</option>
+                                                                                <option value="Enriched">ENRICHED</option>
+                                                                                <option value="Pitched">PITCHED</option>
+                                                                                <option value="Emailed">EMAILED</option>
+                                                                                <option value="Replied">REPLIED</option>
+                                                                                <option value="Dead">DEAD</option>
+                                                                            </select>
                                                                             {lead.in_sequence && (
                                                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-200" title="In automated follow-up sequence">
                                                                                     📧 Sequence

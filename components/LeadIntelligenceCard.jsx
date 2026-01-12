@@ -411,18 +411,28 @@ export function LeadIntelligenceCard({ lead, isEnriching, onTriggerEnrichment, o
                                 <div className="text-center py-6">
                                     {isEnriching ? (
                                         <span className="flex items-center justify-center gap-2 animate-pulse text-indigo-500">
-                                            Running Deep Research...
+                                            <Brain className="w-4 h-4 animate-spin" />
+                                            Running Deep Research... This may take 10-30 seconds
                                         </span>
                                     ) : (
                                         <div className="space-y-3">
-                                            <p className="text-sm text-gray-500">No research available yet</p>
-                                            <button
-                                                onClick={() => onTriggerEnrichment?.(lead)}
-                                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto"
-                                            >
-                                                <Brain className="w-4 h-4" />
-                                                Run Deep Research
-                                            </button>
+                                            {/* Check if lead has enough data for research */}
+                                            {!lead.name && !lead.website && !lead.instagram && !lead.storeUrl ? (
+                                                <p className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200">
+                                                    ⚠️ Lead needs a name, website, or Instagram handle before running research
+                                                </p>
+                                            ) : (
+                                                <>
+                                                    <p className="text-sm text-gray-500">No research available yet</p>
+                                                    <button
+                                                        onClick={() => onTriggerEnrichment?.(lead)}
+                                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto"
+                                                    >
+                                                        <Brain className="w-4 h-4" />
+                                                        Run Deep Research
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </div>

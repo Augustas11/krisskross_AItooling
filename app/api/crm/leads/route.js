@@ -222,36 +222,62 @@ export async function POST(req) {
         const duplicates = [];
 
         for (const lead of taggedLeads) {
-            // Skip if no email or instagram (can't check for duplicates)
-            if (!lead.email && !lead.instagram) {
-                leadsToInsertFinal.push(lead);
-                continue;
+            let isDuplicate = false;
+            let existingLead = null;
+            let matchedOn = null;
+
+            // Check 1: Email or Instagram match (exact)
+            if (lead.email || lead.instagram) {
+                const conditions = [];
+                if (lead.email) conditions.push(`email.eq.${lead.email}`);
+                if (lead.instagram) conditions.push(`instagram.eq.${lead.instagram}`);
+
+                const { data: existing, error: checkError } = await supabase
+                    .from('leads')
+                    .select('id, name, email, instagram, store_url')
+                    .or(conditions.join(','))
+                    .limit(1);
+
+                if (!checkError && existing?.length > 0) {
+                    isDuplicate = true;
+                    existingLead = existing[0];
+                    matchedOn = lead.email && existing[0].email === lead.email ? 'email' : 'instagram';
+                }
             }
 
-            // Build OR condition for duplicate check
-            let orCondition = '';
-            if (lead.email) orCondition += `email.eq.${lead.email}`;
-            if (lead.instagram) {
-                if (orCondition) orCondition += ',';
-                orCondition += `instagram.eq.${lead.instagram}`;
+            // Check 2: StoreUrl match (if not already duplicate)
+            if (!isDuplicate && lead.storeUrl) {
+                const { data: urlMatch } = await supabase
+                    .from('leads')
+                    .select('id, name, store_url')
+                    .eq('store_url', lead.storeUrl)
+                    .limit(1);
+
+                if (urlMatch?.length > 0) {
+                    isDuplicate = true;
+                    existingLead = urlMatch[0];
+                    matchedOn = 'store_url';
+                }
             }
 
-            // Check if lead already exists
-            const { data: existing, error: checkError } = await supabase
-                .from('leads')
-                .select('id, name, email, instagram')
-                .or(orCondition)
-                .limit(1);
+            // Check 3: Name match - case insensitive (if not already duplicate)
+            if (!isDuplicate && lead.name) {
+                const { data: nameMatch } = await supabase
+                    .from('leads')
+                    .select('id, name')
+                    .ilike('name', lead.name)
+                    .limit(1);
 
-            if (checkError) {
-                console.error('❌ [SUPABASE] Error checking duplicates:', checkError);
-                leadsToInsertFinal.push(lead);
-                continue;
+                if (nameMatch?.length > 0) {
+                    isDuplicate = true;
+                    existingLead = nameMatch[0];
+                    matchedOn = 'name';
+                }
             }
 
-            if (existing && existing.length > 0) {
+            if (isDuplicate && existingLead) {
                 // Duplicate found - update last_interaction
-                console.log(`⚠️ [SUPABASE] Duplicate: ${lead.name} (${lead.email || lead.instagram}), updating timestamp`);
+                console.log(`⚠️ [SUPABASE] Duplicate: ${lead.name} (matched on ${matchedOn}), updating timestamp`);
 
                 await supabase
                     .from('leads')
@@ -259,15 +285,15 @@ export async function POST(req) {
                         last_interaction: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     })
-                    .eq('id', existing[0].id);
+                    .eq('id', existingLead.id);
 
                 duplicates.push({
                     name: lead.name,
-                    existingId: existing[0].id,
-                    matchedOn: lead.email ? 'email' : 'instagram'
+                    existingId: existingLead.id,
+                    matchedOn
                 });
             } else {
-                // No duplicate
+                // No duplicate found
                 leadsToInsertFinal.push(lead);
             }
         }
