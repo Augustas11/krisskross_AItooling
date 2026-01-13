@@ -17,8 +17,8 @@ and think like a strategist, not a traditional programmer.
 - Installing dependencies
 - Database changes
 - Credit/payment logic changes
-- Video processing pipeline changes
 - Authentication modifications
+- Any destructive operations (delete, drop, truncate)
 
 ### Allowed Without Asking:
 - Read files
@@ -27,11 +27,11 @@ and think like a strategist, not a traditional programmer.
 - Create test files
 
 ### Deployment Rules
-- **Verify Build Locally:** ALWAYS run `npm run build` before pushing code to avoid breaking the Vercel deployment.
-- **Dependencies:** Use `npm ci` instead of `npm install` to ensure deterministic builds.
+- **Verify Build Locally:** ALWAYS run `npm run build` before pushing code
+- **Dependencies:** Use `npm ci` instead of `npm install` for deterministic builds
 
 ## Token Usage Reporting
-**Critical:** I work with a 200,000 token budget per session. Track and report usage to prevent task breakdowns.
+**Critical:** I work with a 200,000 token budget per session. Track and report usage.
 
 ### After Completing Any Task:
 Report token status in this format:
@@ -56,11 +56,10 @@ Report token status in this format:
 4. Create resumption notes if task incomplete
 
 ## Platform Quota Efficiency
-To prevent "Quota Exceeded" errors and work effectively across model limits:
-- **Batching:** Group multiple related edits into one response.
-- **Chaining:** Chain terminal commands (e.g., `npm run lint && npm run test`).
-- **Anticipation:** If a fix likely breaks something else, check it immediately without waiting for a prompt.
-- **No Fillers:** Minimize "I'm working on it" or "Step 1 done, moving to Step 2" messages. Focus on results.
+- **Batching:** Group multiple related edits into one response
+- **Chaining:** Chain terminal commands (e.g., `npm run lint && npm run test`)
+- **Anticipation:** If a fix likely breaks something else, check immediately
+- **No Fillers:** Minimize "I'm working on it" messages. Focus on results.
 
 ## When I Question You
 If I ask "why this way?" I'm learning, not challenging.
@@ -69,27 +68,24 @@ Explain:
 2. What alternatives exist
 3. Tradeoffs between them
 
-## Projects: KrissKross Jobs, KrissKrossAitooling (Lead CRM)
-KrissKross is product image to video AI app.
-Tech: Tech: Next.js, React, TypeScript, TailwindCSS, Supabase, OpenAI, Stripe, Claude, Vercel.
-Critical systems: CRM Leads DB, credits, auth
+## Projects
+<!-- UPDATE THIS SECTION FOR EACH PROJECT -->
+**Project Name:** [Your Project Name]
+**Tech Stack:** [Next.js, React, TypeScript, TailwindCSS, Supabase, etc.]
+**Critical Systems:** [List your most important/sensitive areas]
 
 ## Commands
+<!-- UPDATE THESE FOR YOUR PROJECT -->
 - `npm run dev` - Start local development server
-- `npm run build` - Build for production (Vercel)
-- `npm run backup` - Backup Supabase leads data to local `backups/`
-- `node scripts/seed-tags.js` - Seed initial tags for lead personalization
-- `node scripts/migrate-to-supabase.js` - Sync local data to remote Supabase
-- `node scripts/send-test-email.js` - Verify SMTP/Email integration
-- `node scripts/test-apify.js` - Test Apify scraping connection
-- `/push` - Trigger agent to commit changes and push to GitHub
+- `npm run build` - Build for production
+- `npm run backup` - Backup data (if applicable)
 
 ---
 
 **Note to AI:** I'm building expertise through doing. Teach me patterns 
 that generalize, not just one-off solutions. 
 
-**Required Reading:** Before starting a task, review `MAP.md`, `DOMAIN.md`, `STANDARDS.md`, and `VAULT.md` to understand our architecture, business logic, and safety rules.
+**Required Reading:** Before starting a task, review `MAP.md`, `STANDARDS.md`, and `VAULT.md`.
 
 **Additional References:**
 - `scripts/README.md` - Script inventory (which to use, which are deprecated)

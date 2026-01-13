@@ -198,7 +198,51 @@ export async function POST(req) {
             } catch (e) {
                 logs.push(createLog('error', 'Perplexity Exception', e.message));
 
-                // Provide actionable error message
+                // Check if this is an auth error (401/403) - try Grok as fallback
+                const isAuthError = e.message.includes('401') || e.message.includes('403') || e.message.includes('Authorization');
+                const grokKey = process.env.GROK_API_KEY;
+
+                if (isAuthError && grokKey) {
+                    logs.push(createLog('info', 'Perplexity auth failed, falling back to Grok...'));
+
+                    try {
+                        // First fetch content using a simple fetch (since Perplexity can't)
+                        logs.push(createLog('execution', 'Fetching page content for Grok analysis...'));
+                        const pageResponse = await fetch(url, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        });
+
+                        if (!pageResponse.ok) {
+                            throw new Error(`Failed to fetch page: ${pageResponse.status}`);
+                        }
+
+                        const pageContent = await pageResponse.text();
+
+                        const grokStartTime = Date.now();
+                        const grokResult = await executeGrokSearch(pageContent, grokKey);
+                        const grokDuration = ((Date.now() - grokStartTime) / 1000).toFixed(2);
+
+                        const grokLeadsFound = grokResult.shops?.length || 0;
+                        logs.push(createLog('api_response', `Grok fallback completed in ${grokDuration}s, found ${grokLeadsFound} leads`));
+
+                        return NextResponse.json({
+                            leads: grokResult.shops || [],
+                            method: 'grok_fallback',
+                            message: grokLeadsFound === 0 ? 'Grok could not extract leads from this page. Try a different URL.' : null,
+                            logs
+                        });
+                    } catch (grokError) {
+                        logs.push(createLog('error', 'Grok fallback also failed', grokError.message));
+                        return NextResponse.json({
+                            error: `Both Perplexity and Grok failed. Perplexity: ${e.message}. Grok: ${grokError.message}`,
+                            logs
+                        }, { status: 500 });
+                    }
+                }
+
+                // Provide actionable error message for non-auth errors
                 const errorMessage = e.message.includes('parse')
                     ? 'AI could not process this page format. Try the Grok provider instead.'
                     : e.message;
