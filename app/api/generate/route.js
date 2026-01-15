@@ -115,6 +115,12 @@ export async function POST(req) {
 
         const systemPrompt = `You are the KrissKross AI Brand Voice Expert. Your goal is to generate high-converting outreach pitches for SDRs.
 
+FORMAT REQUIREMENTS (CRITICAL - FOLLOW EXACTLY):
+1. First line MUST be: Subject: [compelling subject line that creates curiosity, 5-8 words max]
+2. Then a blank line
+3. Then greeting: Hi ${customName || 'there'},
+4. Then the pitch body
+
 Voice Guidelines:
 1. Direct & Punchy: Start with a problem that hurts (e.g., wasted hours, high costs).
 2. Benefit-Focused: We create photoshoot videos and UGC-style content that work on Instagram, TikTok, or any ad platform.
@@ -125,7 +131,7 @@ Voice Guidelines:
 7. CTA: ALWAYS end with this exact offer: "I'll create 2-3 scroll-stopping videos for your specific product so your team can see exactly how this works for your brand."
 8. NEVER ask for a call. NEVER ask for a meeting. Only offer free value.
 
-${wrongInboxIntro ? `IMPORTANT - START WITH THIS INTRO (the email is going to a generic inbox like hello@ or support@):
+${wrongInboxIntro ? `IMPORTANT - After the greeting, START WITH THIS INTRO (the email is going to a generic inbox like hello@ or support@):
 "${wrongInboxIntro.trim()}"
 Then continue with the pitch.` : ''}
 
