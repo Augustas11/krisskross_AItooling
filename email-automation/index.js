@@ -64,11 +64,33 @@ async function sendViaSendGridDirect(options) {
         } else {
             const errorBody = await response.text();
             console.error('SendGrid API error:', response.status, errorBody);
-            return { success: false, error: `SendGrid ${response.status}: ${errorBody}` };
+
+            // Parse error for user-friendly messaging
+            let userFriendlyError = `SendGrid error (${response.status})`;
+            try {
+                const errorJson = JSON.parse(errorBody);
+                const errorMessage = errorJson.errors?.[0]?.message || '';
+
+                if (errorMessage.includes('Maximum credits exceeded')) {
+                    userFriendlyError = '⚠️ SendGrid credits exhausted. Please add credits to your SendGrid account or wait for monthly reset.';
+                } else if (errorMessage.includes('verified') || response.status === 403) {
+                    userFriendlyError = '⚠️ Sender email not verified in SendGrid. Please verify hello@krisskross.ai in your SendGrid account.';
+                } else if (response.status === 429) {
+                    userFriendlyError = '⚠️ SendGrid rate limit reached. Please wait a few minutes before sending more emails.';
+                } else if (response.status === 401) {
+                    userFriendlyError = '⚠️ SendGrid API key invalid or expired. Please check your SENDGRID_API_KEY.';
+                } else {
+                    userFriendlyError = `SendGrid error: ${errorMessage || errorBody}`;
+                }
+            } catch (e) {
+                userFriendlyError = `SendGrid error: ${errorBody}`;
+            }
+
+            return { success: false, error: userFriendlyError, isSendGridError: true };
         }
     } catch (error) {
         console.error('SendGrid fetch error:', error.message);
-        return { success: false, error: error.message };
+        return { success: false, error: `SendGrid connection failed: ${error.message}`, isSendGridError: true };
     }
 }
 
@@ -76,6 +98,8 @@ async function sendViaSendGridDirect(options) {
  * Send email with SendGrid as primary, SMTP as fallback
  */
 async function sendEmail(options) {
+    let sendGridError = null;
+
     // Try SendGrid first (if API key is configured)
     if (process.env.SENDGRID_API_KEY) {
         console.log('📧 Sending via SendGrid...');
@@ -89,13 +113,34 @@ async function sendEmail(options) {
             };
         }
 
-        // SendGrid failed, fall through to SMTP
-        console.warn('SendGrid send failed, falling back to SMTP:', result.error);
+        // Store SendGrid error
+        sendGridError = result.error;
+
+        // For account/billing issues, don't fall back to SMTP - surface the error
+        if (result.isSendGridError && (
+            sendGridError.includes('credits exhausted') ||
+            sendGridError.includes('API key invalid') ||
+            sendGridError.includes('not verified')
+        )) {
+            console.error('SendGrid account issue - not falling back to SMTP:', sendGridError);
+            throw new Error(sendGridError);
+        }
+
+        // For transient errors, try SMTP fallback
+        console.warn('SendGrid send failed, falling back to SMTP:', sendGridError);
     }
 
     // Fallback to SMTP
     console.log('📧 Sending via SMTP...');
-    return await sendViaSMTP(options);
+    try {
+        return await sendViaSMTP(options);
+    } catch (smtpError) {
+        // If both fail, provide a comprehensive error message
+        const combinedError = sendGridError
+            ? `Email sending failed. SendGrid: ${sendGridError}. SMTP fallback: ${smtpError.message}`
+            : `SMTP sending failed: ${smtpError.message}`;
+        throw new Error(combinedError);
+    }
 }
 
 /**
