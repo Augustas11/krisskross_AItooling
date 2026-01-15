@@ -25,7 +25,12 @@ export async function GET() {
 
         if (!unreadEmails || unreadEmails.length === 0) {
             console.log('📭 No new unread replies.');
-            return NextResponse.json({ message: 'No new replies', processed: 0 });
+            return NextResponse.json({
+                success: true,
+                message: 'No new replies found in inbox',
+                processed: 0,
+                matched: 0
+            });
         }
 
         logs.push(`Found ${unreadEmails.length} unread emails`);
@@ -104,7 +109,6 @@ export async function GET() {
                             .from('email_sequence_enrollments')
                             .update({
                                 completed_at: new Date().toISOString(),
-                                status: 'replied',  // if column exists
                                 unenrolled_at: new Date().toISOString(),
                                 unenroll_reason: 'reply_received'
                             })

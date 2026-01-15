@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 
+// Helper: Detect if email is a generic/non-marketing address
+const isGenericEmail = (email) => {
+    if (!email) return false;
+    const genericPrefixes = [
+        'hello', 'hi', 'info', 'contact', 'support',
+        'customerservice', 'cs', 'help', 'sales', 'admin',
+        'team', 'office', 'general', 'enquiry', 'enquiries',
+        'service', 'care', 'assist', 'helpdesk'
+    ];
+    const prefix = email.split('@')[0].toLowerCase().replace(/[0-9]/g, '');
+    return genericPrefixes.some(gp => prefix === gp || prefix.startsWith(gp));
+};
+
 export async function POST(req) {
     try {
         const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -13,7 +26,7 @@ export async function POST(req) {
             apiKey: apiKey,
         });
 
-        const { targetType, customName, context, leadId } = await req.json();
+        const { targetType, customName, context, leadId, leadEmail } = await req.json();
 
         // Auto-populate context from CRM if leadId provided
         let enrichedContext = context;
@@ -71,15 +84,50 @@ export async function POST(req) {
             }
         }
 
+        // Fetch signature settings from database
+        let signatureName = 'Augustas';
+        let signatureTitle = 'Co-Founder at KrissKross.';
+        try {
+            const { supabase, isSupabaseConfigured } = require('@/lib/supabase');
+            if (isSupabaseConfigured()) {
+                const { data: nameData } = await supabase
+                    .from('app_settings')
+                    .select('value')
+                    .eq('key', 'signature_name')
+                    .single();
+                const { data: titleData } = await supabase
+                    .from('app_settings')
+                    .select('value')
+                    .eq('key', 'signature_title')
+                    .single();
+                if (nameData?.value) signatureName = nameData.value;
+                if (titleData?.value) signatureTitle = titleData.value;
+            }
+        } catch (e) {
+            console.log('Using default signature settings');
+        }
+
+        // Determine if we need the "wrong inbox" intro
+        const actualEmail = leadEmail || leadData?.email;
+        const wrongInboxIntro = isGenericEmail(actualEmail)
+            ? "I know this landed in the wrong inbox, but this could save your marketing team 10+ hours/week on ad creative—figured it's worth 30 seconds to forward to whoever handles your social advertising.\n\n"
+            : "";
+
         const systemPrompt = `You are the KrissKross AI Brand Voice Expert. Your goal is to generate high-converting outreach pitches for SDRs.
 
 Voice Guidelines:
 1. Direct & Punchy: Start with a problem that hurts (e.g., wasted hours, high costs).
-2. Benefit-Focused: We turn product photos into TikTok videos in minutes.
+2. Benefit-Focused: We create photoshoot videos and UGC-style content that work on Instagram, TikTok, or any ad platform.
 3. Specific Proof: Mention $20.99 for 50 videos and savings of 10+ hours/week.
 4. No Tech Jargon: Avoid "AI models" or "rendering". Use "scroll-stopping videos".
 5. No False Promises: Don't promise "going viral". Promise professional consistency.
-6. Structure: Problem (Hook) -> Solution (Value) -> Proof (Evidence) -> CTA (Action).
+6. Structure: Problem (Hook) -> Solution (Value) -> Proof (Evidence) -> Free Video Offer.
+7. CTA: ALWAYS end with this exact offer: "I'll create 2-3 scroll-stopping videos for your specific product so your team can see exactly how this works for your brand."
+8. NEVER ask for a call. NEVER ask for a meeting. Only offer free value.
+
+${wrongInboxIntro ? `IMPORTANT - START WITH THIS INTRO (the email is going to a generic inbox like hello@ or support@):
+"${wrongInboxIntro.trim()}"
+Then continue with the pitch.` : ''}
 
 Target: ${targetType}
 Recipient Name: ${customName || 'Prospect'}
@@ -87,18 +135,22 @@ ${enrichedContext ? `Additional Context: ${enrichedContext}` : ''}
 
 CRITICAL: If context is provided (like a profile link, bio, or product details), weave it into the hook or value prop to make the pitch feel deeply personalized and not robotic.
 
-Keep it under 100 words. Be conversational but professional. Use line breaks for readability.`;
+Keep it under 100 words (excluding signature). Be conversational but professional. Use line breaks for readability.
+
+DO NOT include a signature - it will be added automatically.`;
 
         const response = await anthropic.messages.create({
             model: "claude-sonnet-4-5-20250929",
-            max_tokens: 300,
+            max_tokens: 400,
             system: systemPrompt,
             messages: [
                 { role: "user", content: `Generate a KrissKross pitch for ${customName ? customName : 'a ' + targetType}.${enrichedContext ? ` Use this context to personalize it: ${enrichedContext}` : ''}` }
             ],
         });
 
-        const pitchText = response.content[0].text;
+        // Add signature to the pitch
+        const signature = `\n\nBest,\n${signatureName}\n${signatureTitle}`;
+        const pitchText = response.content[0].text + signature;
 
         // Auto-save to history (Fire & Forget for speed)
         try {

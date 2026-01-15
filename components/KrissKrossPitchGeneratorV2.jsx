@@ -47,13 +47,22 @@ export default function KrissKrossPitchGeneratorV2() {
 
     // --- SETTINGS STATE ---
     const [calendlyLink, setCalendlyLink] = useState('');
+    const [signatureName, setSignatureName] = useState('Augustas');
+    const [signatureTitle, setSignatureTitle] = useState('Co-Founder at KrissKross.');
     const [isSavingSettings, setIsSavingSettings] = useState(false);
 
     // Load settings on mount
     useEffect(() => {
         const loadSettings = async () => {
-            const { data } = await supabase.from('app_settings').select('value').eq('key', 'calendly_link').single();
-            if (data?.value) setCalendlyLink(data.value);
+            // Fetch all settings in one query
+            const { data: settings } = await supabase.from('app_settings').select('key, value');
+            if (settings) {
+                settings.forEach(s => {
+                    if (s.key === 'calendly_link' && s.value) setCalendlyLink(s.value);
+                    if (s.key === 'signature_name' && s.value) setSignatureName(s.value);
+                    if (s.key === 'signature_title' && s.value) setSignatureTitle(s.value);
+                });
+            }
         };
         loadSettings();
     }, []);
@@ -61,11 +70,20 @@ export default function KrissKrossPitchGeneratorV2() {
     const saveSettings = async () => {
         setIsSavingSettings(true);
         try {
-            const { error } = await supabase
-                .from('app_settings')
-                .upsert({ key: 'calendly_link', value: calendlyLink });
+            // Save all settings
+            const settingsToSave = [
+                { key: 'calendly_link', value: calendlyLink },
+                { key: 'signature_name', value: signatureName },
+                { key: 'signature_title', value: signatureTitle }
+            ];
 
-            if (error) throw error;
+            for (const setting of settingsToSave) {
+                const { error } = await supabase
+                    .from('app_settings')
+                    .upsert(setting);
+                if (error) throw error;
+            }
+
             setIsSettingsOpen(false);
         } catch (e) {
             console.error('Failed to save settings:', e);
@@ -305,29 +323,32 @@ export default function KrissKrossPitchGeneratorV2() {
         }
     }, [isDataLoaded, hasProcessedDeepLink, savedLeads]);
 
+    // Default signature (loaded from settings)
+    const SIGNATURE = `\n\nBest,\nAugustas\nCo-Founder at KrissKross.`;
+
     const pitchTemplates = {
         'fashion-seller': [
             {
-                hook: "Spending 10+ hours every week editing TikTok videos?",
-                value: "KrissKross turns your product photos into scroll-stopping TikTok videos in minutes. No editing skills needed.",
-                proof: "Save $250-500/month on freelancers. Just $20.99 for 50 videos.",
-                cta: "Want to see how it works with your products?"
+                hook: "Creating content for social ads but running out of fresh videos?",
+                value: "KrissKross turns your product photos into photoshoot-quality videos—perfect for Instagram, TikTok, or any ad platform. No editing skills needed.",
+                proof: "Save $250-500/month on freelancers. Just $20.99 for 50 scroll-stopping videos.",
+                cta: "I'll create 2-3 scroll-stopping videos for your specific product so your team can see exactly how this works for your brand."
             },
         ],
         'ecommerce-owner': [
             {
                 hook: "Running an e-commerce store means juggling everything—and video content always falls behind.",
-                value: "KrissKross automates your TikTok video creation. Upload your product catalog, get platform-ready videos without the production hassle.",
+                value: "KrissKross creates photoshoot and UGC-style videos from your product catalog. Works on Instagram, TikTok, or any ad platform.",
                 proof: "Scale from 0 to 50 videos/month for $20.99. No freelancers, no agencies, no technical headaches.",
-                cta: "Want to see it work with your store's products?"
+                cta: "I'll create 2-3 scroll-stopping videos for your specific product so your team can see exactly how this works for your brand."
             },
         ],
         'affiliate': [
             {
-                hook: "Promoting products on TikTok without custom videos? You're leaving commissions on the table.",
-                value: "KrissKross lets you create professional product videos from brand photos in minutes. More content = more conversions = more commissions.",
+                hook: "Promoting products without custom video content? You're leaving conversions on the table.",
+                value: "KrissKross lets you create professional product videos from brand photos in minutes. Use them on Instagram, TikTok, or any ad creative.",
                 proof: "Create 50 videos/month for $20.99. Each video takes minutes, not hours. Your ROI on the first few sales.",
-                cta: "Want to see how fast you can turn around video content?"
+                cta: "I'll create 2-3 scroll-stopping videos for your specific product so your team can see exactly how this works for your brand."
             },
         ]
     };
@@ -344,7 +365,8 @@ export default function KrissKrossPitchGeneratorV2() {
                     targetType,
                     customName,
                     context,
-                    leadId: pitchLead?.id // Pass leadId if available for auto-population
+                    leadId: pitchLead?.id, // Pass leadId if available for auto-population
+                    leadEmail: recipientEmail || pitchLead?.email // Pass email for generic email detection
                 }),
             });
 
@@ -374,7 +396,7 @@ export default function KrissKrossPitchGeneratorV2() {
 
             setLastTemplateIndex(templateIndex);
             const template = templates[templateIndex];
-            const fallbackPitch = `${customName ? `Hey ${customName}, ` : 'Hey, '}
+            const fallbackPitch = `${customName ? `Hey ${customName},` : 'Hey,'}
 
 ${template.hook}
 
@@ -382,7 +404,7 @@ ${template.value}
 
 ${template.proof}
 
-${template.cta}`;
+${template.cta}${SIGNATURE}`;
             setGeneratedPitch(fallbackPitch);
             setWasAiGenerated(false);
         } finally {
@@ -1245,6 +1267,45 @@ ${template.cta}`;
                                         This link will be used when you click "Book Meeting" in the CRM.
                                     </p>
                                 </div>
+
+                                {/* Email Signature Settings */}
+                                <div className="border-t border-gray-100 pt-6">
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                        ✍️ Email Signature
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                Your Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                placeholder="Augustas"
+                                                value={signatureName}
+                                                onChange={(e) => setSignatureName(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                Your Title
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                placeholder="Co-Founder at KrissKross."
+                                                value={signatureTitle}
+                                                onChange={(e) => setSignatureTitle(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+                                            <p className="font-medium text-gray-700 mb-1">Preview:</p>
+                                            <div className="whitespace-pre-line">
+                                                Best,{'\n'}{signatureName}{'\n'}{signatureTitle}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
@@ -2022,11 +2083,11 @@ ${template.cta}`;
                                                                                 value={lead.status || 'New'}
                                                                                 onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
                                                                                 className={`text-[10px] font-bold px-2 py-1 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer ${lead.status === 'New' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-400' :
-                                                                                        lead.status === 'Enriched' ? 'bg-teal-50 text-teal-700 border-teal-200 focus:ring-teal-400' :
-                                                                                            lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 focus:ring-indigo-400' :
-                                                                                                lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200 focus:ring-purple-400' :
-                                                                                                    lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200 focus:ring-green-400' :
-                                                                                                        'bg-red-50 text-red-700 border-red-200 focus:ring-red-400'
+                                                                                    lead.status === 'Enriched' ? 'bg-teal-50 text-teal-700 border-teal-200 focus:ring-teal-400' :
+                                                                                        lead.status === 'Pitched' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 focus:ring-indigo-400' :
+                                                                                            lead.status === 'Emailed' ? 'bg-purple-50 text-purple-700 border-purple-200 focus:ring-purple-400' :
+                                                                                                lead.status === 'Replied' ? 'bg-green-50 text-green-700 border-green-200 focus:ring-green-400' :
+                                                                                                    'bg-red-50 text-red-700 border-red-200 focus:ring-red-400'
                                                                                     }`}
                                                                             >
                                                                                 <option value="New">NEW</option>
