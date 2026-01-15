@@ -2375,7 +2375,7 @@ ${template.cta}${SIGNATURE}`;
                                                         value={generatedPitch}
 
                                                         onChange={(e) => setGeneratedPitch(e.target.value)}
-                                                        className="w-full h-64 bg-white rounded-lg p-4 text-gray-800 font-mono text-sm border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
+                                                        className="w-full h-96 bg-white rounded-lg p-4 text-gray-800 font-mono text-sm border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
                                                         placeholder="Pitch content will appear here..."
                                                     />
                                                 </motion.div>
