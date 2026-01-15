@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUnreadReplies, markEmailAsSeen } from '../../../../email-automation/services/imap-client';
+import { getAllRecentEmails, markEmailAsSeen } from '../../../../email-automation/services/imap-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,61 +9,131 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+/**
+ * Extract email address from various formats like "Name <email@domain.com>" or just "email@domain.com"
+ */
+function extractEmailAddress(fromString) {
+    if (!fromString) return null;
+
+    // Try to match email in angle brackets first: "Name <email@domain.com>"
+    const angleMatch = fromString.match(/<([^>]+)>/);
+    if (angleMatch) {
+        return angleMatch[1].toLowerCase().trim();
+    }
+
+    // Otherwise, check if it's already a plain email
+    const emailMatch = fromString.match(/[\w.-]+@[\w.-]+\.\w+/);
+    if (emailMatch) {
+        return emailMatch[0].toLowerCase().trim();
+    }
+
+    return null;
+}
+
 export async function GET() {
-    console.log('🔄 [CRON] Checking for email replies via IMAP...');
+    console.log('🔄 [CRON] Checking for email replies via IMAP (all recent emails)...');
     const logs = [];
 
     try {
-        // 1. Fetch unread emails from IMAP
-        let unreadEmails = [];
+        // 1. Fetch ALL recent emails from IMAP (last 7 days, not just unread)
+        let allEmails = [];
         try {
-            unreadEmails = await getUnreadReplies();
+            allEmails = await getAllRecentEmails(7);
         } catch (imapError) {
             console.error('IMAP Connection Failed:', imapError);
-            return NextResponse.json({ error: 'IMAP Check Failed', details: imapError.message }, { status: 500 });
+            return NextResponse.json({
+                success: false,
+                error: 'IMAP Check Failed',
+                details: imapError.message
+            }, { status: 500 });
         }
 
-        if (!unreadEmails || unreadEmails.length === 0) {
-            console.log('📭 No new unread replies.');
+        if (!allEmails || allEmails.length === 0) {
+            console.log('📭 No emails found in the last 7 days.');
             return NextResponse.json({
                 success: true,
-                message: 'No new replies found in inbox',
+                message: 'No emails found in inbox (last 7 days)',
                 processed: 0,
-                matched: 0
+                matched: 0,
+                scanned: 0
             });
         }
 
-        logs.push(`Found ${unreadEmails.length} unread emails`);
-        console.log(`📨 Processing ${unreadEmails.length} emails...`);
+        logs.push(`Found ${allEmails.length} emails from the last 7 days`);
+        console.log(`📨 Scanning ${allEmails.length} emails for replies...`);
+
+        // 2. Get all leads with their emails for matching
+        const { data: allLeads, error: leadsError } = await supabase
+            .from('leads')
+            .select('id, name, email, status, in_sequence')
+            .not('email', 'is', null);
+
+        if (leadsError) {
+            console.error('Error fetching leads:', leadsError);
+            return NextResponse.json({
+                success: false,
+                error: 'Failed to fetch leads',
+                details: leadsError.message
+            }, { status: 500 });
+        }
+
+        // Create a map for fast email lookup
+        const leadsByEmail = new Map();
+        allLeads?.forEach(lead => {
+            if (lead.email) {
+                leadsByEmail.set(lead.email.toLowerCase().trim(), lead);
+            }
+        });
+
+        logs.push(`Loaded ${leadsByEmail.size} leads with emails for matching`);
+
+        // 3. Get already processed message IDs from activity feed to avoid duplicates
+        const { data: processedReplies } = await supabase
+            .from('activity_feed')
+            .select('metadata')
+            .eq('action_verb', 'detected reply')
+            .eq('action_type', 'email');
+
+        const processedMessageIds = new Set();
+        processedReplies?.forEach(item => {
+            if (item.metadata?.messageId) {
+                processedMessageIds.add(item.metadata.messageId);
+            }
+        });
+
+        logs.push(`Found ${processedMessageIds.size} already processed replies`);
 
         let processedCount = 0;
         let matchedCount = 0;
+        let skippedCount = 0;
 
-        // 2. Process each email
-        for (const email of unreadEmails) {
+        // 4. Process each email
+        for (const email of allEmails) {
             try {
-                const fromEmail = email.from;
-                const normalizedEmail = fromEmail.trim().toLowerCase();
-
-                // Search for lead by email
-                // Using maybe 'ilike' or just direct match.
-                // Note: email.from might contain name "Name <email>". `imap-client` parses it.
-
-                const { data: leads, error: searchError } = await supabase
-                    .from('leads')
-                    .select('id, name, status, email, in_sequence')
-                    .ilike('email', normalizedEmail)
-                    .limit(1);
-
-                if (searchError) {
-                    logs.push(`Error searching for ${normalizedEmail}: ${searchError.message}`);
+                // Skip if we've already processed this message
+                if (email.messageId && processedMessageIds.has(email.messageId)) {
+                    skippedCount++;
                     continue;
                 }
 
-                if (leads && leads.length > 0) {
-                    const lead = leads[0];
+                // Extract clean email address
+                const senderEmail = email.fromAddress || extractEmailAddress(email.from);
+                if (!senderEmail) {
+                    continue;
+                }
+
+                // Search for matching lead
+                const lead = leadsByEmail.get(senderEmail);
+
+                if (lead) {
+                    // Skip if lead is already marked as Replied
+                    if (lead.status === 'Replied') {
+                        skippedCount++;
+                        continue;
+                    }
+
                     matchedCount++;
-                    logs.push(`🎯 Matched lead: ${lead.name} (${lead.email})`);
+                    logs.push(`🎯 Matched lead: ${lead.name} (${lead.email}) - Subject: "${email.subject?.substring(0, 50)}"`);
 
                     // Log Activity Feed Event
                     try {
@@ -78,6 +148,9 @@ export async function GET() {
                                 subject: email.subject,
                                 from: email.from,
                                 preview: email.preview,
+                                messageId: email.messageId,
+                                emailDate: email.date,
+                                wasUnread: !email.isRead,
                                 previously_in_sequence: lead.in_sequence
                             },
                             priority: 8,
@@ -88,20 +161,17 @@ export async function GET() {
                         console.error('Error logging activity:', actErr);
                     }
 
-                    // A. Mark as Replied
-                    if (lead.status !== 'Replied') {
-                        await supabase
-                            .from('leads')
-                            .update({
-                                status: 'Replied',
-                                last_interaction: new Date().toISOString(),
-                                // Auto-pause sequence if replied
-                                in_sequence: false
-                            })
-                            .eq('id', lead.id);
+                    // A. Mark lead as Replied
+                    await supabase
+                        .from('leads')
+                        .update({
+                            status: 'Replied',
+                            last_interaction: new Date().toISOString(),
+                            in_sequence: false
+                        })
+                        .eq('id', lead.id);
 
-                        logs.push(`Updated status to Replied for ${lead.name}`);
-                    }
+                    logs.push(`Updated status to Replied for ${lead.name}`);
 
                     // B. Stop Sequence Enrollment
                     if (lead.in_sequence) {
@@ -119,12 +189,12 @@ export async function GET() {
                         logs.push(`Unenrolled ${lead.name} from sequence`);
                     }
 
-                    // C. Mark email as seen in IMAP
-                    await markEmailAsSeen(email.uid);
-                    processedCount++;
+                    // C. Mark email as seen in IMAP (if not already)
+                    if (!email.isRead) {
+                        await markEmailAsSeen(email.uid);
+                    }
 
-                } else {
-                    logs.push(`👻 No lead matched for ${normalizedEmail}`);
+                    processedCount++;
                 }
 
             } catch (err) {
@@ -133,15 +203,25 @@ export async function GET() {
             }
         }
 
+        const message = matchedCount > 0
+            ? `Found ${matchedCount} new reply(ies) and updated lead status`
+            : 'No new replies from leads found';
+
         return NextResponse.json({
             success: true,
+            message,
+            scanned: allEmails.length,
             processed: processedCount,
             matched: matchedCount,
+            skipped: skippedCount,
             logs
         });
 
     } catch (error) {
         console.error('❌ [CRON] Fatal error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            error: error.message
+        }, { status: 500 });
     }
 }
